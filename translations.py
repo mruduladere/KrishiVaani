@@ -23,6 +23,8 @@ TRANSLATIONS = {
         # Auth & Login Portal
         "auth_welcome_title": "Welcome back, Farmer",
         "auth_welcome_subtitle": "Enter your mobile number and 4-digit PIN to access your farm portal.",
+        "auth_landscape_headline": "Empowering Every Harvest",
+        "auth_landscape_sub": "Unified crop advisory, livestock care & mandi insights.",
         "auth_headline": "Smart Farming, Simplified",
         "auth_subheadline": "One unified digital platform for everyday Maharashtra farming.",
         "auth_showcase_badge": "🌾 KrishiVaani • Voice of Agriculture",
@@ -213,6 +215,8 @@ TRANSLATIONS = {
         # Auth & Login Portal
         "auth_welcome_title": "पुन्हा स्वागत आहे, शेतकरी दादा",
         "auth_welcome_subtitle": "आपल्या शेती पोर्टलमध्ये प्रवेश करण्यासाठी मोबाईल नंबर व ४-अंकी पिन प्रविष्ट करा.",
+        "auth_landscape_headline": "प्रत्येक हंगामाचे सक्षमीकरण",
+        "auth_landscape_sub": "एकात्मिक पीक सल्ला, पशुधन काळजी आणि बाजारपेठ माहिती.",
         "auth_headline": "स्मार्ट शेती, सोपे व्यवस्थापन",
         "auth_subheadline": "महाराष्ट्रातील शेतकऱ्यांसाठी एकात्मिक डिजिटल कृषी व्यासपीठ.",
         "auth_showcase_badge": "🌾 कृषीवाणी • शेतकऱ्यांचा डिजिटल आवाज",

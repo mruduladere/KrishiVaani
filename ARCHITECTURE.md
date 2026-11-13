@@ -236,12 +236,11 @@ To transition from a prototype look into an enterprise-grade agricultural digita
 - *Judge Question:* "Why invest in a modern SaaS split-screen design for rural agricultural software?"
 - *Engineering Defense:* User adoption among modern farmers, farmer-producer organizations (FPOs), and agri-extension workers demands high visual trust. A cluttered, amateurish prototype suggests unreliability. Clean typography, bilingual clarity, and an uncluttered visual hierarchy reduce cognitive load, making the application immediately intuitive even for first-time smartphone users.
 
-### C. Engineering Note: Avoiding Markdown 4-Space Code-Block Traps in Streamlit
-- **The Issue:** Standard Markdown specifications treat any line indented by 4 or more leading spaces as a literal code block (`<pre><code>`). When multi-line HTML, CSS, or SVG strings in Python are formatted with normal code indentation, Streamlit's Markdown engine misinterprets the markup and renders raw gray code boxes instead of visual HTML.
-- **The Fix:**
-  1. Every raw HTML/SVG block is wrapped in `textwrap.dedent(...)`.
-  2. All inner markup tags (`<div`, `<svg`, `<style`, `<p`, `<h3`) are flushed strictly to column 0 without leading spaces.
-- **Balanced Geometry:** Both panels are pinned to a synchronized `540px` height (`height: 540px` / `min-height: 540px`) inside a centered `max-width: 960px` container, eliminating awkward vertical height mismatches and ensuring the modal renders flush and balanced on all screen sizes.
+### C. High-End SaaS Card & Animated Agricultural Landscape
+- **Zero Nested Boxes & Single-Viewport Fit:** Removed all `border=True` arguments from `st.container()` and `st.form()` to eliminate nested gray boxes. Styled `div[data-testid="stHorizontalBlock"]` as a unified white card container (`background: #FFFFFF; border-radius: 24px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08); padding: 16px; max-width: 1040px; margin: 0 auto;`), flattening default Streamlit form borders so the entire view fits neatly on a single screen without vertical scrolling.
+- **Rich Animated Sunrise & Swaying Crops (`generate_animated_landscape_svg()`):** Designed a lush SVG landscape featuring a sunrise gradient (`#FEF3C7` to `#DCFCE7`), a pulsing golden sun (`@keyframes pulseGlow`), multi-layered rolling emerald terraces with contour furrows, and foreground golden wheat stalks and green leafy plants gently swaying in the breeze via pure CSS `@keyframes swayLeft` / `swayRight`.
+- **Frosted Glassmorphic Overlay:** Positioned a frosted glass card (`backdrop-filter: blur(12px); background: rgba(20, 83, 45, 0.85);`) at the bottom of the landscape containing a brand badge, headline (*"Empowering Every Harvest"* / *"प्रत्येक हंगामाचे सक्षमीकरण"*), and subtitle.
+- **Zero-Indentation DOM Engine:** All HTML, CSS, and SVG templates are strictly left-aligned to column 0 and parsed via `textwrap.dedent(...)`, completely eliminating Markdown 4-space code-block misinterpretation traps.
 
 ---
 
