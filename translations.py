@@ -21,6 +21,11 @@ TRANSLATIONS = {
         "lang_name_en": "English",
 
         # Auth & Login Portal
+        "auth_minimal_welcome": "Welcome back",
+        "auth_minimal_sub": "Sign in to manage your crops & cattle",
+        "auth_minimal_tagline": "Voice of Agriculture",
+        "auth_minimal_new_reg": "New farmer? Register here",
+        "auth_minimal_existing": "Already registered? Sign in",
         "auth_welcome_title": "Welcome back, Farmer",
         "auth_welcome_subtitle": "Enter your mobile number and 4-digit PIN to access your farm portal.",
         "auth_landscape_headline": "Empowering Every Harvest",
@@ -213,6 +218,11 @@ TRANSLATIONS = {
         "lang_name_en": "English (इंग्रजी)",
 
         # Auth & Login Portal
+        "auth_minimal_welcome": "पुन्हा स्वागत आहे",
+        "auth_minimal_sub": "पिके व शेती व्यवस्थापनासाठी लॉगिन करा",
+        "auth_minimal_tagline": "शेतीचा आवाज",
+        "auth_minimal_new_reg": "नवीन शेतकरी आहात? येथे नोंदणी करा",
+        "auth_minimal_existing": "आधीच खाते आहे? लॉगिन करा",
         "auth_welcome_title": "पुन्हा स्वागत आहे, शेतकरी दादा",
         "auth_welcome_subtitle": "आपल्या शेती पोर्टलमध्ये प्रवेश करण्यासाठी मोबाईल नंबर व ४-अंकी पिन प्रविष्ट करा.",
         "auth_landscape_headline": "प्रत्येक हंगामाचे सक्षमीकरण",
