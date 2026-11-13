@@ -1,16 +1,17 @@
 """
-modules/auth.py - Modern Split-Screen Authentication & Registration Portal
+modules/auth.py - Compact & Balanced Split-Screen Authentication Portal
 KrishiVaani (Voice of Agriculture)
 
 Provides:
-1. Centered split-screen SaaS login card (Left showcase visual panel + Right clean form panel).
-2. Clean custom SVG agricultural illustration showing connected platform modules.
-3. 1-Click Demo Login (Ramesh Patil) for Hackathon evaluators.
-4. Credential-based Farmer Login & In-Memory New Farmer Registration.
-5. Neat language toggle (English | मराठी) in the top-right corner of the form card.
+1. Centered split-screen SaaS login card (max-width: 960px, min-height: 540px).
+2. Clean custom SVG agricultural illustration (compact 180px height).
+3. Zero-indentation HTML rendering via textwrap.dedent to avoid Markdown code-block traps.
+4. Balanced Left showcase panel & Right white form panel.
+5. 1-Click Demo Login, Credential Login, and In-Memory Registration.
 """
 
 import copy
+import textwrap
 import streamlit as st
 from sample_data import SAMPLE_FARMER
 from translations import t, get_lang, render_language_switcher
@@ -44,175 +45,145 @@ def find_farmer_by_credentials(phone_input, pin_input):
 
 
 def generate_showcase_svg(is_mr):
-    """Generates a modern, clean vector SVG agricultural ecosystem diagram."""
-    crop_lbl = "पीक सल्ला" if is_mr else "Crop Advisory"
-    livestock_lbl = "पशुधन काळजी" if is_mr else "Livestock Care"
-    expense_lbl = "खर्च विश्लेषण" if is_mr else "Expense Analytics"
-    service_lbl = "स्थानिक सेवा" if is_mr else "Local Services"
-    hub_lbl = "कृषीवाणी केंद्र" if is_mr else "KrishiVaani Hub"
+    """Generates a compact, clean vector SVG agricultural ecosystem diagram (180px height)."""
+    crop_lbl = "पीक" if is_mr else "Crops"
+    livestock_lbl = "पशुधन" if is_mr else "Cattle"
+    expense_lbl = "खर्च" if is_mr else "Finance"
+    service_lbl = "सेवा" if is_mr else "Services"
+    hub_lbl = "कृषीवाणी" if is_mr else "KrishiVaani"
 
-    return f"""
-    <svg viewBox="0 0 440 260" width="100%" height="230" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));">
-      <defs>
-        <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#34D399" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#34D399" stop-opacity="0"/>
-        </radialGradient>
-        <linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#059669"/>
-          <stop offset="100%" stop-color="#047857"/>
-        </linearGradient>
-        <linearGradient id="nodeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#064E3B"/>
-          <stop offset="100%" stop-color="#022C22"/>
-        </linearGradient>
-      </defs>
-
-      <!-- Glow Rings -->
-      <circle cx="220" cy="130" r="105" fill="url(#hubGlow)" />
-      <circle cx="220" cy="130" r="75" stroke="#34D399" stroke-width="1.2" stroke-dasharray="4 6" opacity="0.45" />
-
-      <!-- Interconnecting Circuit Lines -->
-      <line x1="220" y1="130" x2="85" y2="60" stroke="#6EE7B7" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.8"/>
-      <line x1="220" y1="130" x2="355" y2="60" stroke="#FDE68A" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.8"/>
-      <line x1="220" y1="130" x2="85" y2="200" stroke="#7DD3FC" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.8"/>
-      <line x1="220" y1="130" x2="355" y2="200" stroke="#FCA5A5" stroke-width="1.8" stroke-dasharray="4 4" opacity="0.8"/>
-
-      <!-- Center Hub Node -->
-      <circle cx="220" cy="130" r="40" fill="url(#hubGrad)" stroke="#FBBF24" stroke-width="2.5" />
-      <path d="M220 148V120M220 120C214 114 206 114 204 118C204 126 212 130 220 132M220 120C226 114 234 114 236 118C236 126 228 130 220 132" stroke="#FEF3C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="220" cy="112" r="3" fill="#FBBF24"/>
-      <text x="220" y="185" text-anchor="middle" fill="#ECFDF5" font-size="11" font-weight="700" letter-spacing="0.5">{hub_lbl}</text>
-
-      <!-- Satellite Node 1: Crop Advisory -->
-      <circle cx="85" cy="60" r="28" fill="url(#nodeGrad)" stroke="#34D399" stroke-width="2"/>
-      <path d="M78 63C78 51 90 49 94 49C94 61 82 73 78 73C78 69 82 63 90 57" stroke="#6EE7B7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="85" y="104" text-anchor="middle" fill="#D1FAE5" font-size="11" font-weight="600">{crop_lbl}</text>
-
-      <!-- Satellite Node 2: Livestock Care -->
-      <circle cx="355" cy="60" r="28" fill="url(#nodeGrad)" stroke="#FBBF24" stroke-width="2"/>
-      <path d="M343 55C343 51 349 49 355 49C361 49 367 51 367 55M347 59H363M350 69C350 71 352 73 355 73C358 73 360 71 360 69" stroke="#FDE68A" stroke-width="2" stroke-linecap="round"/>
-      <text x="355" y="104" text-anchor="middle" fill="#FEF3C7" font-size="11" font-weight="600">{livestock_lbl}</text>
-
-      <!-- Satellite Node 3: Expense Analytics -->
-      <circle cx="85" cy="200" r="28" fill="url(#nodeGrad)" stroke="#38BDF8" stroke-width="2"/>
-      <path d="M79 207L84 200L88 204L93 195M93 195H89M93 195V199" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="85" y="244" text-anchor="middle" fill="#E0F2FE" font-size="11" font-weight="600">{expense_lbl}</text>
-
-      <!-- Satellite Node 4: Nearby Services -->
-      <circle cx="355" cy="200" r="28" fill="url(#nodeGrad)" stroke="#F87171" stroke-width="2"/>
-      <path d="M355 190C350 190 347 193 347 198C347 204 355 212 355 212C355 212 363 204 363 198C363 193 360 190 355 190ZM355 200C353.5 200 352.5 198.8 352.5 197.5C352.5 196.2 353.5 195 355 195C356.5 195 357.5 196.2 357.5 197.5C357.5 198.8 356.5 200 355 200Z" stroke="#FECACA" stroke-width="1.8" stroke-linejoin="round"/>
-      <text x="355" y="244" text-anchor="middle" fill="#FEE2E2" font-size="11" font-weight="600">{service_lbl}</text>
-    </svg>
-    """
+    svg = f"""<svg viewBox="0 0 360 180" width="100%" height="180" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#34D399" stop-opacity="0.3"/>
+<stop offset="100%" stop-color="#34D399" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#059669"/>
+<stop offset="100%" stop-color="#047857"/>
+</linearGradient>
+<linearGradient id="nodeGrad" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#064E3B"/>
+<stop offset="100%" stop-color="#022C22"/>
+</linearGradient>
+</defs>
+<circle cx="180" cy="90" r="75" fill="url(#hubGlow)"/>
+<circle cx="180" cy="90" r="55" stroke="#34D399" stroke-width="1" stroke-dasharray="3 4" opacity="0.4"/>
+<line x1="180" y1="90" x2="65" y2="45" stroke="#6EE7B7" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.75"/>
+<line x1="180" y1="90" x2="295" y2="45" stroke="#FDE68A" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.75"/>
+<line x1="180" y1="90" x2="65" y2="135" stroke="#7DD3FC" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.75"/>
+<line x1="180" y1="90" x2="295" y2="135" stroke="#FCA5A5" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.75"/>
+<circle cx="180" cy="90" r="32" fill="url(#hubGrad)" stroke="#FBBF24" stroke-width="2"/>
+<path d="M180 102V82M180 82C175 78 168 78 166 81C166 87 173 90 180 92M180 82C185 78 192 78 194 81C194 87 187 90 180 92" stroke="#FEF3C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="180" cy="76" r="2.5" fill="#FBBF24"/>
+<text x="180" y="132" text-anchor="middle" fill="#ECFDF5" font-size="10.5" font-weight="700" letter-spacing="0.4">{hub_lbl}</text>
+<circle cx="65" cy="45" r="22" fill="url(#nodeGrad)" stroke="#34D399" stroke-width="1.6"/>
+<path d="M60 47C60 38 69 36 72 36C72 45 63 54 60 54C60 51 63 47 69 42" stroke="#6EE7B7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="65" y="78" text-anchor="middle" fill="#D1FAE5" font-size="9.5" font-weight="600">{crop_lbl}</text>
+<circle cx="295" cy="45" r="22" fill="url(#nodeGrad)" stroke="#FBBF24" stroke-width="1.6"/>
+<path d="M286 42C286 39 290 37 295 37C300 37 304 39 304 42M289 45H301M291 52C291 54 293 55 295 55C297 55 299 54 299 52" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/>
+<text x="295" y="78" text-anchor="middle" fill="#FEF3C7" font-size="9.5" font-weight="600">{livestock_lbl}</text>
+<circle cx="65" cy="135" r="22" fill="url(#nodeGrad)" stroke="#38BDF8" stroke-width="1.6"/>
+<path d="M60 141L64 135L67 138L71 131M71 131H68M71 131V134" stroke="#BAE6FD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="65" y="168" text-anchor="middle" fill="#E0F2FE" font-size="9.5" font-weight="600">{expense_lbl}</text>
+<circle cx="295" cy="135" r="22" fill="url(#nodeGrad)" stroke="#F87171" stroke-width="1.6"/>
+<path d="M295 127C291 127 289 129 289 133C289 138 295 144 295 144C295 144 301 138 301 133C301 129 299 127 295 127ZM295 135C293.8 135 293 134 293 133C293 132 293.8 131 295 131C296.2 131 297 132 297 133C297 134 296.2 135 295 135Z" stroke="#FECACA" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="295" y="168" text-anchor="middle" fill="#FEE2E2" font-size="9.5" font-weight="600">{service_lbl}</text>
+</svg>"""
+    return textwrap.dedent(svg)
 
 
 def render_showcase_panel():
-    """Renders the left column showcase card with gradient styling and vector diagram."""
+    """Renders the clean and minimalist left column showcase card."""
     is_mr = get_lang() == "mr"
     svg_markup = generate_showcase_svg(is_mr)
-    
     badge_text = t("auth_showcase_badge")
-    tagline_text = t("auth_showcase_tagline")
-    desc_text = t("auth_showcase_desc")
+    headline_text = t("auth_headline")
+    subheadline_text = t("auth_subheadline")
 
-    pills_html = f"""
-    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
-        <span style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #ECFDF5; font-weight: 500;">
-            {t('auth_pill_crop')}
-        </span>
-        <span style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #ECFDF5; font-weight: 500;">
-            {t('auth_pill_livestock')}
-        </span>
-        <span style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #ECFDF5; font-weight: 500;">
-            {t('auth_pill_expenses')}
-        </span>
-        <span style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; padding: 5px 12px; font-size: 12px; color: #ECFDF5; font-weight: 500;">
-            {t('auth_pill_services')}
-        </span>
-    </div>
-    """
-
-    showcase_card = f"""
-    <div style="
-        background: linear-gradient(150deg, #14532D 0%, #166534 50%, #064E3B 100%);
-        border-radius: 20px;
-        padding: 38px 34px;
-        color: white;
-        box-shadow: 0 20px 45px -12px rgba(20, 83, 45, 0.45);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 560px;
-        box-sizing: border-box;
-    ">
-        <div>
-            <!-- Top Badge -->
-            <div style="display: inline-flex; align-items: center; padding: 6px 14px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 999px; font-size: 13px; font-weight: 600; color: #ECFDF5; margin-bottom: 24px;">
-                {badge_text}
-            </div>
-
-            <!-- Custom Vector Illustration -->
-            <div style="margin: 10px 0 20px 0; text-align: center;">
-                {svg_markup}
-            </div>
-        </div>
-
-        <div>
-            <!-- Bottom Tagline & Description -->
-            <h3 style="color: #FFFFFF; font-size: 21px; font-weight: 700; line-height: 1.35; margin: 0 0 10px 0;">
-                "{tagline_text}"
-            </h3>
-            <p style="color: #A7F3D0; font-size: 13.5px; line-height: 1.55; margin: 0; opacity: 0.95;">
-                {desc_text}
-            </p>
-            {pills_html}
-        </div>
-    </div>
-    """
-    st.markdown(showcase_card, unsafe_allow_html=True)
+    showcase_card = f"""<div style="background: linear-gradient(145deg, #14532D 0%, #166534 100%);
+border-radius: 20px;
+padding: 30px 26px;
+color: white;
+box-shadow: 0 16px 36px -8px rgba(20, 83, 45, 0.35);
+height: 540px;
+min-height: 540px;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+box-sizing: border-box;">
+<div>
+<div style="display: inline-block; padding: 5px 12px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px; font-size: 12px; font-weight: 600; color: #ECFDF5; letter-spacing: 0.3px;">
+{badge_text}
+</div>
+<div style="margin-top: 20px; text-align: center;">
+{svg_markup}
+</div>
+</div>
+<div style="margin-top: auto;">
+<h3 style="color: #FFFFFF; font-size: 22px; font-weight: 700; margin: 0 0 8px 0; line-height: 1.3;">
+{headline_text}
+</h3>
+<p style="color: #A7F3D0; font-size: 13.5px; line-height: 1.5; margin: 0; opacity: 0.95;">
+{subheadline_text}
+</p>
+</div>
+</div>"""
+    st.markdown(textwrap.dedent(showcase_card), unsafe_allow_html=True)
 
 
 def render_auth():
     """
     Renders the modern split-screen SaaS login and registration interface.
-    Left: Visual showcase card.
-    Right: Clean white form card with top-right pill language toggle.
+    Enforces balanced 540px height and centered 960px container without raw HTML code blocks.
     """
     # Active auth mode: "login" or "register"
     if "auth_mode" not in st.session_state:
         st.session_state.auth_mode = "login"
 
-    # Container-level spacing
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+    # Inject scoped layout CSS for the authentication page
+    auth_styles = """<style>
+div[data-testid="stAppViewBlockContainer"] {
+    max-width: 960px !important;
+    margin: 1.5rem auto 2rem auto !important;
+    padding-top: 1rem !important;
+    padding-bottom: 2rem !important;
+}
+div[data-testid="stColumn"]:nth-of-type(2) div[data-testid="stVerticalBlockBorderWrapper"] {
+    min-height: 540px !important;
+    border-radius: 20px !important;
+    padding: 24px 26px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.06) !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+}
+</style>"""
+    st.markdown(textwrap.dedent(auth_styles), unsafe_allow_html=True)
 
-    # Centered split-screen 2-column layout (1.15 : 1)
-    col_showcase, col_form = st.columns([1.15, 1], gap="large")
+    # Balanced split-screen columns: 1 : 1
+    col_showcase, col_form = st.columns([1, 1], gap="medium")
 
     # ----------------- LEFT COLUMN: SHOWCASE CARD -----------------
     with col_showcase:
         render_showcase_panel()
 
-    # ----------------- RIGHT COLUMN: CLEAN FORM CARD -----------------
+    # ----------------- RIGHT COLUMN: CRISP WHITE FORM CARD -----------------
     with col_form:
-        # Wrap form inside clean white card container
         with st.container(border=True):
             # Top row: Brand caption and right-aligned Language pill switcher
             top_bar_col1, top_bar_col2 = st.columns([1, 1])
             with top_bar_col1:
-                st.caption(f"🌱 **KrishiVaani** • SIH 2026")
+                st.caption("🌱 **KrishiVaani** • SIH 2026")
             with top_bar_col2:
                 render_language_switcher(key="auth_panel_pill")
 
-            st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
 
             # Mode 1: FARMER LOGIN
             if st.session_state.auth_mode == "login":
-                st.markdown(f"## {t('auth_welcome_title')}")
+                st.markdown(f"### {t('auth_welcome_title')}")
                 st.caption(t("auth_welcome_subtitle"))
-
-                st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
 
                 with st.form("split_login_form"):
                     phone_input = st.text_input(
@@ -226,7 +197,6 @@ def render_auth():
                         placeholder=t("pin_placeholder")
                     )
 
-                    st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
                     submit_login = st.form_submit_button(t("login_button"), use_container_width=True)
 
                     if submit_login:
@@ -240,19 +210,13 @@ def render_auth():
                         else:
                             st.error(t("login_failed"))
 
-                # Subtle divider
-                st.markdown(
-                    f"""
-                    <div style="display: flex; align-items: center; text-align: center; margin: 18px 0 14px 0;">
-                        <div style="flex-grow: 1; height: 1px; background: #E2E8F0;"></div>
-                        <span style="padding: 0 12px; color: #94A3B8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            {t('auth_or_text')}
-                        </span>
-                        <div style="flex-grow: 1; height: 1px; background: #E2E8F0;"></div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                # Subtle divider (zero indentation to prevent Markdown code block)
+                divider_html = f"""<div style="display: flex; align-items: center; text-align: center; margin: 10px 0 8px 0;">
+<div style="flex-grow: 1; height: 1px; background: #E2E8F0;"></div>
+<span style="padding: 0 10px; color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">{t('auth_or_text')}</span>
+<div style="flex-grow: 1; height: 1px; background: #E2E8F0;"></div>
+</div>"""
+                st.markdown(textwrap.dedent(divider_html), unsafe_allow_html=True)
 
                 # ⚡ 1-Click Demo Login Button
                 if st.button(t("auth_demo_title"), key="demo_login_split", use_container_width=True):
@@ -264,7 +228,7 @@ def render_auth():
 
                 st.caption(t("demo_login_caption"))
 
-                st.markdown("<hr style='margin: 20px 0 14px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
+                st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
 
                 # Bottom Switcher to Registration
                 if st.button(f"👉 {t('auth_switch_to_register')}", key="btn_switch_to_reg", use_container_width=True):
@@ -273,10 +237,8 @@ def render_auth():
 
             # Mode 2: NEW FARMER REGISTRATION
             else:
-                st.markdown(f"## {t('auth_register_header')}")
+                st.markdown(f"### {t('auth_register_header')}")
                 st.caption(t("auth_register_subtitle"))
-
-                st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
 
                 with st.form("split_registration_form"):
                     reg_name = st.text_input(t("reg_name_label"), placeholder=t("reg_name_placeholder"))
@@ -360,19 +322,15 @@ def render_auth():
                         else:
                             st.warning(t("reg_validation_error"))
 
-                st.markdown("<hr style='margin: 18px 0 12px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
+                st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
 
                 # Bottom Switcher back to Login
                 if st.button(f"👈 {t('auth_switch_to_login')}", key="btn_switch_to_login", use_container_width=True):
                     st.session_state.auth_mode = "login"
                     st.rerun()
 
-    # Footer note
-    st.markdown(
-        f"""
-        <div style="text-align: center; font-size: 12px; color: #94A3B8; margin-top: 25px; padding-bottom: 20px;">
-            {t('footer_text')}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Footer note (zero indentation)
+    footer_html = f"""<div style="text-align: center; font-size: 11.5px; color: #94A3B8; margin-top: 18px; padding-bottom: 10px;">
+{t('footer_text')}
+</div>"""
+    st.markdown(textwrap.dedent(footer_html), unsafe_allow_html=True)
