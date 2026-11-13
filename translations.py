@@ -1,0 +1,397 @@
+"""
+translations.py - Comprehensive Bilingual (English & Marathi) Translation Engine
+KrishiVaani (Voice of Agriculture)
+
+Provides:
+- Complete dictionaries for Marathi ('mr') and English ('en').
+- Helper t(key, lang=None) for instantaneous UI string resolution.
+- render_language_switcher(key) for synchronized dual-mode switching across views.
+"""
+
+import streamlit as st
+
+TRANSLATIONS = {
+    "en": {
+        # App Branding & Meta
+        "app_title": "KrishiVaani",
+        "app_subtitle": "Voice of Agriculture",
+        "sih_badge": "Smart India Hackathon Prototype",
+        "footer_text": "🌱 KrishiVaani • Pure Python • No Database • Designed for Maharashtra Farmers",
+        "lang_name_mr": "मराठी (Marathi)",
+        "lang_name_en": "English",
+
+        # Auth & Login Portal
+        "login_portal_title": "KrishiVaani Farmer Portal",
+        "login_portal_subtitle": "Unified Digital Agriculture Platform for Maharashtra Farmers",
+        "demo_login_button": "⚡ 1-Click Demo Login (Ramesh Patil)",
+        "demo_login_caption": "Instant 1-click access with pre-loaded Nashik farm data for Hackathon evaluators.",
+        "or_divider": "OR SIGN IN WITH CREDENTIALS",
+        "tab_login": "🔑 Farmer Login",
+        "tab_register": "📝 New Farmer Registration",
+        "phone_label": "Registered Mobile Number",
+        "phone_placeholder": "e.g. 9822012345 or +91 98220 12345",
+        "pin_label": "4-Digit Security PIN",
+        "pin_placeholder": "Enter 4-digit PIN (Demo: 1234)",
+        "login_button": "🚀 Log In to My Farm",
+        "login_failed": "Invalid Mobile Number or PIN. For demo, use 9822012345 with PIN 1234, or use 1-Click Demo Login above.",
+        "login_success": "Login successful! Welcome to KrishiVaani.",
+
+        # Registration
+        "reg_name_label": "Full Name",
+        "reg_name_placeholder": "e.g. Ramesh Tukaram Patil",
+        "reg_phone_label": "Mobile Number",
+        "reg_phone_placeholder": "10-digit mobile number",
+        "reg_pin_label": "Create 4-Digit Security PIN",
+        "reg_pin_placeholder": "4-digit numeric PIN",
+        "reg_village_label": "Village",
+        "reg_village_placeholder": "e.g. Pimpalgaon Baswant",
+        "reg_taluka_label": "Taluka",
+        "reg_taluka_placeholder": "e.g. Niphad",
+        "reg_district_label": "District",
+        "reg_land_label": "Total Land Size (Acres)",
+        "reg_soil_label": "Soil Type",
+        "reg_irrigation_label": "Irrigation Method",
+        "reg_crops_label": "Crops Grown (comma-separated)",
+        "reg_crops_placeholder": "e.g. Grapes, Onion, Soybean",
+        "register_button": "🌱 Complete Registration & Enter Farm",
+        "reg_validation_error": "Please provide Full Name, 10-digit Mobile Number, and a 4-digit PIN.",
+        "reg_success": "Registration completed successfully! Welcome to KrishiVaani.",
+
+        # Sidebar & Navigation
+        "nav_header": "Main Navigation",
+        "nav_dashboard": "🏠 1. Profile & Dashboard",
+        "nav_crop_helper": "🌱 2. Crop & Farming Helper",
+        "nav_ai_assistant": "🤖 3. Multilingual AI Assistant",
+        "nav_nearby_services": "📍 4. Nearby Agri Services",
+        "nav_marketplace": "🛒 5. Farmer Marketplace",
+        "nav_livestock": "🐄 6. Livestock & Vaccines",
+        "nav_expense_tracker": "💰 7. Farm Expense Tracker",
+        "logout_button": "Log Out (लॉगआउट)",
+        "farmer_badge": "Farmer",
+        "location_badge": "Location",
+        "land_badge": "Land Holding",
+        "back_to_dashboard": "⬅️ Back to Farmer Dashboard",
+
+        # Module 1: Dashboard
+        "greeting_welcome": "Namaskar",
+        "greeting_season": "Season: Rabi 2026-27",
+        "greeting_land": "Land",
+        "quick_overview": "Quick Farm Overview",
+        "metric_land": "Total Farm Land",
+        "metric_crops": "Active Crops",
+        "metric_livestock": "Total Livestock",
+        "metric_expenses": "Current Month Spend",
+        "crops_count_suffix": "Crops",
+        "animals_count_suffix": "Animals",
+        "logs_suffix": "logs",
+        "profile_heading": "Farmer Profile & Farm Details",
+        "btn_view_profile": "👁️ View Profile",
+        "btn_edit_profile": "✏️ Edit Profile",
+        "btn_save_profile": "💾 Save Profile Changes",
+        "btn_cancel": "Cancel",
+        "full_name": "Full Name",
+        "contact_phone": "Phone Number",
+        "contact_email": "Email Address",
+        "pref_language": "Preferred Language",
+        "address_label": "Location / Address",
+        "land_size_label": "Land Size",
+        "soil_type_label": "Soil Type",
+        "irrigation_label": "Irrigation Method",
+        "livestock_summary_label": "Livestock Holding",
+        "daily_milk_label": "Daily Milk Yield",
+        "crops_cultivated_label": "Crops Currently Cultivated",
+        "profile_updated_success": "Profile updated successfully!",
+        "reset_defaults_title": "Reset to Sample Data Defaults",
+        "reset_defaults_desc": "If you edited data and want to restore baseline demonstration values, click below.",
+        "btn_reset_defaults": "🔄 Restore Sample Defaults",
+        "reset_success": "Baseline sample data restored successfully!",
+        "services_hub_title": "Platform Services & Modules",
+        "services_hub_caption": "Click on any module below to navigate directly.",
+        "btn_open_module": "Open",
+        "btn_view_info": "View Scope",
+
+        # Module 2: Crop Helper
+        "crop_helper_banner_title": "Crop & Farming Helper",
+        "crop_helper_banner_subtitle": "Stage-by-stage agronomy advice, fertilizer schedules, and actionable farming reminders for Maharashtra crops.",
+        "select_crop_title": "Select Crop to Inspect",
+        "your_farm_crop": "From Your Farm",
+        "other_crop": "Available Guide",
+        "crop_name_label": "Crop Name",
+        "marathi_name_label": "Regional Name",
+        "season_label": "Season",
+        "soil_label": "Recommended Soil",
+        "stage_1_tab": "🌱 Stage 1: Sowing / Pruning",
+        "stage_2_tab": "🌿 Stage 2: Vegetative Growth",
+        "stage_3_tab": "🌸 Stage 3: Flowering / Fruiting",
+        "stage_4_tab": "🌾 Stage 4: Harvest & Storage",
+        "duration_label": "Duration / Window",
+        "fertilizer_heading": "Fertilizer & Nutrition Management",
+        "irrigation_heading": "Irrigation Schedule",
+        "pest_heading": "Pest & Disease Prevention",
+        "pro_tip_heading": "Agronomy Expert Pro Tip",
+        "checklist_title": "Farm Tasks & Action Checklist",
+        "checklist_caption": "Timely farming reminders and tasks synced with your crop stages.",
+        "filter_tasks_label": "Filter Tasks:",
+        "filter_current_crop": "Current Crop Only",
+        "filter_all_tasks": "All Farm Tasks",
+        "progress_label": "Progress",
+        "completed_label": "tasks completed",
+        "priority_high": "High",
+        "priority_med": "Medium",
+        "priority_low": "Low",
+        "add_task_expander": "➕ Add New Farm Task / Reminder",
+        "task_desc_label": "Task Description",
+        "task_crop_label": "Related Crop",
+        "task_stage_label": "Stage / Category",
+        "task_due_label": "Due Period",
+        "task_priority_label": "Priority",
+        "btn_save_task": "Save Task",
+        "task_saved_success": "Task added to checklist successfully!",
+        "task_input_warning": "Please enter a task description.",
+
+        # Module 4: Nearby Services
+        "nearby_banner_title": "Nearby Agricultural Services",
+        "nearby_banner_subtitle": "Find certified veterinary doctors, seed & fertilizer shops, equipment rental, and soil testing labs near your farm.",
+        "search_filter_title": "Find & Filter Services",
+        "category_filter_label": "Select Category:",
+        "taluka_filter_label": "Select Taluka:",
+        "keyword_search_label": "Search by Keyword:",
+        "keyword_placeholder": "e.g. Kulkarni, Tractor, Onion Seed, Clinic",
+        "all_categories": "All Categories",
+        "all_talukas": "All Talukas",
+        "showing_label": "Showing",
+        "providers_label": "service providers",
+        "timings_label": "Timings",
+        "available_services_label": "Available Services & Specialities:",
+        "btn_call_now": "Call Now",
+        "btn_whatsapp": "WhatsApp Inquiry",
+        "no_providers_found": "No service providers found matching these filters. Try changing your filters or add a new provider below.",
+        "add_service_expander": "➕ Register a New Local Service / Doctor",
+        "add_service_caption": "Contribute trusted local service provider details to assist fellow farmers in your taluka.",
+        "provider_name_label": "Provider / Centre Name",
+        "provider_cat_label": "Service Category",
+        "provider_taluka_label": "Taluka",
+        "provider_location_label": "Location & Distance",
+        "provider_phone_label": "Contact Number",
+        "provider_timings_label": "Operating Hours / Timings",
+        "provider_speciality_label": "Services & Specialities",
+        "btn_save_service": "Save Service Provider",
+        "service_saved_success": "Service provider registered successfully in directory!",
+        "service_input_warning": "Please provide provider name and phone.",
+
+        # Under Construction Placeholders
+        "under_dev_badge": "Under Development",
+        "planned_features_heading": "Planned Features in this Module:",
+    },
+    "mr": {
+        # App Branding & Meta
+        "app_title": "कृषीवाणी",
+        "app_subtitle": "शेतकऱ्यांचा डिजिटल आवाज",
+        "sih_badge": "स्मार्ट इंडिया हॅकाथॉन प्रोटोटाईप",
+        "footer_text": "🌱 कृषीवाणी • प्युअर पायथन • डेटाबेस विरहित • महाराष्ट्रातील बळीराजासाठी",
+        "lang_name_mr": "मराठी",
+        "lang_name_en": "English (इंग्रजी)",
+
+        # Auth & Login Portal
+        "login_portal_title": "कृषीवाणी शेतकरी पोर्टल",
+        "login_portal_subtitle": "महाराष्ट्रातील शेतकऱ्यांसाठी एकात्मिक डिजिटल कृषी व्यासपीठ",
+        "demo_login_button": "⚡ १-क्लिक डेमो लॉगिन (रमेश पाटील)",
+        "demo_login_caption": "परीक्षक व परीक्षणासाठी नाशिक शेती डेटासह त्वरित १-क्लिक प्रवेश.",
+        "or_divider": "किंवा मोबाईल व पिन प्रविष्ट करून लॉगिन करा",
+        "tab_login": "🔑 शेतकरी लॉगिन",
+        "tab_register": "📝 नवीन शेतकरी नोंदणी",
+        "phone_label": "नोंदणीकृत मोबाईल क्रमांक",
+        "phone_placeholder": "उदा. 9822012345 किंवा +91 98220 12345",
+        "pin_label": "४-अंकी सुरक्षा पिन (PIN)",
+        "pin_placeholder": "४-अंकी पिन प्रविष्ट करा (डेमो: 1234)",
+        "login_button": "🚀 शेतात प्रवेश करा (लॉगिन)",
+        "login_failed": "अवैध मोबाईल क्रमांक किंवा पिन. डेमोसाठी 9822012345 आणि पिन 1234 वापरा किंवा वरील १-क्लिक डेमो लॉगिन वापरा.",
+        "login_success": "लॉगिन यशस्वी! कृषीवाणीमध्ये आपले स्वागत आहे.",
+
+        # Registration
+        "reg_name_label": "पूर्ण नाव",
+        "reg_name_placeholder": "उदा. रमेश तुकाराम पाटील",
+        "reg_phone_label": "मोबाईल क्रमांक",
+        "reg_phone_placeholder": "१० अंकी मोबाईल नंबर",
+        "reg_pin_label": "४-अंकी सुरक्षा पिन तयार करा",
+        "reg_pin_placeholder": "४ अंकी संख्यात्मक पिन",
+        "reg_village_label": "गाव",
+        "reg_village_placeholder": "उदा. पिंपळगाव बसवंत",
+        "reg_taluka_label": "तालुका",
+        "reg_taluka_placeholder": "उदा. निफाड",
+        "reg_district_label": "जिल्हा",
+        "reg_land_label": "एकूण शेतजमीन (एकर)",
+        "reg_soil_label": "मातीचा प्रकार",
+        "reg_irrigation_label": "सिंचन पद्धत",
+        "reg_crops_label": "पिके (स्वल्पविरामाने वेगळे करा)",
+        "reg_crops_placeholder": "उदा. द्राक्ष, कांदा, सोयाबीन",
+        "register_button": "🌱 नोंदणी पूर्ण करा व शेतात प्रवेश करा",
+        "reg_validation_error": "कृपया पूर्ण नाव, १०-अंकी मोबाईल नंबर आणि ४-अंकी पिन प्रविष्ट करा.",
+        "reg_success": "नोंदणी यशस्वीरीत्या पूर्ण झाली! कृषीवाणीमध्ये आपले स्वागत आहे.",
+
+        # Sidebar & Navigation
+        "nav_header": "मुख्य विभाग",
+        "nav_dashboard": "🏠 १. शेतकरी प्रोफाइल व डॅशबोर्ड",
+        "nav_crop_helper": "🌱 २. पीक सल्लागार व मार्गदर्शन",
+        "nav_ai_assistant": "🤖 ३. AI शेती सहाय्यक",
+        "nav_nearby_services": "📍 ४. जवळपासची कृषी सेवा केंद्र",
+        "nav_marketplace": "🛒 ५. शेतकरी थेट बाजारपेठ",
+        "nav_livestock": "🐄 ६. पशुधन नोंदी व लसीकरण",
+        "nav_expense_tracker": "💰 ७. शेतखर्च ट्रॅकर व नफा",
+        "logout_button": "लॉगआउट करा (Log Out)",
+        "farmer_badge": "शेतकरी",
+        "location_badge": "पत्ता",
+        "land_badge": "शेतजमीन",
+        "back_to_dashboard": "⬅️ शेतकरी डॅशबोर्डवर परत जा",
+
+        # Module 1: Dashboard
+        "greeting_welcome": "नमस्कार",
+        "greeting_season": "हंगाम: रब्बी २०२६-२७",
+        "greeting_land": "जमीन",
+        "quick_overview": "शेती सारांश",
+        "metric_land": "एकूण शेतजमीन",
+        "metric_crops": "सक्रिय पिके",
+        "metric_livestock": "एकूण पशुधन",
+        "metric_expenses": "चालू महिना खर्च",
+        "crops_count_suffix": "पिके",
+        "animals_count_suffix": "जनावरे",
+        "logs_suffix": "नोंदी",
+        "profile_heading": "शेतकरी प्रोफाइल व शेतजमीन माहिती",
+        "btn_view_profile": "👁️ प्रोफाइल पहा",
+        "btn_edit_profile": "✏️ प्रोफाइल संपादन",
+        "btn_save_profile": "💾 बदल जतन करा",
+        "btn_cancel": "रद्द करा",
+        "full_name": "पूर्ण नाव",
+        "contact_phone": "मोबाईल क्रमांक",
+        "contact_email": "ईमेल पत्ता",
+        "pref_language": "पसंतीची भाषा",
+        "address_label": "पत्ता व ठिकाण",
+        "land_size_label": "शेतजमीन धारणा",
+        "soil_type_label": "मातीचा प्रकार",
+        "irrigation_label": "सिंचन सुविधा",
+        "livestock_summary_label": "पशुधन माहिती",
+        "daily_milk_label": "दैनंदिन दूध उत्पादन",
+        "crops_cultivated_label": "सध्या शेतात असलेली पिके",
+        "profile_updated_success": "प्रोफाइल यशस्वीरीत्या जतन केले!",
+        "reset_defaults_title": "नमुना डेटा रिसेट करा",
+        "reset_defaults_desc": "जर तुम्ही डेटा बदलला असेल आणि पुन्हा मूळ नमुना डेटा आणायचा असेल, तर खालील बटण दाबा.",
+        "btn_reset_defaults": "🔄 मूळ नमुना डेटा पुनर्स्थापित करा",
+        "reset_success": "मूळ नमुना डेटा पूर्ववत करण्यात आला!",
+        "services_hub_title": "कृषीवाणी सेवा केंद्र व विभाग",
+        "services_hub_caption": "खालील सेवांवर क्लिक करून थेट त्या विभागात जा.",
+        "btn_open_module": "उघडा",
+        "btn_view_info": "माहिती पहा",
+
+        # Module 2: Crop Helper
+        "crop_helper_banner_title": "पीक सल्लागार व शेती मार्गदर्शन",
+        "crop_helper_banner_subtitle": "महाराष्ट्रातील हवामानानुसार पिकांचे टप्प्याटप्प्याने खत, पाणी व रोग नियंत्रण मार्गदर्शन आणि दैनंदिन शेतकाम चेकलिस्ट.",
+        "select_crop_title": "तपासणीसाठी पीक निवडा",
+        "your_farm_crop": "तुमच्या शेतातील",
+        "other_crop": "इतर उपलब्ध पीक",
+        "crop_name_label": "पीक नाव",
+        "marathi_name_label": "स्थानिक नाव",
+        "season_label": "हंगाम",
+        "soil_label": "योग्य जमीन",
+        "stage_1_tab": "🌱 टप्पा १: लागवड / छाटणी",
+        "stage_2_tab": "🌿 टप्पा २: शाकीय वाढ",
+        "stage_3_tab": "🌸 टप्पा ३: फुलधारणा / फळधारणा",
+        "stage_4_tab": "🌾 टप्पा ४: काढणी व साठवणूक",
+        "duration_label": "कालावधी / टप्पा वेळ",
+        "fertilizer_heading": "खत व्यवस्थापन",
+        "irrigation_heading": "पाणी व्यवस्थापन",
+        "pest_heading": "रोग व कीड नियंत्रण",
+        "pro_tip_heading": "कृषी तज्ज्ञ विशेष सल्ला",
+        "checklist_title": "शेतकाम चेकलिस्ट व स्मरणपत्रे",
+        "checklist_caption": "तुमच्या पिकांच्या चालू टप्प्यानुसार आवश्यक शेती कामांची नोंद व स्मरणपत्रे.",
+        "filter_tasks_label": "फिल्टर निवडा:",
+        "filter_current_crop": "केवळ निवडलेले पीक",
+        "filter_all_tasks": "सर्व पिकांची कामे",
+        "progress_label": "प्रगती",
+        "completed_label": "कामे पूर्ण",
+        "priority_high": "उच्च",
+        "priority_med": "मध्यम",
+        "priority_low": "सामान्य",
+        "add_task_expander": "➕ नवीन शेतकाम / स्मरणपत्र जोडा",
+        "task_desc_label": "कामाचे नाव व तपशील",
+        "task_crop_label": "संबंधित पीक",
+        "task_stage_label": "टप्पा / विभाग",
+        "task_due_label": "अपेक्षित वेळ / मुदत",
+        "task_priority_label": "प्राधान्य",
+        "btn_save_task": "काम सेव्ह करा",
+        "task_saved_success": "नवीन काम यशस्वीरीत्या चेकलिस्टमध्ये जोडले!",
+        "task_input_warning": "कृपया कामाचे नाव प्रविष्ट करा.",
+
+        # Module 4: Nearby Services
+        "nearby_banner_title": "जवळपासची कृषी सेवा केंद्र",
+        "nearby_banner_subtitle": "पशुवैद्यकीय डॉक्टर, बियाणे-खत दुकाने, कृषी अवजारे भाडे केंद्र व माती परीक्षण प्रयोगशाळांची खात्रीशीर माहिती.",
+        "search_filter_title": "सेवा शोधा व फिल्टर करा",
+        "category_filter_label": "सेवेचा प्रकार निवडा:",
+        "taluka_filter_label": "तालुका निवडा:",
+        "keyword_search_label": "कीवर्ड शोधा:",
+        "keyword_placeholder": "उदा. Kulkarni, ट्रॅक्टर, कांदा बियाणे, क्लिनिक",
+        "all_categories": "सर्व सेवा",
+        "all_talukas": "सर्व तालुके",
+        "showing_label": "दाखवत आहे",
+        "providers_label": "सेवा प्रदाते",
+        "timings_label": "कामाची वेळ",
+        "available_services_label": "उपलब्ध सेवा व वैशिष्ट्ये:",
+        "btn_call_now": "कॉल करा",
+        "btn_whatsapp": "व्हॉट्सॲप चौकशी",
+        "no_providers_found": "या निकषांनुसार कोणताही सेवा प्रदाता सापडला नाही. कृपया फिल्टर बदला किंवा खालील फॉर्ममधून नवीन प्रदाता जोडा.",
+        "add_service_expander": "➕ नवीन कृषी सेवा प्रदाता नोंदवा",
+        "add_service_caption": "तुमच्या भागातील इतर शेतकरी मित्रांच्या सोयीसाठी खात्रीशीर सेवा प्रदात्यांची माहिती जोडा.",
+        "provider_name_label": "प्रदाता किंवा केंद्राचे नाव",
+        "provider_cat_label": "सेवेचा प्रकार",
+        "provider_taluka_label": "तालुका",
+        "provider_location_label": "पत्ता व अंतर",
+        "provider_phone_label": "संपर्क क्रमांक",
+        "provider_timings_label": "कामाची वेळ",
+        "provider_speciality_label": "उपलब्ध सेवा व वैशिष्ट्ये",
+        "btn_save_service": "सेवा प्रदाता जतन करा",
+        "service_saved_success": "सेवा प्रदाता यशस्वीरीत्या जोडला गेला!",
+        "service_input_warning": "कृपया प्रदात्याचे नाव व फोन नंबर प्रविष्ट करा.",
+
+        # Under Construction Placeholders
+        "under_dev_badge": "विकासाधीन",
+        "planned_features_heading": "या विभागात समाविष्ट होणारी मुख्य वैशिष्ट्ये:",
+    }
+}
+
+
+def get_lang():
+    """Returns active language string ('mr' or 'en') from session state."""
+    return st.session_state.get("lang", "mr")
+
+
+def t(key, lang=None):
+    """
+    Translates a key into the active language with graceful fallbacks.
+    If key is missing in active language, falls back to English, then to raw key.
+    """
+    if lang is None:
+        lang = get_lang()
+    lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["mr"])
+    return lang_dict.get(key, TRANSLATIONS["en"].get(key, key))
+
+
+def render_language_switcher(key="global"):
+    """
+    Renders an interactive language mode selector.
+    Updates st.session_state.lang and triggers st.rerun() on user switch.
+    """
+    current_lang = get_lang()
+    current_idx = 0 if current_lang == "mr" else 1
+
+    selected = st.radio(
+        label="🌐 Language / भाषा",
+        options=["मराठी", "English"],
+        index=current_idx,
+        horizontal=True,
+        key=f"lang_toggle_{key}",
+        label_visibility="collapsed"
+    )
+
+    new_lang = "mr" if selected == "मराठी" else "en"
+    if new_lang != current_lang:
+        st.session_state.lang = new_lang
+        st.rerun()

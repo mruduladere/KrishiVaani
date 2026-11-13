@@ -7,10 +7,12 @@ Provides:
 2. Stage-by-stage agricultural guidance (Sowing, Vegetative, Flowering/Fruiting, Harvesting)
    covering fertilizer dosage, irrigation schedules, and pest/disease management.
 3. Interactive task checklist and reminder management synced to active crops.
+4. Pure English & Marathi mode rendering via translations.py.
 """
 
 import streamlit as st
 from sample_data import CROP_GUIDES
+from translations import t, get_lang
 
 
 def detect_crop_key(crop_name):
@@ -27,50 +29,49 @@ def detect_crop_key(crop_name):
         return "Soybean"
     elif "sugarcane" in crop_lower or "ऊस" in crop_lower:
         return "Sugarcane"
-    return "Grapes"  # Default fallback
+    return "Grapes"
 
 
 def render_crop_stages(crop_info):
     """Renders the 4 sequential agricultural growth stages inside interactive tabs."""
     stages = crop_info.get("stages", [])
     if not stages:
-        st.info("या पिकाची टप्प्याटप्प्याने माहिती लवकरच उपलब्ध होईल.")
+        st.info("Information for this crop will be available soon.")
         return
 
     tab_labels = [
-        "🌱 टप्पा १: लागवड/छाटणी",
-        "🌿 टप्पा २: शाकीय वाढ",
-        "🌸 टप्पा ३: फुलधारणा/फळधारणा",
-        "🌾 टप्पा ४: काढणी व साठवण"
+        t("stage_1_tab"),
+        t("stage_2_tab"),
+        t("stage_3_tab"),
+        t("stage_4_tab")
     ]
     
-    # Ensure tab count matches stage count
     tabs = st.tabs(tab_labels[:len(stages)])
 
     for index, stage in enumerate(stages):
         with tabs[index]:
             st.markdown(f"### {stage['stage_name']}")
-            st.caption(f"⏱️ **कालावधी (Duration / Window):** {stage['duration']}")
+            st.caption(f"⏱️ **{t('duration_label')}:** {stage['duration']}")
 
             col1, col2 = st.columns(2)
             
             with col1:
                 with st.container(border=True):
-                    st.markdown("#### 🧪 खत व्यवस्थापन (Fertilizer Management)")
+                    st.markdown(f"#### 🧪 {t('fertilizer_heading')}")
                     st.write(stage["fertilizer"])
                 
                 with st.container(border=True):
-                    st.markdown("#### 💧 पाणी व्यवस्थापन (Irrigation Schedule)")
+                    st.markdown(f"#### 💧 {t('irrigation_heading')}")
                     st.write(stage["irrigation"])
 
             with col2:
                 with st.container(border=True):
-                    st.markdown("#### 🐛 रोग व कीड नियंत्रण (Pest & Disease Prevention)")
+                    st.markdown(f"#### 🐛 {t('pest_heading')}")
                     st.write(stage["pest_disease"])
                 
                 with st.container(border=True):
-                    st.markdown("#### 💡 कृषी तज्ज्ञ सल्ला (Pro Agronomy Tip)")
-                    st.info(f"**टीप:** {stage['pro_tip']}")
+                    st.markdown(f"#### 💡 {t('pro_tip_heading')}")
+                    st.info(f"**Tip / सल्ला:** {stage['pro_tip']}")
 
 
 def render_task_checklist(selected_crop_key):
@@ -78,8 +79,8 @@ def render_task_checklist(selected_crop_key):
     Renders an interactive farm task checklist stored in st.session_state.crop_tasks.
     Farmers can toggle completion, view priority badges, and add new tasks.
     """
-    st.markdown("### 📝 शेतकाम चेकलिस्ट व स्मरणपत्रे (Farm Tasks & Action Checklist)")
-    st.caption("तुमच्या पिकांच्या चालू टप्प्यानुसार आवश्यक शेती कामांची नोंद व स्मरणपत्रे.")
+    st.markdown(f"### 📝 {t('checklist_title')}")
+    st.caption(t("checklist_caption"))
 
     if "crop_tasks" not in st.session_state:
         st.session_state.crop_tasks = []
@@ -90,38 +91,41 @@ def render_task_checklist(selected_crop_key):
     filter_col1, filter_col2 = st.columns([2, 1])
     with filter_col1:
         task_filter = st.radio(
-            "फिल्टर निवडा (Filter Tasks):",
-            options=["केवळ निवडलेले पीक (Current Crop Only)", "सर्व पिकांची कामे (All Farm Tasks)"],
+            t("filter_tasks_label"),
+            options=[t("filter_current_crop"), t("filter_all_tasks")],
             horizontal=True
         )
 
     # Filter tasks list
-    if task_filter == "केवळ निवडलेले पीक (Current Crop Only)":
-        visible_tasks = [t for t in tasks if t.get("crop", "").lower() == selected_crop_key.lower()]
+    if task_filter == t("filter_current_crop"):
+        visible_tasks = [t_item for t_item in tasks if t_item.get("crop", "").lower() == selected_crop_key.lower()]
     else:
         visible_tasks = tasks
 
     # Progress Metric
     if visible_tasks:
-        completed_count = sum(1 for t in visible_tasks if t.get("status", False))
+        completed_count = sum(1 for item in visible_tasks if item.get("status", False))
         total_count = len(visible_tasks)
         progress = completed_count / total_count if total_count > 0 else 0
-        st.progress(progress, text=f"प्रगती (Progress): {completed_count}/{total_count} कामे पूर्ण ({int(progress*100)}%)")
+        st.progress(progress, text=f"{t('progress_label')}: {completed_count}/{total_count} {t('completed_label')} ({int(progress*100)}%)")
     else:
-        st.caption("या पिकासाठी कोणतीही कामे प्रलंबित नाहीत (No pending tasks for this crop).")
+        st.caption("No pending tasks for this crop.")
 
     # Render individual task checkboxes
     for idx, task in enumerate(visible_tasks):
         # Priority badge formatting
-        p_badge = "🔴 उच्च (High)" if task.get("priority") == "High" else (
-            "🟡 मध्यम (Med)" if task.get("priority") == "Medium" else "🟢 सामान्य (Low)"
-        )
+        p_raw = task.get("priority", "Medium")
+        if p_raw == "High":
+            p_badge = f"🔴 {t('priority_high')}"
+        elif p_raw == "Medium":
+            p_badge = f"🟡 {t('priority_med')}"
+        else:
+            p_badge = f"🟢 {t('priority_low')}"
         
         with st.container(border=True):
             col_check, col_meta = st.columns([4, 2])
             
             with col_check:
-                # Find task in original list by ID for safe state updates
                 is_done = st.checkbox(
                     f"**{task['title']}**",
                     value=task.get("status", False),
@@ -132,27 +136,27 @@ def render_task_checklist(selected_crop_key):
                     st.rerun()
 
             with col_meta:
-                st.caption(f"🌾 **पीक:** {task.get('crop')} | **टप्पा:** {task.get('stage', 'General')}")
-                st.markdown(f"**प्राधान्य:** `{p_badge}` | ⏰ **मुदत:** `{task.get('due_date', 'N/A')}`")
+                st.caption(f"🌾 **Crop:** {task.get('crop')} | **Stage:** {task.get('stage', 'General')}")
+                st.markdown(f"**Priority:** `{p_badge}` | ⏰ **Due:** `{task.get('due_date', 'N/A')}`")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Expander to add a new customized task
-    with st.expander("➕ नवीन शेतकाम / स्मरणपत्र जोडा (Add New Farm Task)"):
+    with st.expander(t("add_task_expander")):
         with st.form("add_new_task_form"):
             t_col1, t_col2 = st.columns(2)
             with t_col1:
-                new_title = st.text_input("कामाचे नाव (Task Description)", placeholder="उदा. ०:५२:३४ खताचा डोस देणे किंवा फवारणी")
+                new_title = st.text_input(t("task_desc_label"), placeholder="e.g. 0:52:34 drip fertigation or neem spray")
                 new_crop = st.selectbox(
-                    "संबंधित पीक (Related Crop)",
+                    t("task_crop_label"),
                     options=["Grapes", "Onion", "Soybean", "Sugarcane", "General Farm"]
                 )
             with t_col2:
-                new_stage = st.text_input("टप्पा / विभाग (Stage)", placeholder="उदा. फुलधारणा किंवा पुनर्लागवड")
-                new_due = st.text_input("अपेक्षित वेळ / मुदत (Due Period)", placeholder="उदा. पुढील ३ दिवसात किंवा तातडीने")
-                new_priority = st.selectbox("प्राधान्य (Priority)", options=["High", "Medium", "Low"], index=1)
+                new_stage = st.text_input(t("task_stage_label"), placeholder="e.g. Flowering or Sowing")
+                new_due = st.text_input(t("task_due_label"), placeholder="e.g. Next 3 Days / Upcoming")
+                new_priority = st.selectbox(t("task_priority_label"), options=["High", "Medium", "Low"], index=1)
 
-            submit_task = st.form_submit_button("✅ काम सेव्ह करा (Save Task)", use_container_width=True)
+            submit_task = st.form_submit_button(t("btn_save_task"), use_container_width=True)
             if submit_task:
                 if new_title.strip():
                     new_entry = {
@@ -165,10 +169,10 @@ def render_task_checklist(selected_crop_key):
                         "status": False
                     }
                     st.session_state.crop_tasks.append(new_entry)
-                    st.success("✅ नवीन काम यशस्वीरीत्या जोडले! (Task added to checklist)")
+                    st.success(t("task_saved_success"))
                     st.rerun()
                 else:
-                    st.warning("कृपया कामाचे नाव प्रविष्ट करा (Please enter a task title).")
+                    st.warning(t("task_input_warning"))
 
 
 def render_crop_helper():
@@ -181,12 +185,12 @@ def render_crop_helper():
 
     # Top Header Banner
     st.markdown(
-        """
+        f"""
         <div style="background: linear-gradient(135deg, #2e7d32 0%, #1565c0 100%);
                     padding: 20px 24px; border-radius: 12px; color: white; margin-bottom: 22px;">
-            <h2 style="margin: 0; color: white;">🌱 पीक सल्लागार व शेती मार्गदर्शन (Crop & Farming Helper)</h2>
+            <h2 style="margin: 0; color: white;">🌱 {t('crop_helper_banner_title')}</h2>
             <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.94;">
-                महाराष्ट्रातील हवामानानुसार पिकांचे टप्प्याटप्प्याने खत, पाणी व रोग नियंत्रण मार्गदर्शन आणि दैनंदिन शेतकाम चेकलिस्ट.
+                {t('crop_helper_banner_subtitle')}
             </p>
         </div>
         """,
@@ -194,22 +198,21 @@ def render_crop_helper():
     )
 
     # Crop Selector linked to farmer's active crops
-    st.markdown("### 🌾 तुमचे पीक निवडा (Select Crop to Inspect)")
+    st.markdown(f"### 🌾 {t('select_crop_title')}")
     
-    # Build options list combining farmer crops with available guides
     crop_options = {}
     for c_raw in farmer_crops:
         k = detect_crop_key(c_raw)
         if k in CROP_GUIDES:
-            crop_options[f"🌿 {c_raw} (तुमच्या शेतातील)"] = k
+            crop_options[f"🌿 {c_raw} ({t('your_farm_crop')})"] = k
 
-    # Add other Maharashtra crops if not already in farmer profile
     for k, v in CROP_GUIDES.items():
         if k not in crop_options.values():
-            crop_options[f"📖 {v['display_name']} (इतर उपलब्ध)"] = k
+            disp_crop = v['marathi_name'] if get_lang() == "mr" else v['display_name']
+            crop_options[f"📖 {disp_crop} ({t('other_crop')})"] = k
 
     selected_label = st.selectbox(
-        "पीक निवडा (Select Crop):",
+        t("crop_name_label"),
         options=list(crop_options.keys()),
         index=0
     )
@@ -221,12 +224,12 @@ def render_crop_helper():
     with st.container(border=True):
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown(f"**पीक नाव:** `{crop_info.get('display_name', selected_crop_key)}`")
-            st.markdown(f"**मराठी नाव:** `{crop_info.get('marathi_name', '')}`")
+            st.markdown(f"**{t('crop_name_label')}:** `{crop_info.get('display_name', selected_crop_key)}`")
+            st.markdown(f"**{t('marathi_name_label')}:** `{crop_info.get('marathi_name', '')}`")
         with c2:
-            st.markdown(f"**हंगाम (Season):** `{crop_info.get('season', 'N/A')}`")
+            st.markdown(f"**{t('season_label')}:** `{crop_info.get('season', 'N/A')}`")
         with c3:
-            st.markdown(f"**योग्य जमीन (Recommended Soil):** {crop_info.get('recommended_soil', 'N/A')}")
+            st.markdown(f"**{t('soil_label')}:** {crop_info.get('recommended_soil', 'N/A')}")
 
     st.markdown("<br>", unsafe_allow_html=True)
 

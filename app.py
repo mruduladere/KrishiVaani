@@ -2,10 +2,13 @@
 app.py - Main Application Controller for KrishiVaani (Voice of Agriculture)
 Unified Python digital platform for Indian farmers built with Streamlit.
 Strictly NO external database (uses Streamlit in-memory session state).
+Bilingual English & Marathi support via translations.py.
 """
 
 import streamlit as st
 from sample_data import init_session_data
+from translations import t, render_language_switcher
+from modules.auth import render_auth
 from modules.dashboard import render_dashboard
 from modules.crop_helper import render_crop_helper
 from modules.nearby_services import render_nearby_services
@@ -49,29 +52,42 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------- SIDEBAR NAVIGATION -----------------
+# ----------------- AUTHENTICATION GATE -----------------
+# If user is not authenticated, render login/registration screen only
+if not st.session_state.get("is_authenticated", False):
+    render_auth()
+    st.stop()
+
+
+# ----------------- AUTHENTICATED FARMER SIDEBAR -----------------
 with st.sidebar:
-    st.markdown("## 🌾 कृषीवाणी (KrishiVaani)")
-    st.caption("Voice of Agriculture | Smart India Hackathon Prototype")
-    
-    # Farmer snapshot widget in the sidebar
-    profile = st.session_state.farmer_profile
+    # 1. Top Language Mode Switcher (English | मराठी)
+    st.markdown("##### 🌐 भाषा / Language Mode")
+    render_language_switcher(key="sidebar")
+    st.markdown("---")
+
+    # 2. App Branding
+    st.markdown(f"## 🌾 {t('app_title')}")
+    st.caption(f"{t('app_subtitle')} | {t('sih_badge')}")
+
+    # 3. Farmer Profile Snapshot
+    profile = st.session_state.get("farmer_profile", {})
     with st.container(border=True):
-        st.markdown(f"**शेतकरी:** {profile.get('name', 'N/A')}")
+        st.markdown(f"**{t('farmer_badge')}:** {profile.get('name', 'N/A')}")
         st.caption(f"📍 {profile.get('village', '')}, {profile.get('district', '')}")
-        st.caption(f"🚜 शेतजमीन: {profile.get('land_size_acres', 0)} एकर (Acres)")
+        st.caption(f"🚜 {t('land_badge')}: {profile.get('land_size_acres', 0)} Acres")
 
     st.markdown("---")
-    st.markdown("### 🧭 मुख्य विभाग (Navigation)")
+    st.markdown(f"### 🧭 {t('nav_header')}")
 
     nav_options = {
-        "dashboard": "🏠 1. प्रोफाइल व डॅशबोर्ड (Profile & Hub)",
-        "crop_helper": "🌱 2. पीक सल्लागार (Crop Helper)",
-        "ai_assistant": "🤖 3. AI शेती सहाय्यक (AI Assistant)",
-        "nearby_services": "📍 4. कृषी सेवा केंद्र (Nearby Services)",
-        "marketplace": "🛒 5. शेतकरी बाजारपेठ (Marketplace)",
-        "livestock": "🐄 6. पशुधन व लसीकरण (Livestock)",
-        "expense_tracker": "💰 7. शेतखर्च ट्रॅकर (Expense Tracker)"
+        "dashboard": t("nav_dashboard"),
+        "crop_helper": t("nav_crop_helper"),
+        "ai_assistant": t("nav_ai_assistant"),
+        "nearby_services": t("nav_nearby_services"),
+        "marketplace": t("nav_marketplace"),
+        "livestock": t("nav_livestock"),
+        "expense_tracker": t("nav_expense_tracker")
     }
 
     # Determine current selection index
@@ -80,7 +96,7 @@ with st.sidebar:
     current_index = keys_list.index(current_key) if current_key in keys_list else 0
 
     selected_label = st.radio(
-        label="विभाग निवडा (Select Module):",
+        label="Select Module:",
         options=list(nav_options.values()),
         index=current_index,
         label_visibility="collapsed"
@@ -93,12 +109,17 @@ with st.sidebar:
             break
 
     st.markdown("---")
+
+    # 4. Logout Button
+    if st.button(f"🚪 {t('logout_button')}", use_container_width=True):
+        st.session_state.is_authenticated = False
+        st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
-        """
-        <div style="font-size: 12px; color: #6b7280; text-align: center;">
-            🌱 <b>KrishiVaani v1.1 (Step 2)</b><br>
-            Modules 1, 2, and 4 Active<br>
-            Pure Python • No Database
+        f"""
+        <div style="font-size: 11px; color: #6b7280; text-align: center;">
+            {t('footer_text')}
         </div>
         """,
         unsafe_allow_html=True
@@ -174,13 +195,13 @@ else:
     })
 
     st.markdown(f"## {info['title']}")
-    st.info(f"🚧 **{info['step']} विकासाधीन (Under Development):** {info['scope']}")
+    st.info(f"🚧 **{info['step']} {t('under_dev_badge')}:** {info['scope']}")
     
-    st.markdown("### 📋 या विभागात समाविष्ट होणारी मुख्य वैशिष्ट्ये (Planned Features):")
+    st.markdown(f"### 📋 {t('planned_features_heading')}")
     for feature in info["planned"]:
         st.markdown(f"- ✅ {feature}")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("⬅️ डॅशबोर्डवर परत जा (Back to Farmer Dashboard)", use_container_width=False):
+    if st.button(t("back_to_dashboard"), use_container_width=False):
         st.session_state.active_nav = "dashboard"
         st.rerun()

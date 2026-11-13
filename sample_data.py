@@ -10,6 +10,7 @@ import copy
 SAMPLE_FARMER = {
     "name": "Ramesh Tukaram Patil (रमेश तुकाराम पाटील)",
     "phone": "+91 98220 12345",
+    "pin": "1234",
     "email": "ramesh.patil.krishi@gmail.com",
     "village": "Pimpalgaon Baswant (पिंपळगाव बसवंत)",
     "taluka": "Niphad (निफाड)",
@@ -32,6 +33,13 @@ SAMPLE_FARMER = {
         "total_animals": 7,
         "daily_milk_litres": 22.0
     }
+}
+
+# Pre-registered sample farmer accounts for authentication (Module: Auth)
+SAMPLE_REGISTERED_FARMERS = {
+    "9822012345": SAMPLE_FARMER,
+    "+919822012345": SAMPLE_FARMER,
+    "+91 98220 12345": SAMPLE_FARMER,
 }
 
 # Detailed Crop Guidance Knowledge Base (Module 2)
@@ -542,6 +550,15 @@ def init_session_data(st):
     This fulfills the strict NO-DATABASE requirement while ensuring any farmer edits
     remain reactive and intact during their session.
     """
+    if "is_authenticated" not in st.session_state:
+        st.session_state.is_authenticated = False
+
+    if "lang" not in st.session_state:
+        st.session_state.lang = "mr"  # Default to Marathi
+
+    if "registered_farmers" not in st.session_state:
+        st.session_state.registered_farmers = copy.deepcopy(SAMPLE_REGISTERED_FARMERS)
+
     if "farmer_profile" not in st.session_state:
         st.session_state.farmer_profile = copy.deepcopy(SAMPLE_FARMER)
 
@@ -566,6 +583,7 @@ def init_session_data(st):
 
 def reset_to_defaults(st):
     """Allows resetting session data to initial sample values."""
+    st.session_state.registered_farmers = copy.deepcopy(SAMPLE_REGISTERED_FARMERS)
     st.session_state.farmer_profile = copy.deepcopy(SAMPLE_FARMER)
     st.session_state.crop_tasks = copy.deepcopy(SAMPLE_CROP_TASKS)
     st.session_state.livestock_records = copy.deepcopy(SAMPLE_LIVESTOCK)
