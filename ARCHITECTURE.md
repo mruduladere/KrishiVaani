@@ -192,10 +192,57 @@ flowchart TD
 
 ---
 
-## 8. Summary of Edge Cases Handled
+## 8. Modern Split-Screen SaaS UI Architecture & Global Polish
+
+### A. Layout Geometry & Visual Hierarchy
+To transition from a prototype look into an enterprise-grade agricultural digital product, `modules/auth.py` and `app.py` were redesigned with a modern split-screen SaaS card pattern:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             KrishiVaani App Canvas                          │
+│  ┌───────────────────────────────────┬───────────────────────────────────┐  │
+│  │   LEFT PANEL (Rich Visual Brand)  │   RIGHT PANEL (Clean White Form)  │  │
+│  │                                   │                                   │  │
+│  │  [🌾 KrishiVaani • Badge]        │                    [मराठी|English]│  │
+│  │                                   │                                   │  │
+│  │     * Clean Connected Vector *    │   Welcome back, Farmer            │  │
+│  │    * SVG Agricultural Diagram *   │   Enter your mobile & 4-digit PIN │  │
+│  │       (Crop, Cattle, Cost, Serv)  │                                   │  │
+│  │                                   │   [ Mobile Number               ] │  │
+│  │                                   │   [ 4-Digit Security PIN        ] │  │
+│  │   "One unified digital platform   │                                   │  │
+│  │   for everyday Maharashtra farm"  │   [ 🚀 Log In to My Farm (CTA)  ] │  │
+│  │                                   │   ──────────── or ────────────    │  │
+│  │   (Pills: Crop, Cattle, Exp, Serv)│   [ ⚡ 1-Click Demo Login       ] │  │
+│  │                                   │                                   │  │
+│  │                                   │   👉 Don't have an account? Reg   │  │
+│  └───────────────────────────────────┴───────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Split-Screen Ratio (`st.columns([1.15, 1], gap="large")`):**
+   - **Left Panel (Brand Showcase):** Styled with a full-height deep forest gradient (`#14532D` to `#166534`), generous inner padding (38px), rounded corners (20px), and an ambient drop shadow.
+   - **Right Panel (Minimalist Clean White Form):** White card (`#FFFFFF`) with 16px border-radius, soft elevation (`box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05)`), and top-right language switcher pill.
+2. **Custom Vector SVG Farm Ecosystem:**
+   - Designed in pure vector SVG (`generate_showcase_svg()`) without external raster image files or third-party graphic dependencies.
+   - Features a glowing central KrishiVaani hub connected via dashed signal lines to 4 distinct domain satellites: *Crop Advisory*, *Livestock Care*, *Expense Analytics*, and *Local Services*.
+   - Dynamically renders node labels in Marathi or English matching `st.session_state.lang`.
+3. **Global Chrome Elimination & Typography:**
+   - Injects custom CSS hiding Streamlit's default header, colored decoration ribbon, hamburger menu, and footer (`#MainMenu`, `header`, `footer`, `stToolbar`, `stDecoration`).
+   - Imports Google Fonts (`Inter` for Latin characters, `Noto Sans Devanagari` for Marathi) ensuring razor-sharp rendering on all screens.
+   - Standardizes inputs with `border-radius: 10px`, `#15803D` soft focus glow, and emerald green CTA buttons (`#15803D`).
+
+### B. SIH Judge Q&A Defense for UI/UX Redesign
+- *Judge Question:* "Why invest in a modern SaaS split-screen design for rural agricultural software?"
+- *Engineering Defense:* User adoption among modern farmers, farmer-producer organizations (FPOs), and agri-extension workers demands high visual trust. A cluttered, amateurish prototype suggests unreliability. Clean typography, bilingual clarity, and an uncluttered visual hierarchy reduce cognitive load, making the application immediately intuitive even for first-time smartphone users.
+
+---
+
+## 9. Summary of Edge Cases Handled
 
 1. **Authentication Gate Bypassing:** Guarded with `st.stop()` to guarantee that unauthenticated sessions cannot execute background module logic.
 2. **Phone Number Format Variations:** Normalizes `+91`, leading zeros, dashes, and whitespace before credentials lookup.
 3. **Bilingual Fallbacks:** Missing keys in `TRANSLATIONS["mr"]` fall back seamlessly to English without breaking page execution.
 4. **Persistent Language Across Navigation:** Switching modules preserves the selected language mode because `st.session_state.lang` is independent of `active_nav`.
 5. **State Reset Isolation:** Restoring sample defaults resets farm records while maintaining the farmer's active session and language preference.
+6. **Responsive Layout Collapse:** The 2-column split-screen layout gracefully stacks vertically on narrow mobile viewport widths without text truncation.

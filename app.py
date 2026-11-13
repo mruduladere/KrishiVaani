@@ -24,28 +24,106 @@ st.set_page_config(
 # Initialize all in-memory sample data
 init_session_data(st)
 
-# Custom agricultural CSS polish
+# ----------------- GLOBAL THEME & TYPOGRAPHY POLISH -----------------
 st.markdown(
     """
     <style>
-    .main-title {
-        color: #1b5e20;
-        font-weight: 800;
-        margin-bottom: 0px;
+    /* Google Fonts: Inter & Noto Sans Devanagari */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap');
+
+    /* Global typography */
+    html, body, [class*="css"], .stApp, .stMarkdown, .stButton, input, label, select, textarea {
+        font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
-    .sub-title {
-        color: #4a5568;
-        font-size: 14px;
-        margin-bottom: 15px;
+
+    /* Hide Streamlit default chrome to present a clean standalone web application */
+    #MainMenu {visibility: hidden; display: none;}
+    header {visibility: hidden; display: none;}
+    footer {visibility: hidden; display: none;}
+    div[data-testid="stToolbar"] {visibility: hidden; display: none;}
+    div[data-testid="stDecoration"] {visibility: hidden; display: none;}
+    div[data-testid="stStatusWidget"] {visibility: hidden; display: none;}
+
+    /* Background tone: warm off-white / slate canvas */
+    .stApp {
+        background-color: #F8FAFC;
     }
+
+    /* Clean Card Container Polish */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 16px !important;
+        background-color: #FFFFFF;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E2E8F0;
+    }
+
+    /* Polished Input Fields */
+    div[data-testid="stTextInput"] input, 
+    div[data-testid="stNumberInput"] input, 
+    div[data-testid="stSelectbox"] select,
+    div[data-testid="stTextArea"] textarea {
+        border-radius: 10px !important;
+        border: 1.5px solid #CBD5E1 !important;
+        padding: 10px 14px !important;
+        font-size: 14.5px !important;
+        background-color: #FFFFFF !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    div[data-testid="stTextInput"] input:focus, 
+    div[data-testid="stNumberInput"] input:focus {
+        border-color: #15803D !important;
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15) !important;
+    }
+
+    /* Metric Card Polish */
     div[data-testid="stMetricValue"] {
-        font-size: 24px;
-        font-weight: 700;
-        color: #1e522f;
+        font-size: 26px !important;
+        font-weight: 800 !important;
+        color: #14532D !important;
+        letter-spacing: -0.5px;
     }
+
+    /* Buttons: Emerald Primary & Pill Styling */
     .stButton>button {
-        border-radius: 8px;
-        font-weight: 600;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 9px 18px !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    /* Form Submit CTA Highlight */
+    div[data-testid="stFormSubmitButton"]>button {
+        background: #15803D !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(21, 128, 61, 0.25);
+    }
+
+    div[data-testid="stFormSubmitButton"]>button:hover {
+        background: #166534 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(21, 128, 61, 0.35);
+    }
+
+    /* Secondary Outlined Button */
+    button[kind="secondary"] {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #CBD5E1 !important;
+        color: #334155 !important;
+    }
+    
+    button[kind="secondary"]:hover {
+        border-color: #15803D !important;
+        color: #15803D !important;
+        background-color: #F0FDF4 !important;
+    }
+
+    /* Sidebar Clean Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0;
     }
     </style>
     """,
@@ -53,7 +131,7 @@ st.markdown(
 )
 
 # ----------------- AUTHENTICATION GATE -----------------
-# If user is not authenticated, render login/registration screen only
+# If user is not authenticated, render split-screen SaaS login portal
 if not st.session_state.get("is_authenticated", False):
     render_auth()
     st.stop()
@@ -113,6 +191,7 @@ with st.sidebar:
     # 4. Logout Button
     if st.button(f"🚪 {t('logout_button')}", use_container_width=True):
         st.session_state.is_authenticated = False
+        st.session_state.auth_mode = "login"
         st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
