@@ -7,6 +7,8 @@ Strictly NO external database (uses Streamlit in-memory session state).
 import streamlit as st
 from sample_data import init_session_data
 from modules.dashboard import render_dashboard
+from modules.crop_helper import render_crop_helper
+from modules.nearby_services import render_nearby_services
 
 # Configure page layout and visual identity
 st.set_page_config(
@@ -94,9 +96,9 @@ with st.sidebar:
     st.markdown(
         """
         <div style="font-size: 12px; color: #6b7280; text-align: center;">
-            🌱 <b>KrishiVaani v1.0 (Step 1)</b><br>
-            Pure Python • No Database<br>
-            Designed for Maharashtra Farmers
+            🌱 <b>KrishiVaani v1.1 (Step 2)</b><br>
+            Modules 1, 2, and 4 Active<br>
+            Pure Python • No Database
         </div>
         """,
         unsafe_allow_html=True
@@ -109,20 +111,15 @@ active_module = st.session_state.get("active_nav", "dashboard")
 if active_module == "dashboard":
     render_dashboard()
 
+elif active_module == "crop_helper":
+    render_crop_helper()
+
+elif active_module == "nearby_services":
+    render_nearby_services()
+
 else:
-    # Clean, informative placeholder for Modules 2 to 7
+    # Clean, informative placeholder for Modules 3, 5, 6, 7
     placeholders = {
-        "crop_helper": {
-            "title": "Module 2: Crop & Farming Helper (पीक सल्लागार व मार्गदर्शन)",
-            "step": "Step 2",
-            "scope": "Comprehensive crop advisories, disease identification, sowing schedules, and weather advisory alerts tailored to Maharashtra's agro-climatic zones.",
-            "planned": [
-                "Crop advisory database for Grapes, Onion, Soybean, Cotton, and Sugarcane",
-                "Pest and disease symptom diagnostic assistant",
-                "Seasonal schedule tracker (Kharif, Rabi, Summer)",
-                "Weather-linked spray recommendations"
-            ]
-        },
         "ai_assistant": {
             "title": "Module 3: Multilingual Farmer AI Assistant (मराठी व इंग्रजी AI सहाय्यक)",
             "step": "Step 3",
@@ -132,17 +129,6 @@ else:
                 "Instant guidance on PM-KISAN, MahaDBT schemes, and crop insurance",
                 "Organic farming tips and natural pesticide formulations (Jeevamrut, Dashparni)",
                 "Interactive question-answering for common agronomy doubts"
-            ]
-        },
-        "nearby_services": {
-            "title": "Module 4: Nearby Agricultural Services (जवळपासची कृषी सेवा केंद्र)",
-            "step": "Step 4",
-            "scope": "Regional directory of essential agricultural service providers near Niphad and Nashik, helping farmers quickly reach vetted professionals.",
-            "planned": [
-                "Govt & private veterinary doctors with 24x7 emergency contacts",
-                "Certified seed, bio-fertilizer, and pesticide dealers (Krishi Seva Kendra)",
-                "Tractor and heavy harvesting equipment custom hiring centres",
-                "Soil and water testing laboratory directory with test packages"
             ]
         },
         "marketplace": {

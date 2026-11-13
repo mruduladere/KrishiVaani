@@ -196,8 +196,8 @@ def render_module_placeholders():
             "icon": "🌱",
             "title": "Module 2: Crop & Farming Helper",
             "marathi_title": "पीक सल्लागार व मार्गदर्शन",
-            "desc": "Real-time crop advisories, disease identification, sowing calendar, and weather-based spray alerts.",
-            "status": "Ready for Step 2"
+            "desc": "Stage-wise fertilizer doses, irrigation schedules, pest alerts, and interactive crop action checklists.",
+            "status": "🟢 उपलब्ध (Live)"
         },
         {
             "id": "ai_assistant",
@@ -205,15 +205,15 @@ def render_module_placeholders():
             "title": "Module 3: Multilingual Farmer AI Assistant",
             "marathi_title": "मराठी व इंग्रजी AI सहाय्यक",
             "desc": "Text-based Marathi & English intent router for farming FAQs, government schemes, and instant crop solutions.",
-            "status": "Ready for Step 3"
+            "status": "🚧 Step 3"
         },
         {
             "id": "nearby_services",
             "icon": "📍",
             "title": "Module 4: Nearby Agricultural Services",
             "marathi_title": "जवळपासची कृषी सेवा केंद्र",
-            "desc": "Instant discovery of local veterinary doctors, Krishi Seva Kendra seed shops, soil labs, and tractor rentals.",
-            "status": "Ready for Step 4"
+            "desc": "Directory of vetted local vets, Krishi Seva Kendra seed shops, soil labs, and machinery rental centres.",
+            "status": "🟢 उपलब्ध (Live)"
         },
         {
             "id": "marketplace",
@@ -221,7 +221,7 @@ def render_module_placeholders():
             "title": "Module 5: Farmer-to-Buyer Marketplace",
             "marathi_title": "थेट शेतकरी ते खरेदीदार बाजारपेठ",
             "desc": "Post farm produce listings (Onions, Grapes, Soybeans) and receive direct phone enquiries from wholesale buyers.",
-            "status": "Ready for Step 5"
+            "status": "🚧 Step 5"
         },
         {
             "id": "livestock",
@@ -229,7 +229,7 @@ def render_module_placeholders():
             "title": "Module 6: Livestock Records & Reminders",
             "marathi_title": "पशुधन व्यवस्थापन व लसीकरण",
             "desc": "Tag-based cattle profiles, milk yield tracking, and automated overdue vaccination deadline alerts.",
-            "status": "Ready for Step 6"
+            "status": "🚧 Step 6"
         },
         {
             "id": "expense_tracker",
@@ -237,7 +237,7 @@ def render_module_placeholders():
             "title": "Module 7: Farm Expense Tracker",
             "marathi_title": "शेतखर्च नोंदवही व नफा विश्लेषण",
             "desc": "Categorize input costs (seeds, fertilizer, labor), calculate monthly totals, and view crop-wise ROI comparisons.",
-            "status": "Ready for Step 7"
+            "status": "🚧 Step 7"
         }
     ]
 
@@ -247,11 +247,12 @@ def render_module_placeholders():
         with col:
             with st.container(border=True):
                 st.markdown(f"#### {mod['icon']} {mod['title']}")
-                st.caption(f"**{mod['marathi_title']}**")
+                st.markdown(f"`{mod['status']}` &nbsp;|&nbsp; **{mod['marathi_title']}**")
                 st.write(mod["desc"])
                 
                 # Navigation button that switches the active module
-                if st.button(f"उघडा (Open {mod['icon']})", key=f"nav_btn_{mod['id']}", use_container_width=True):
+                btn_text = f"उघडा (Open {mod['icon']})" if "Live" in mod["status"] else f"माहिती (View {mod['icon']})"
+                if st.button(btn_text, key=f"nav_btn_{mod['id']}", use_container_width=True):
                     st.session_state.active_nav = mod["id"]
                     st.rerun()
 
