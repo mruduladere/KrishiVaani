@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('livestock_banner_title') }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+
+    <!-- Header Banner -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
+                <i data-lucide="heart-pulse" class="w-3.5 h-3.5"></i>
+                <span>Module 6 • Maharashtra Dairy & Cattle Care</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                {{ t('livestock_banner_title') }}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+                {{ t('livestock_banner_subtitle') }}
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="document.getElementById('add-animal-modal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>{{ t('btn_add_animal') }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4 KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- KPI 1: Total Animals -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_total_cattle') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-slate-900 tracking-tight">
+                {{ total_animals }} <span class="text-sm font-semibold text-slate-500">{{ t('animals_count_suffix') }}</span>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>
+                <span>Registered in farm registry</span>
+            </div>
+        </div>
+
+        <!-- KPI 2: Daily Milk Yield -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_daily_milk') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+                    <i data-lucide="milk" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-slate-900 tracking-tight">
+                {{ "%.1f"|format(total_milk) }} <span class="text-sm font-semibold text-slate-500">L / day</span>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="activity" class="w-3 h-3 text-sky-600"></i>
+                <span>Average: {{ "%.1f"|format(total_milk / (total_animals if total_animals > 0 else 1)) }} L / animal</span>
+            </div>
+        </div>
+
+        <!-- KPI 3: Overdue Vaccines -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-rose-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_vaccines_overdue') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-rose-700 tracking-tight">
+                {{ overdue_count }} <span class="text-sm font-semibold text-slate-500">Vaccines</span>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="clock" class="w-3 h-3 text-rose-500"></i>
+                <span>Requires immediate vet scheduling</span>
+            </div>
+        </div>
+
+        <!-- KPI 4: Upcoming Vaccines -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-amber-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_vaccines_upcoming') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-amber-700 tracking-tight">
+                {{ upcoming_count }} <span class="text-sm font-semibold text-slate-500">Vaccines</span>
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="calendar" class="w-3 h-3 text-amber-500"></i>
+                <span>Next 14 days calendar window</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Animal Records Cards List -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 tracking-tight">
+                    Individual Animal Health & Vaccine Registry
+                </h2>
+                <p class="text-xs text-slate-500">Vaccination overdue calculation evaluated automatically with Python datetime</p>
+            </div>
+            <span class="text-xs font-semibold text-slate-500">
+                Today: <strong class="text-slate-800">{{ today_str }}</strong>
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for animal in animals %}
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between hover:border-emerald-300 transition-colors">
+                <div>
+                    <!-- Top Row: Tag ID, Name, Health Badge -->
+                    <div class="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold tracking-wider uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                                    {{ animal.tag_id }}
+                                </span>
+                                <h3 class="font-bold text-base text-slate-900 leading-snug">
+                                    {{ animal.name }}
+                                </h3>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                                <i data-lucide="tag" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>{{ animal.type }} • <strong>{{ animal.breed }}</strong></span>
+                            </p>
+                        </div>
+
+                        <!-- Overall Animal Health Status -->
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border {{ animal.overall_badge_class }}">
+                            <i data-lucide="{{ animal.overall_icon }}" class="w-3.5 h-3.5"></i>
+                            <span>{{ animal.overall_status_text }}</span>
+                        </span>
+                    </div>
+
+                    <!-- Metrics Grid: Age, Yield, Status -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+                        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">{{ t('animal_age_label') }}</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ animal.age_years }} Yrs</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">{{ t('animal_milk_label') }}</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ animal.daily_milk_yield_litres }} L/day</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center col-span-2 sm:col-span-1">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Vaccines Tracked</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ animal.vaccination_history | length }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Vaccine Schedule Subtable -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>{{ t('vaccination_schedule_title') }}</span>
+                        </span>
+
+                        <div class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden text-xs">
+                            {% for v in animal.processed_vaccines %}
+                            <div class="p-3 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div class="space-y-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-semibold text-slate-900">{{ v.vaccine }}</span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ v.badge_class }}">
+                                            <i data-lucide="{{ v.badge_icon }}" class="w-3 h-3"></i>
+                                            <span>{{ v.badge_label }}</span>
+                                        </span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 flex items-center gap-2">
+                                        <span>Last: {{ v.date_given }}</span>
+                                        <span>•</span>
+                                        <span>Due: <strong class="text-slate-700">{{ v.due_date }}</strong></span>
+                                        {% if v.days_diff is not none %}
+                                            {% if v.days_diff < 0 %}
+                                                <span class="text-rose-600 font-bold">({{ v.days_diff | abs }} days late)</span>
+                                            {% elif v.days_diff <= 14 %}
+                                                <span class="text-amber-600 font-bold">(in {{ v.days_diff }} days)</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Action button: Mark Completed -->
+                                <div>
+                                    {% if v.status_code in ['overdue', 'upcoming'] %}
+                                    <form action="/livestock/vaccinate" method="POST" class="inline">
+                                        <input type="hidden" name="animal_id" value="{{ animal.tag_id }}">
+                                        <input type="hidden" name="vaccine_name" value="{{ v.vaccine }}">
+                                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
+                                            <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
+                                            <span>{{ t('btn_mark_vaccinated') }}</span>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg">
+                                        <i data-lucide="check" class="w-3 h-3"></i>
+                                        <span>Scheduled</span>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Add New Animal -->
+<div id="add-animal-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+                <span>{{ t('add_animal_modal_title') }}</span>
+            </h3>
+            <button onclick="document.getElementById('add-animal-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="/livestock/add" method="POST" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_tag_label') }}</label>
+                    <input type="text" name="tag_id" value="MH-NSK-0{{ animals|length + 1 }}01" required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_name_label') }} *</label>
+                    <input type="text" name="name" required placeholder="e.g. Radhika (राधिका)"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_type_label') }}</label>
+                    <select name="type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                        <option value="Cow">Cow (गाय)</option>
+                        <option value="Buffalo">Buffalo (म्हैस)</option>
+                        <option value="Goat">Goat (शेळी)</option>
+                        <option value="Bull">Bull (बैल)</option>
+                        <option value="Sheep">Sheep (मेंढी)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_breed_label') }}</label>
+                    <input type="text" name="breed" value="Gir (गीर)" required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_age_label') }}</label>
+                    <input type="number" step="0.5" name="age_years" value="3.0" required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_milk_label') }}</label>
+                    <input type="number" step="0.5" name="daily_milk" value="9.0" required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Initial Vaccine Schedule</label>
+                <select name="initial_vaccine" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                    <option value="FMD">Foot & Mouth Disease (FMD - खुरखूत)</option>
+                    <option value="HS">Hemorrhagic Septicemia (HS - घटसर्प)</option>
+                    <option value="BQ">Black Quarter (BQ - फऱ्या)</option>
+                    <option value="Brucellosis">Brucellosis (ब्रुसेलोसिस)</option>
+                </select>
+            </div>
+
+            <div class="pt-3 flex items-center justify-end gap-2">
+                <button type="button" onclick="document.getElementById('add-animal-modal').classList.add('hidden')" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition">
+                    {{ t('btn_cancel') }}
+                </button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
+                    {{ t('btn_save_animal') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

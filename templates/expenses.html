@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('expense_banner_title') }}{% endblock %}
+
+{% block head %}
+<!-- Chart.js CDN for Expense Analytics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+
+    <!-- Header Banner -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
+                <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                <span>Module 7 • Farm Financial Ledger & Analytics</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                {{ t('expense_banner_title') }}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+                {{ t('expense_banner_subtitle') }}
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="document.getElementById('add-expense-modal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>{{ t('btn_add_expense') }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top 3 KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- KPI 1: Total Spend -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_total_spend') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-slate-900 tracking-tight">
+                ₹{{ "{:,}".format(total_spend) }}
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>
+                <span>Across {{ total_entries }} logged transactions</span>
+            </div>
+        </div>
+
+        <!-- KPI 2: Highest Expense Category -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_top_category') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-xl font-black text-slate-900 tracking-tight truncate">
+                {{ top_category_name.split('(')[0] }}
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="pie-chart" class="w-3 h-3 text-rose-600"></i>
+                <span class="font-bold text-rose-700">₹{{ "{:,}".format(top_category_amount) }}</span>
+                <span>({{ top_category_share }}% of budget)</span>
+            </div>
+        </div>
+
+        <!-- KPI 3: Current Month Spend -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ t('kpi_current_month') }}</span>
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-2xl font-black text-slate-900 tracking-tight">
+                ₹{{ "{:,}".format(current_month_spend) }}
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="clock" class="w-3 h-3 text-amber-600"></i>
+                <span>November 2026 active window</span>
+            </div>
+        </div>
+
+        <!-- KPI 4: Active Crop Investment -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Invested Crop</span>
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                    <i data-lucide="sprout" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <div class="text-xl font-black text-slate-900 tracking-tight truncate">
+                {{ top_crop_name }}
+            </div>
+            <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
+                <i data-lucide="activity" class="w-3 h-3 text-indigo-600"></i>
+                <span class="font-bold text-indigo-700">₹{{ "{:,}".format(top_crop_amount) }}</span>
+                <span>({{ top_crop_share }}% share)</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Chart.js Visualizations Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Category Breakdown (Doughnut) -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-600"></i>
+                        <span>{{ t('chart_category_heading') }}</span>
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-medium">12 Core Agro Categories</span>
+                </div>
+                <div class="h-64 relative flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <p class="text-[11px] text-center text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                Fertilizers, Labour & Feeds account for major operating investments
+            </p>
+        </div>
+
+        <!-- Chart 2: Monthly Expenditure Trend (Bar) -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-600"></i>
+                        <span>{{ t('chart_monthly_heading') }}</span>
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-medium">Season Timeline</span>
+                </div>
+                <div class="h-64 relative flex items-center justify-center">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <p class="text-[11px] text-center text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                Peak expenditure observed during forward pruning & basal fertilizer application
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Structured Comparison Tables & Ledger Tabs -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-6">
+        
+        <!-- Tab Navigation Switcher -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2 overflow-x-auto scrollbar-none">
+                <button type="button" onclick="switchExpenseTab('recent')" id="tab-btn-recent" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {{ t('tab_recent_logs') }} ({{ expenses | length }})
+                </button>
+                <button type="button" onclick="switchExpenseTab('category')" id="tab-btn-category" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all">
+                    {{ t('tab_category_summary') }}
+                </button>
+                <button type="button" onclick="switchExpenseTab('crop')" id="tab-btn-crop" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all">
+                    {{ t('tab_crop_summary') }}
+                </button>
+                <button type="button" onclick="switchExpenseTab('season')" id="tab-btn-season" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all">
+                    {{ t('tab_seasonal_summary') }}
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('add-expense-modal').classList.remove('hidden')" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Record</span>
+            </button>
+        </div>
+
+        <!-- 1. Recent Transactions Table -->
+        <div id="tab-pane-recent" class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 rounded-xl">
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold rounded-l-xl">{{ t('col_date') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_crop') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_category') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_desc') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_mode') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-right">{{ t('col_amount') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-center rounded-r-xl">{{ t('col_action') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for exp in expenses %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-3.5 font-semibold text-slate-900 whitespace-nowrap">{{ exp.date }}</td>
+                        <td class="py-3.5 px-3.5 whitespace-nowrap">
+                            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                {{ exp.crop }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3.5 font-medium text-slate-800 whitespace-nowrap">
+                            {{ exp.category.split('(')[0] }}
+                        </td>
+                        <td class="py-3.5 px-3.5 max-w-xs truncate text-slate-500">{{ exp.description }}</td>
+                        <td class="py-3.5 px-3.5 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 text-[11px] text-slate-600">
+                                <i data-lucide="credit-card" class="w-3 h-3 text-slate-400"></i>
+                                <span>{{ exp.payment_mode }}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900 text-right whitespace-nowrap">
+                            ₹{{ "{:,}".format(exp.amount) }}
+                        </td>
+                        <td class="py-3.5 px-3.5 text-center whitespace-nowrap">
+                            <form action="/expenses/delete/{{ exp.id }}" method="POST" onsubmit="return confirm('Delete this expense?');" class="inline">
+                                <button type="submit" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Delete Expense">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. Category Summary Table -->
+        <div id="tab-pane-category" class="hidden overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 rounded-xl">
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold rounded-l-xl">{{ t('col_category') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-center">{{ t('col_entries') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_percentage') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-right rounded-r-xl">{{ t('col_amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for cat in category_stats %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900">{{ cat.name }}</td>
+                        <td class="py-3.5 px-3.5 text-center font-semibold text-slate-600">{{ cat.count }}</td>
+                        <td class="py-3.5 px-3.5">
+                            <div class="flex items-center gap-2 max-w-xs">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-600 h-2 rounded-full" style="width: {{ cat.share }}%;"></div>
+                                </div>
+                                <span class="font-semibold text-[11px] text-slate-700 w-10 text-right">{{ cat.share }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900 text-right">
+                            ₹{{ "{:,}".format(cat.amount) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. Crop-wise Allocation Table -->
+        <div id="tab-pane-crop" class="hidden overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 rounded-xl">
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold rounded-l-xl">{{ t('col_crop') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-center">{{ t('col_entries') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_percentage') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-right rounded-r-xl">{{ t('col_amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for c in crop_stats %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="sprout" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span>{{ c.name }}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3.5 text-center font-semibold text-slate-600">{{ c.count }}</td>
+                        <td class="py-3.5 px-3.5">
+                            <div class="flex items-center gap-2 max-w-xs">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ c.share }}%;"></div>
+                                </div>
+                                <span class="font-semibold text-[11px] text-slate-700 w-10 text-right">{{ c.share }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900 text-right">
+                            ₹{{ "{:,}".format(c.amount) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. Seasonal Breakdown Table -->
+        <div id="tab-pane-season" class="hidden overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 rounded-xl">
+                    <tr>
+                        <th class="py-3 px-3.5 font-bold rounded-l-xl">{{ t('col_season') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-center">{{ t('col_entries') }}</th>
+                        <th class="py-3 px-3.5 font-bold">{{ t('col_percentage') }}</th>
+                        <th class="py-3 px-3.5 font-bold text-right rounded-r-xl">{{ t('col_amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for s in season_stats %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600"></i>
+                                <span>{{ s.name }}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3.5 text-center font-semibold text-slate-600">{{ s.count }}</td>
+                        <td class="py-3.5 px-3.5">
+                            <div class="flex items-center gap-2 max-w-xs">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-amber-500 h-2 rounded-full" style="width: {{ s.share }}%;"></div>
+                                </div>
+                                <span class="font-semibold text-[11px] text-slate-700 w-10 text-right">{{ s.share }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-3.5 font-bold text-slate-900 text-right">
+                            ₹{{ "{:,}".format(s.amount) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Modal: Log New Farm Expense -->
+<div id="add-expense-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+                <span>{{ t('add_expense_modal_title') }}</span>
+            </h3>
+            <button onclick="document.getElementById('add-expense-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="/expenses/add" method="POST" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_amount_label') }} *</label>
+                    <input type="number" step="10" name="amount" required placeholder="e.g. 4500"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_date_label') }}</label>
+                    <input type="date" name="date" value="{{ today_str }}" required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+            </div>
+
+            <!-- 12 Core Problem Statement Categories -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_category_label') }} *</label>
+                <select name="category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                    {% for cat in all_categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_season_label') }}</label>
+                    <select name="season" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                        <option value="Rabi 2026-27">Rabi 2026-27 (रब्बी)</option>
+                        <option value="Kharif 2026">Kharif 2026 (खरीप)</option>
+                        <option value="Zaid / Summer 2026">Zaid / Summer 2026 (उन्हाळी)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_crop_label') }}</label>
+                    <select name="crop" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                        <option value="Grapes">Grapes (द्राक्ष)</option>
+                        <option value="Onion">Onion (कांदा)</option>
+                        <option value="Soybean">Soybean (सोयाबीन)</option>
+                        <option value="Livestock / Dairy">Livestock / Dairy (दुग्धव्यवसाय)</option>
+                        <option value="General Farm">General Farm (सामायिक शेती)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_mode_label') }}</label>
+                <select name="payment_mode" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                    <option value="UPI">UPI / GooglePay / PhonePe</option>
+                    <option value="Cash">Cash (रोख)</option>
+                    <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                    <option value="Credit / Udhar">Credit / Udhar (उधार)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('expense_desc_label') }}</label>
+                <textarea name="description" rows="2" placeholder="e.g. 5 bags 10:26:26 NPK fertilizer from Pimpalgaon Seva Kendra"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"></textarea>
+            </div>
+
+            <div class="pt-3 flex items-center justify-end gap-2">
+                <button type="button" onclick="document.getElementById('add-expense-modal').classList.add('hidden')" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition">
+                    {{ t('btn_cancel') }}
+                </button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
+                    {{ t('btn_save_expense') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Tab Switcher Logic
+    function switchExpenseTab(tabKey) {
+        const tabs = ['recent', 'category', 'crop', 'season'];
+        tabs.forEach(t => {
+            const pane = document.getElementById('tab-pane-' + t);
+            const btn = document.getElementById('tab-btn-' + t);
+            if (t === tabKey) {
+                pane.classList.remove('hidden');
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-200';
+            } else {
+                pane.classList.add('hidden');
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all';
+            }
+        });
+        lucide.createIcons();
+    }
+
+    // Chart.js Visualizations
+    const categoryLabels = {{ chart_category_labels | tojson }};
+    const categoryData = {{ chart_category_data | tojson }};
+
+    const monthlyLabels = {{ chart_monthly_labels | tojson }};
+    const monthlyData = {{ chart_monthly_data | tojson }};
+
+    // Category Doughnut Chart
+    const ctxCat = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: [
+                    '#10B981', '#059669', '#3B82F6', '#6366F1', 
+                    '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', 
+                    '#14B8A6', '#F97316', '#64748B', '#84CC16'
+                ],
+                borderWidth: 2,
+                borderColor: '#FFFFFF'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 10,
+                        padding: 12,
+                        font: { size: 10, family: 'Inter' }
+                    }
+                }
+            },
+            cutout: '62%'
+        }
+    });
+
+    // Monthly Expenditure Bar Chart
+    const ctxMonth = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(ctxMonth, {
+        type: 'bar',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Monthly Spend (₹)',
+                data: monthlyData,
+                backgroundColor: '#10B981',
+                borderRadius: 8,
+                hoverBackgroundColor: '#059669'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return '₹' + value.toLocaleString(); },
+                        font: { size: 10, family: 'Inter' }
+                    },
+                    grid: { color: '#F1F5F9' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10, family: 'Inter' } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

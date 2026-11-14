@@ -6,6 +6,7 @@ Bilingual English & Marathi support via translations.py.
 """
 
 import copy
+import datetime
 import urllib.parse
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from sample_data import (
@@ -16,7 +17,8 @@ from sample_data import (
     SAMPLE_LIVESTOCK,
     SAMPLE_MARKETPLACE,
     SAMPLE_EXPENSES,
-    CROP_GUIDES
+    CROP_GUIDES,
+    EXPENSE_CATEGORIES
 )
 from translations import t, TRANSLATIONS
 
@@ -485,46 +487,359 @@ def marketplace():
     return render_template("placeholder.html", farmer=get_current_farmer(), info=info, active_nav="marketplace")
 
 
+# ---------------------------------------------------------
+# MODULE 6: LIVESTOCK RECORDS & VACCINES
+# ---------------------------------------------------------
 @app.route("/livestock")
 def livestock():
-    """Module 6 placeholder."""
+    """Digital registry for farm cattle and goats with automated vaccination schedules."""
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
-    info = {
-        "title": "Module 6: Livestock Records & Reminders",
-        "marathi_subtitle": "पशुधन व्यवस्थापन व लसीकरण वेळापत्रक",
-        "step": "Step 6",
-        "icon": "heart-pulse",
-        "scope": "Digital registry for farm cattle and goats with automated vaccination schedules and overdue alert calculations.",
-        "planned": [
-            "Individual animal profiles with Ear Tag ID, breed, age, and lactation cycle",
-            "Daily milk yield tracker with monthly production trends",
-            "Vaccination calendar with automated overdue date math for FMD, HS, BQ",
-            "Veterinary checkup and deworming reminder flags"
+
+    farmer = get_current_farmer()
+    today = datetime.date.today()
+    
+    total_animals = len(LIVESTOCK_DB)
+    total_milk = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
+    
+    overdue_count = 0
+    upcoming_count = 0
+    
+    processed_animals = []
+    for animal in LIVESTOCK_DB:
+        animal_copy = copy.deepcopy(animal)
+        processed_vaccines = []
+        has_overdue = False
+        has_upcoming = False
+        
+        for v in animal.get("vaccination_history", []):
+            v_copy = copy.deepcopy(v)
+            due_str = v.get("due_date", "")
+            days_diff = None
+            status_code = "uptodate"
+            
+            try:
+                due_date = datetime.datetime.strptime(due_str, "%Y-%m-%d").date()
+                days_diff = (due_date - today).days
+                if days_diff < 0:
+                    status_code = "overdue"
+                    has_overdue = True
+                    overdue_count += 1
+                    badge_class = "bg-red-50 text-red-700 border-red-200"
+                    badge_label = t("status_overdue_badge")
+                    badge_icon = "alert-circle"
+                elif days_diff <= 14:
+                    status_code = "upcoming"
+                    has_upcoming = True
+                    upcoming_count += 1
+                    badge_class = "bg-amber-50 text-amber-700 border-amber-200"
+                    badge_label = t("status_upcoming_badge")
+                    badge_icon = "clock"
+                else:
+                    status_code = "uptodate"
+                    badge_class = "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    badge_label = t("status_uptodate_badge")
+                    badge_icon = "check-circle"
+            except Exception:
+                badge_class = "bg-slate-100 text-slate-600 border-slate-200"
+                badge_label = v.get("status", "Logged")
+                badge_icon = "check"
+
+            v_copy["days_diff"] = days_diff
+            v_copy["status_code"] = status_code
+            v_copy["badge_class"] = badge_class
+            v_copy["badge_label"] = badge_label
+            v_copy["badge_icon"] = badge_icon
+            processed_vaccines.append(v_copy)
+            
+        if has_overdue:
+            animal_copy["overall_badge_class"] = "bg-red-50 text-red-700 border-red-200"
+            animal_copy["overall_status_text"] = t("health_attention")
+            animal_copy["overall_icon"] = "alert-triangle"
+        elif has_upcoming:
+            animal_copy["overall_badge_class"] = "bg-amber-50 text-amber-700 border-amber-200"
+            animal_copy["overall_status_text"] = t("status_upcoming_badge")
+            animal_copy["overall_icon"] = "clock"
+        else:
+            animal_copy["overall_badge_class"] = "bg-emerald-50 text-emerald-700 border-emerald-200"
+            animal_copy["overall_status_text"] = t("health_healthy")
+            animal_copy["overall_icon"] = "check-circle"
+            
+        animal_copy["processed_vaccines"] = processed_vaccines
+        processed_animals.append(animal_copy)
+
+    return render_template(
+        "livestock.html",
+        farmer=farmer,
+        animals=processed_animals,
+        total_animals=total_animals,
+        total_milk=total_milk,
+        overdue_count=overdue_count,
+        upcoming_count=upcoming_count,
+        today_str=today.strftime("%Y-%m-%d"),
+        active_nav="livestock"
+    )
+
+
+@app.route("/livestock/vaccinate", methods=["POST"])
+def vaccinate_animal():
+    """Marks a vaccine completed and updates the next due date using datetime math."""
+    animal_id = request.form.get("animal_id", "").strip()
+    vaccine_name = request.form.get("vaccine_name", "").strip()
+    today = datetime.date.today()
+
+    for animal in LIVESTOCK_DB:
+        if animal.get("tag_id") == animal_id:
+            for v in animal.get("vaccination_history", []):
+                if v.get("vaccine") == vaccine_name:
+                    v["date_given"] = today.strftime("%Y-%m-%d")
+                    # Biannual (180 days) for FMD/BQ/HS, 365 days for Brucellosis/others
+                    name_lower = vaccine_name.lower()
+                    if "fmd" in name_lower or "bq" in name_lower or "hs" in name_lower:
+                        next_due = today + datetime.timedelta(days=180)
+                    else:
+                        next_due = today + datetime.timedelta(days=365)
+                    v["due_date"] = next_due.strftime("%Y-%m-%d")
+                    v["status"] = "Up-to-Date"
+                    break
+            break
+
+    flash(t("vaccine_updated_success"), "success")
+    return redirect(url_for("livestock"))
+
+
+@app.route("/livestock/add", methods=["POST"])
+def add_animal():
+    """Adds a new animal to the in-memory livestock registry."""
+    tag_id = request.form.get("tag_id", "").strip()
+    name = request.form.get("name", "").strip()
+    animal_type = request.form.get("type", "Cow").strip()
+    breed = request.form.get("breed", "Gir").strip()
+    age_years = float(request.form.get("age_years", 3.0))
+    daily_milk = float(request.form.get("daily_milk", 8.0))
+    initial_vaccine = request.form.get("initial_vaccine", "FMD").strip()
+    
+    today = datetime.date.today()
+    if not tag_id:
+        tag_id = f"MH-NSK-0{len(LIVESTOCK_DB) + 1:02d}"
+
+    vaccine_labels = {
+        "FMD": "Foot & Mouth Disease (FMD)",
+        "HS": "Hemorrhagic Septicemia (HS)",
+        "BQ": "Black Quarter (BQ)",
+        "Brucellosis": "Brucellosis"
+    }
+    v_name = vaccine_labels.get(initial_vaccine, "Foot & Mouth Disease (FMD)")
+    due_date = today + datetime.timedelta(days=180)
+
+    new_animal = {
+        "tag_id": tag_id,
+        "name": name if name else f"Animal {tag_id}",
+        "type": animal_type,
+        "breed": breed,
+        "age_years": age_years,
+        "daily_milk_yield_litres": daily_milk,
+        "health_status": "Healthy",
+        "vaccination_history": [
+            {
+                "vaccine": v_name,
+                "date_given": today.strftime("%Y-%m-%d"),
+                "due_date": due_date.strftime("%Y-%m-%d"),
+                "status": "Up-to-Date"
+            }
         ]
     }
-    return render_template("placeholder.html", farmer=get_current_farmer(), info=info, active_nav="livestock")
+    
+    LIVESTOCK_DB.append(new_animal)
+
+    # Sync with farmer profile livestock summary
+    farmer = get_current_farmer()
+    livestock_sum = farmer.setdefault("livestock_summary", {})
+    livestock_sum["total_animals"] = len(LIVESTOCK_DB)
+    livestock_sum["daily_milk_litres"] = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
+
+    flash(t("animal_added_success"), "success")
+    return redirect(url_for("livestock"))
 
 
+# ---------------------------------------------------------
+# MODULE 7: FARM EXPENSE TRACKER & ANALYTICS
+# ---------------------------------------------------------
 @app.route("/expenses")
 def expenses():
-    """Module 7 placeholder."""
+    """Farm expense tracker with multi-dimensional reports and Chart.js analytics."""
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
-    info = {
-        "title": "Module 7: Farm Expense Tracker",
-        "marathi_subtitle": "शेतखर्च नोंदवही व नफा विश्लेषण",
-        "step": "Step 7",
-        "icon": "receipt",
-        "scope": "Systematic accounting of input investments and labor expenses with automated monthly, seasonal, crop-wise, and category-wise totals.",
-        "planned": [
-            "Quick expense logging form (seeds, fertilizer, pesticide, labor, diesel/machinery)",
-            "Monthly expenditure breakdown (e.g. October vs November 2026)",
-            "Crop-wise cost allocation (Grapes vs Onion vs Soybean)",
-            "Category-wise breakdown for input cost optimization"
-        ]
+
+    farmer = get_current_farmer()
+    today = datetime.date.today()
+    
+    total_spend = sum(float(e.get("amount", 0)) for e in EXPENSES_DB)
+    total_entries = len(EXPENSES_DB)
+    
+    current_month_spend = sum(
+        float(e.get("amount", 0))
+        for e in EXPENSES_DB
+        if "Nov" in e.get("month", "") or "11" in e.get("date", "")
+    )
+
+    # 1. Category aggregation
+    cat_map = {}
+    for e in EXPENSES_DB:
+        cat = e.get("category", "Other")
+        amt = float(e.get("amount", 0))
+        if cat not in cat_map:
+            cat_map[cat] = {"amount": 0, "count": 0}
+        cat_map[cat]["amount"] += amt
+        cat_map[cat]["count"] += 1
+        
+    category_stats = []
+    for cat_name, data in sorted(cat_map.items(), key=lambda x: x[1]["amount"], reverse=True):
+        share = round((data["amount"] / total_spend * 100), 1) if total_spend > 0 else 0
+        category_stats.append({
+            "name": cat_name,
+            "amount": int(data["amount"]),
+            "count": data["count"],
+            "share": share
+        })
+
+    top_cat = category_stats[0] if category_stats else {"name": "None", "amount": 0, "share": 0}
+
+    # 2. Crop aggregation
+    crop_map = {}
+    for e in EXPENSES_DB:
+        c = e.get("crop", "General Farm")
+        amt = float(e.get("amount", 0))
+        if c not in crop_map:
+            crop_map[c] = {"amount": 0, "count": 0}
+        crop_map[c]["amount"] += amt
+        crop_map[c]["count"] += 1
+        
+    crop_stats = []
+    for crop_name, data in sorted(crop_map.items(), key=lambda x: x[1]["amount"], reverse=True):
+        share = round((data["amount"] / total_spend * 100), 1) if total_spend > 0 else 0
+        crop_stats.append({
+            "name": crop_name,
+            "amount": int(data["amount"]),
+            "count": data["count"],
+            "share": share
+        })
+
+    top_crop = crop_stats[0] if crop_stats else {"name": "None", "amount": 0, "share": 0}
+
+    # 3. Monthly aggregation
+    month_map = {}
+    for e in EXPENSES_DB:
+        m = e.get("month", "Recent")
+        amt = float(e.get("amount", 0))
+        month_map[m] = month_map.get(m, 0) + amt
+
+    month_order = ["September 2026", "October 2026", "November 2026"]
+    sorted_months = sorted(month_map.keys(), key=lambda x: month_order.index(x) if x in month_order else 99)
+
+    # 4. Seasonal aggregation
+    season_map = {}
+    for e in EXPENSES_DB:
+        s = e.get("season", "Rabi 2026-27")
+        amt = float(e.get("amount", 0))
+        if s not in season_map:
+            season_map[s] = {"amount": 0, "count": 0}
+        season_map[s]["amount"] += amt
+        season_map[s]["count"] += 1
+
+    season_stats = []
+    for s_name, data in sorted(season_map.items(), key=lambda x: x[1]["amount"], reverse=True):
+        share = round((data["amount"] / total_spend * 100), 1) if total_spend > 0 else 0
+        season_stats.append({
+            "name": s_name,
+            "amount": int(data["amount"]),
+            "count": data["count"],
+            "share": share
+        })
+
+    # Prepare Chart.js datasets
+    chart_cat_labels = [c["name"].split("(")[0].strip() for c in category_stats]
+    chart_cat_data = [c["amount"] for c in category_stats]
+
+    chart_month_labels = [m.split(" ")[0] for m in sorted_months]
+    chart_month_data = [int(month_map[m]) for m in sorted_months]
+
+    return render_template(
+        "expenses.html",
+        farmer=farmer,
+        expenses=sorted(EXPENSES_DB, key=lambda x: x.get("date", ""), reverse=True),
+        all_categories=EXPENSE_CATEGORIES,
+        total_spend=int(total_spend),
+        total_entries=total_entries,
+        current_month_spend=int(current_month_spend),
+        top_category_name=top_cat["name"],
+        top_category_amount=top_cat["amount"],
+        top_category_share=top_cat["share"],
+        top_crop_name=top_crop["name"],
+        top_crop_amount=top_crop["amount"],
+        top_crop_share=top_crop["share"],
+        category_stats=category_stats,
+        crop_stats=crop_stats,
+        season_stats=season_stats,
+        chart_category_labels=chart_cat_labels,
+        chart_category_data=chart_cat_data,
+        chart_monthly_labels=chart_month_labels,
+        chart_monthly_data=chart_month_data,
+        today_str=today.strftime("%Y-%m-%d"),
+        active_nav="expense_tracker"
+    )
+
+
+@app.route("/expenses/add", methods=["POST"])
+def add_expense():
+    """Logs a new farm expenditure directly to in-memory EXPENSES_DB."""
+    amount_str = request.form.get("amount", "0").strip()
+    date_str = request.form.get("date", "").strip()
+    category = request.form.get("category", "Fertilizers & Nutrients").strip()
+    season = request.form.get("season", "Rabi 2026-27").strip()
+    crop = request.form.get("crop", "Grapes").strip()
+    payment_mode = request.form.get("payment_mode", "UPI").strip()
+    description = request.form.get("description", "").strip()
+
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        amount = 0.0
+
+    today = datetime.date.today()
+    if not date_str:
+        date_str = today.strftime("%Y-%m-%d")
+
+    try:
+        month_str = datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%B %Y")
+    except Exception:
+        month_str = today.strftime("%B %Y")
+
+    new_id = f"EXP-{len(EXPENSES_DB) + 1:03d}"
+    new_expense = {
+        "id": new_id,
+        "date": date_str,
+        "month": month_str,
+        "season": season,
+        "crop": crop,
+        "category": category,
+        "description": description if description else f"{category.split('(')[0]} for {crop}",
+        "amount": amount,
+        "payment_mode": payment_mode
     }
-    return render_template("placeholder.html", farmer=get_current_farmer(), info=info, active_nav="expense_tracker")
+    
+    EXPENSES_DB.insert(0, new_expense)
+    flash(t("expense_added_success"), "success")
+    return redirect(url_for("expenses"))
+
+
+@app.route("/expenses/delete/<expense_id>", methods=["POST"])
+def delete_expense(expense_id):
+    """Removes an expense record from in-memory EXPENSES_DB."""
+    global EXPENSES_DB
+    EXPENSES_DB = [e for e in EXPENSES_DB if e.get("id") != expense_id]
+    flash(t("expense_deleted_success"), "success")
+    return redirect(url_for("expenses"))
 
 
 if __name__ == "__main__":

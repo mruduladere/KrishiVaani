@@ -283,6 +283,7 @@ SAMPLE_LIVESTOCK = [
         "breed": "Gir (गीर)",
         "age_years": 4.5,
         "daily_milk_yield_litres": 12.0,
+        "health_status": "Attention Needed",
         "vaccination_history": [
             {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-05-10", "due_date": "2026-11-10", "status": "Overdue"},
             {"vaccine": "Brucellosis", "date_given": "2025-06-15", "due_date": "2026-06-15", "status": "Completed"}
@@ -295,9 +296,10 @@ SAMPLE_LIVESTOCK = [
         "breed": "Gir (गीर)",
         "age_years": 3.0,
         "daily_milk_yield_litres": 10.0,
+        "health_status": "Healthy",
         "vaccination_history": [
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-09-01", "due_date": "2027-03-01", "status": "Up-to-date"},
-            {"vaccine": "Hemorrhagic Septicemia (HS)", "date_given": "2026-07-20", "due_date": "2027-07-20", "status": "Up-to-date"}
+            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-05-22", "due_date": "2026-11-22", "status": "Upcoming"},
+            {"vaccine": "Hemorrhagic Septicemia (HS)", "date_given": "2026-07-20", "due_date": "2027-07-20", "status": "Up-to-Date"}
         ]
     },
     {
@@ -307,9 +309,23 @@ SAMPLE_LIVESTOCK = [
         "breed": "Murrah (मुऱ्हा)",
         "age_years": 5.0,
         "daily_milk_yield_litres": 9.5,
+        "health_status": "Attention Needed",
         "vaccination_history": [
             {"vaccine": "Black Quarter (BQ)", "date_given": "2026-04-12", "due_date": "2026-10-12", "status": "Overdue"},
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-08-15", "due_date": "2027-02-15", "status": "Up-to-date"}
+            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-08-15", "due_date": "2027-02-15", "status": "Up-to-Date"}
+        ]
+    },
+    {
+        "tag_id": "MH-NSK-0301",
+        "name": "Surabhi (सुरभी)",
+        "type": "Cow",
+        "breed": "Sahiwal (साहिवाल)",
+        "age_years": 2.5,
+        "daily_milk_yield_litres": 8.0,
+        "health_status": "Healthy",
+        "vaccination_history": [
+            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-09-10", "due_date": "2027-03-10", "status": "Up-to-Date"},
+            {"vaccine": "Theileriosis", "date_given": "2026-08-01", "due_date": "2027-08-01", "status": "Up-to-Date"}
         ]
     }
 ]
@@ -473,7 +489,23 @@ SAMPLE_MARKETPLACE = [
     }
 ]
 
-# Realistic categorized farm expenses (ready for Module 7)
+# 12 Core Farm Expense Categories from Problem Statement
+EXPENSE_CATEGORIES = [
+    "Seeds & Seedlings (बियाणे व रोपे)",
+    "Fertilizers & Nutrients (खते व पोषण)",
+    "Pesticides & Bio-agents (कीटकनाशके व बुरशीनाशके)",
+    "Labour & Pruning (मजुरी व छाटणी)",
+    "Irrigation & Water (सिंचन व पाणी)",
+    "Machinery & Rentals (यंत्रसामग्री व भाडे)",
+    "Transport & Mandi Hamali (वाहतूक व हमाली)",
+    "Animal Fodder & Feed (पशुखाद्य व वैरण)",
+    "Veterinary & Healthcare (पशुवैद्यकीय उपचार)",
+    "Animal Vaccination (पशुधन लसीकरण)",
+    "Fuel & Electricity (डिझेल व वीज बिल)",
+    "Repairs & Maintenance (दुरुस्ती व देखभाल)"
+]
+
+# Realistic categorized farm expenses across seasons & categories (Module 7)
 SAMPLE_EXPENSES = [
     {
         "id": "EXP-001",
@@ -481,7 +513,7 @@ SAMPLE_EXPENSES = [
         "month": "October 2026",
         "season": "Rabi 2026-27",
         "crop": "Onion",
-        "category": "Seeds & Seedlings",
+        "category": "Seeds & Seedlings (बियाणे व रोपे)",
         "description": "Purchased 4 kg certified Fursungi onion seed packets",
         "amount": 4800,
         "payment_mode": "UPI"
@@ -492,7 +524,7 @@ SAMPLE_EXPENSES = [
         "month": "October 2026",
         "season": "Rabi 2026-27",
         "crop": "Grapes",
-        "category": "Fertilizers & Nutrients",
+        "category": "Fertilizers & Nutrients (खते व पोषण)",
         "description": "Water-soluble 0:52:34 and micronutrient drip application kit",
         "amount": 7600,
         "payment_mode": "Cash"
@@ -503,7 +535,7 @@ SAMPLE_EXPENSES = [
         "month": "October 2026",
         "season": "Rabi 2026-27",
         "crop": "Grapes",
-        "category": "Labor & Pruning",
+        "category": "Labour & Pruning (मजुरी व छाटणी)",
         "description": "Forward pruning labour charges (6 workers for 2 days)",
         "amount": 7200,
         "payment_mode": "Cash"
@@ -514,7 +546,7 @@ SAMPLE_EXPENSES = [
         "month": "November 2026",
         "season": "Rabi 2026-27",
         "crop": "Livestock / Dairy",
-        "category": "Livestock Feed & Healthcare",
+        "category": "Animal Fodder & Feed (पशुखाद्य व वैरण)",
         "description": "5 bags cattle feed pellet (Godrej Agrovet) + mineral mixture",
         "amount": 6250,
         "payment_mode": "UPI"
@@ -525,7 +557,7 @@ SAMPLE_EXPENSES = [
         "month": "November 2026",
         "season": "Rabi 2026-27",
         "crop": "Onion",
-        "category": "Labor & Pruning",
+        "category": "Labour & Pruning (मजुरी व छाटणी)",
         "description": "Nursery bed transplanting labor (4 women workers)",
         "amount": 2800,
         "payment_mode": "Cash"
@@ -536,9 +568,75 @@ SAMPLE_EXPENSES = [
         "month": "November 2026",
         "season": "Rabi 2026-27",
         "crop": "Grapes",
-        "category": "Pesticides & Bio-agents",
+        "category": "Pesticides & Bio-agents (कीटकनाशके व बुरशीनाशके)",
         "description": "Downy mildew preventive bio-fungicide spray (Trichoderma + Copper)",
         "amount": 3400,
+        "payment_mode": "UPI"
+    },
+    {
+        "id": "EXP-007",
+        "date": "2026-09-15",
+        "month": "September 2026",
+        "season": "Kharif 2026",
+        "crop": "Soybean",
+        "category": "Machinery & Rentals (यंत्रसामग्री व भाडे)",
+        "description": "Tractor rotavator & threshing rental for soybean harvest",
+        "amount": 5500,
+        "payment_mode": "Cash"
+    },
+    {
+        "id": "EXP-008",
+        "date": "2026-10-28",
+        "month": "October 2026",
+        "season": "Rabi 2026-27",
+        "crop": "General Farm",
+        "category": "Irrigation & Water (सिंचन व पाणी)",
+        "description": "Drip lateral pipe replacement & filter flushing flush valves",
+        "amount": 3200,
+        "payment_mode": "UPI"
+    },
+    {
+        "id": "EXP-009",
+        "date": "2026-11-05",
+        "month": "November 2026",
+        "season": "Rabi 2026-27",
+        "crop": "Livestock / Dairy",
+        "category": "Veterinary & Healthcare (पशुवैद्यकीय उपचार)",
+        "description": "Dr. Kulkarni farm visit, cattle deworming & mineral bolus",
+        "amount": 1400,
+        "payment_mode": "Cash"
+    },
+    {
+        "id": "EXP-010",
+        "date": "2026-11-10",
+        "month": "November 2026",
+        "season": "Rabi 2026-27",
+        "crop": "General Farm",
+        "category": "Fuel & Electricity (डिझेल व वीज बिल)",
+        "description": "MSEDCL agricultural water pump quarterly electricity bill",
+        "amount": 4650,
+        "payment_mode": "Bank Transfer"
+    },
+    {
+        "id": "EXP-011",
+        "date": "2026-09-25",
+        "month": "September 2026",
+        "season": "Kharif 2026",
+        "crop": "Soybean",
+        "category": "Transport & Mandi Hamali (वाहतूक व हमाली)",
+        "description": "Tempo transport of 18 bags soybean to Lasalgaon APMC",
+        "amount": 2200,
+        "payment_mode": "Cash"
+    },
+    {
+        "id": "EXP-012",
+        "date": "2026-10-18",
+        "month": "October 2026",
+        "season": "Rabi 2026-27",
+        "crop": "Grapes",
+        "category": "Repairs & Maintenance (दुरुस्ती व देखभाल)",
+        "description": "Tractor boom sprayer nozzle servicing and diaphragm seal repair",
+        "amount": 1850,
         "payment_mode": "UPI"
     }
 ]
