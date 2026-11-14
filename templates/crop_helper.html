@@ -101,9 +101,14 @@
                                 {{ stage.duration }}
                             </span>
                         </div>
-                        <span class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0">
-                            {{ loop.index }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="playCropTTS(this, '{{ stage.stage_name }}. {{ stage.fertilizer | replace("'", "\\'") }}. {{ stage.pest_disease | replace("'", "\\'") }}')" class="p-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition" title="{% if lang == 'mr' %}सल्ला ऐका (Sarvam AI){% else %}Listen to Advisory (Sarvam AI){% endif %}">
+                                <i data-lucide="volume-2" class="w-4 h-4"></i>
+                            </button>
+                            <span class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                {{ loop.index }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- 4 Category Details -->
@@ -260,4 +265,54 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentCropAudio = null;
+    async function playCropTTS(btn, text) {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`;
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            if (currentCropAudio) {
+                currentCropAudio.pause();
+                currentCropAudio = null;
+            }
+
+            const res = await fetch("/api/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, language_code: "{{ lang }}-IN" })
+            });
+            const data = await res.json();
+
+            if (data.status === "ok" && data.audio_base64) {
+                currentCropAudio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+                currentCropAudio.onended = () => { btn.innerHTML = originalHtml; if (window.lucide) lucide.createIcons(); };
+                currentCropAudio.play();
+                btn.innerHTML = `<i data-lucide="volume-x" class="w-4 h-4"></i>`;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+        } catch (e) {
+            console.warn("Sarvam TTS failed, using browser speech synthesis:", e);
+        }
+
+        // Browser fallback
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = '{{ lang }}' === 'en' ? 'en-IN' : 'mr-IN';
+            utterance.onend = () => { btn.innerHTML = originalHtml; if (window.lucide) lucide.createIcons(); };
+            window.speechSynthesis.speak(utterance);
+            btn.innerHTML = `<i data-lucide="volume-x" class="w-4 h-4"></i>`;
+            if (window.lucide) lucide.createIcons();
+        } else {
+            btn.innerHTML = originalHtml;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+</script>
 {% endblock %}

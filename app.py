@@ -1141,5 +1141,63 @@ def delete_expense(expense_id):
     return redirect(url_for("expenses"))
 
 
+# ---------------------------------------------------------
+# SARVAM AI FEATURES: 1-LINE SMART EXPENSE & TEXT-TO-SPEECH
+# ---------------------------------------------------------
+@app.route("/expenses/smart-add", methods=["POST"])
+def smart_add_expense():
+    """Parses 1-line natural language text via Sarvam AI and logs to EXPENSES_DB."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    raw_text = request.form.get("smart_text", "").strip()
+    if not raw_text:
+        return redirect(url_for("expenses"))
+
+    active_lang = session.get("lang", "mr")
+    from sarvam_client import parse_smart_expense
+    parsed = parse_smart_expense(raw_text, active_lang=active_lang)
+
+    if parsed and parsed.get("amount", 0) > 0:
+        today = datetime.date.today()
+        month_str = today.strftime("%B %Y")
+        new_id = f"EXP-{len(EXPENSES_DB) + 1:03d}"
+        new_expense = {
+            "id": new_id,
+            "date": today.strftime("%Y-%m-%d"),
+            "month": month_str,
+            "season": parsed.get("season", "Rabi 2026-27"),
+            "crop": parsed.get("crop", "General Farm"),
+            "category": parsed.get("category", "Fertilizers & Nutrients"),
+            "description": parsed.get("description", {}),
+            "amount": float(parsed.get("amount", 0)),
+            "payment_mode": parsed.get("payment_mode", "Cash")
+        }
+        EXPENSES_DB.insert(0, new_expense)
+        flash(t("expense_added_success"), "success")
+    else:
+        flash("Could not parse expense text. Please try again or use standard form.", "error")
+
+    return redirect(url_for("expenses"))
+
+
+@app.route("/api/tts", methods=["POST"])
+def api_text_to_speech():
+    """Generates speech via Sarvam AI bulbul:v3 with fallback notification."""
+    data = request.get_json(silent=True) or {}
+    text = data.get("text", "").strip()
+    language_code = data.get("language_code", "mr-IN")
+
+    if not text:
+        return {"status": "error", "message": "Text is required", "fallback": True}, 400
+
+    from sarvam_client import text_to_speech
+    audio_base64 = text_to_speech(text, language_code=language_code, speaker="ritu", model="bulbul:v3")
+
+    if audio_base64:
+        return {"status": "ok", "audio_base64": audio_base64, "fallback": False}
+    return {"status": "fallback", "fallback": True}
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)

@@ -27,6 +27,7 @@ This document serves as the project's living architectural manual, written in pl
 KrishiVaani/
 │
 ├── app.py                      # Flask application controller & route handlers
+├── sarvam_client.py            # Official Sarvam AI SDK integration (105b, bulbul:v3 TTS, smart parser)
 ├── ai_router.py                # Module 3: Multilingual intent router & live farm state copilot
 ├── sample_data.py              # Pre-loaded Maharashtra farming datasets & knowledge base
 ├── translations.py             # Complete bilingual dictionaries (English & Marathi) + t() helper
@@ -115,16 +116,18 @@ KrishiVaani/
 5. **Add Expense Form (`POST /expenses/add`):**
    - Logs Amount (₹), Date, Category, Season, Crop, Payment Mode (UPI, Cash, Bank, Credit), and Description directly into memory.
 
-### H. Module 3: Multilingual Farmer AI Assistant (`templates/ai_assistant.html` + `ai_router.py`)
-1. **Intelligent Bilingual Intent Router:**
-   - Text-based Marathi and English intent recognition covering 7 core domains: Farm Expenses, Crop Advisory, Input Services, Cattle Care, Marketplace, Government Schemes (MahaDBT / PM-KISAN), and Greetings.
-   - Detects script (`is_marathi_text()`) to automatically reply in the identical language the farmer used (Marathi for Devanagari input, English for Latin input).
-2. **Ground-Truth Live State Injection:**
-   - Injects actual in-memory metrics directly into responses (e.g. November expenditure of ₹12,450, overdue FMD vaccination for 'Gauri', 4 verified Niphad agro centres).
+### H. Module 3: Multilingual Farmer AI Assistant (`templates/ai_assistant.html` + `ai_router.py` + `sarvam_client.py`)
+1. **Official Sarvam AI Integration (`sarvam-105b-conversations`):**
+   - Natural language conversations supporting Marathi, Hindi, and English (including colloquial rural terms and Marathinglish).
+   - Injects farmer's live in-memory metrics (active crops, November expenses of ₹12,450, overdue FMD vaccines, local Niphad stores) directly into prompts.
    - Generates an actionable one-click navigation button (`Open Recommended Module →`) inside the assistant bubble.
+2. **Text-to-Speech Voice Playback (`bulbul:v3`):**
+   - Every AI reply bubble and Crop Helper stage card features an **"🔊 ऐका / Listen"** button.
+   - Backend endpoint `/api/tts` calls Sarvam's `bulbul:v3` model (`mr-IN` / `en-IN`, speaker: `"ritu"`).
+   - Seamlessly falls back to browser `window.speechSynthesis` if offline or if the API key is not configured.
 3. **Dual Offline & Online Architecture:**
    - 100% reliable offline deterministic engine requiring zero external dependencies or internet connection.
-   - Seamlessly leverages Google Gemini 1.5 Flash when `GEMINI_API_KEY` is present in the environment.
+   - Leverages Sarvam AI as primary LLM (and optional Google Gemini 1.5 Flash as secondary).
 4. **1-Click Quick Prompts:**
    - Sample prompts in Marathi and English directly above the input box allow instant evaluation during hackathon demos without typing.
 

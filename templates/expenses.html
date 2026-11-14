@@ -33,6 +33,25 @@
         </div>
     </div>
 
+    <!-- 1-Line Smart Expense Entry Bar (Powered by Sarvam AI) -->
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 p-4 rounded-3xl shadow-sm">
+        <form action="/expenses/smart-add" method="POST" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="flex items-center gap-2 text-emerald-800 shrink-0 font-bold text-xs">
+                <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600"></i>
+                <span>{% if lang == 'mr' %}१-ओळीत स्मार्ट नोंदणी (Sarvam AI):{% else %}1-Line Smart Entry (Sarvam AI):{% endif %}</span>
+            </div>
+            <div class="relative flex-1 w-full">
+                <input type="text" name="smart_text" required autocomplete="off"
+                    placeholder="{% if lang == 'mr' %}उदा. कांद्यासाठी खतावर १२०० रुपये खर्च झाले किंवा Spent ₹1200 on Urea for Onion{% else %}e.g. Spent ₹1200 on Urea fertilizer for Onion or कांद्यासाठी खतावर १२०० रुपये खर्च{% endif %}"
+                    class="w-full px-4 py-2.5 bg-white border border-emerald-300/80 rounded-2xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-2xs">
+            </div>
+            <button type="submit" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl transition shadow-sm flex items-center justify-center gap-1.5 shrink-0">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>{% if lang == 'mr' %}नोंदवा{% else %}Add Expense{% endif %}</span>
+            </button>
+        </form>
+    </div>
+
     <!-- Top 3 KPI Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         

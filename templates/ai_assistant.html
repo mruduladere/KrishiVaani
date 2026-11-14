@@ -69,9 +69,15 @@
                     <i data-lucide="sprout" class="w-4 h-4 text-emerald-700"></i>
                 </div>
                 <div class="bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-sm p-4 text-xs text-slate-800 leading-relaxed shadow-sm">
-                    <p class="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
-                        <span>{{ t('ai_copilot') }}</span>
-                        <span class="text-[10px] text-slate-400 font-normal">• {% if lang == 'mr' %}आत्ताच{% else %}Just now{% endif %}</span>
+                    <p class="font-semibold text-slate-900 mb-1 flex items-center justify-between gap-1.5">
+                        <span class="flex items-center gap-1.5">
+                            <span>{{ t('ai_copilot') }}</span>
+                            <span class="text-[10px] text-slate-400 font-normal">• {% if lang == 'mr' %}आत्ताच{% else %}Just now{% endif %}</span>
+                        </span>
+                        <button type="button" onclick="playTTS(this, '{{ t('ai_welcome_msg') | replace("'", "\\'") | replace('"', '\\"') }}', '{{ lang }}-IN')" class="text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition">
+                            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                            <span>{% if lang == 'mr' %}ऐका / Listen{% else %}Listen / ऐका{% endif %}</span>
+                        </button>
                     </p>
                     <p class="text-slate-700">{{ t('ai_welcome_msg') }}</p>
                 </div>
@@ -97,20 +103,26 @@
                             <i data-lucide="bot" class="w-4 h-4 text-emerald-700"></i>
                         </div>
                         <div class="bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-sm p-4 text-xs text-slate-800 leading-relaxed shadow-sm space-y-3">
-                            <p class="font-semibold text-slate-900 flex items-center gap-1.5">
-                                <span>{{ t('ai_copilot') }}</span>
-                                {% if msg.intent %}
-                                    <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                                        {{ msg.intent }}
-                                    </span>
-                                {% endif %}
+                            <p class="font-semibold text-slate-900 flex items-center justify-between gap-1.5">
+                                <span class="flex items-center gap-1.5">
+                                    <span>{{ t('ai_copilot') }}</span>
+                                    {% if msg.intent %}
+                                        <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
+                                            {{ msg.intent }}
+                                        </span>
+                                    {% endif %}
+                                </span>
+                                <button type="button" onclick="playTTS(this, '{{ msg.text | replace("'", "\\'") | replace('"', '\\"') | replace('\n', ' ') }}', '{{ lang }}-IN')" class="text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition">
+                                    <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                                    <span>{% if lang == 'mr' %}ऐका / Listen{% else %}Listen / ऐका{% endif %}</span>
+                                </button>
                             </p>
                             
                             <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ msg.text }}</p>
 
                             <!-- Clickable Recommended Module Action Button -->
                             {% if msg.recommended_module %}
-                            <div class="pt-2 border-t border-slate-200/60">
+                            <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
                                 <a href="{{ msg.recommended_module.url }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition">
                                     <i data-lucide="{{ msg.recommended_module.icon or 'arrow-right' }}" class="w-3.5 h-3.5"></i>
                                     <span>{{ msg.recommended_module.title }} &rarr;</span>
@@ -184,6 +196,53 @@
         const input = document.getElementById('user-query-input');
         input.value = text;
         document.getElementById('ai-chat-form').submit();
+    }
+
+    // Audio Player for Sarvam bulbul:v3 with Web Speech API fallback
+    let currentAudio = null;
+    async function playTTS(btn, text, langCode) {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>...</span>`;
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const res = await fetch("/api/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, language_code: langCode || "mr-IN" })
+            });
+            const data = await res.json();
+
+            if (data.status === "ok" && data.audio_base64) {
+                currentAudio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+                currentAudio.onended = () => { btn.innerHTML = originalHtml; if (window.lucide) lucide.createIcons(); };
+                currentAudio.play();
+                btn.innerHTML = `<i data-lucide="volume-x" class="w-3.5 h-3.5"></i><span>Stop</span>`;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+        } catch (e) {
+            console.warn("Sarvam TTS failed, using browser speech synthesis:", e);
+        }
+
+        // Browser speech synthesis fallback
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode === 'en-IN' ? 'en-IN' : 'mr-IN';
+            utterance.onend = () => { btn.innerHTML = originalHtml; if (window.lucide) lucide.createIcons(); };
+            window.speechSynthesis.speak(utterance);
+            btn.innerHTML = `<i data-lucide="volume-x" class="w-3.5 h-3.5"></i><span>Stop</span>`;
+            if (window.lucide) lucide.createIcons();
+        } else {
+            btn.innerHTML = originalHtml;
+            if (window.lucide) lucide.createIcons();
+        }
     }
 
     // Auto-scroll chat to latest message
