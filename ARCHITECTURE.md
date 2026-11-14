@@ -27,7 +27,9 @@ This document serves as the project's living architectural manual, written in pl
 KrishiVaani/
 │
 ├── app.py                      # Flask application controller & route handlers
-├── sarvam_client.py            # Official Sarvam AI SDK integration (105b, bulbul:v3 TTS, smart parser)
+├── form_digitizer.py           # Flagship Smart Form Digitizer & auto-filler engine
+├── smart_dispatcher.py         # Multi-module natural language & voice intent dispatcher
+├── sarvam_client.py            # Official Sarvam AI SDK integration (105b, saaras:v3 STT, bulbul:v3 TTS)
 ├── ai_router.py                # Module 3: Multilingual intent router & live farm state copilot
 ├── sample_data.py              # Pre-loaded Maharashtra farming datasets & knowledge base
 ├── translations.py             # Complete bilingual dictionaries (English & Marathi) + t() helper
@@ -44,7 +46,9 @@ KrishiVaani/
 │   ├── nearby_services.html    # Module 4: Filterable directory with click-to-call & WhatsApp
 │   ├── marketplace.html        # Module 5: Direct farmer-to-buyer produce marketplace & lots
 │   ├── livestock.html          # Module 6: Cattle health registry, milk tracker & vaccine calendar
-│   └── expenses.html           # Module 7: Multi-dimensional expense ledger & Chart.js reports
+│   ├── expenses.html           # Module 7: Multi-dimensional expense ledger & Chart.js reports
+│   ├── smart_log.html          # Universal Smart Voice & Text Log with multi-module allocation
+│   └── form_filler.html        # Flagship Smart Form Digitizer, auto-filler & A4 print generator
 │
 └── modules/                    # Legacy/modular reference components
     ├── auth.py
@@ -197,11 +201,48 @@ KrishiVaani/
 
 ---
 
-## 7. How to Run KrishiVaani
+## 8. Universal Smart Log ("बोलून किंवा लिहून नोंदवा") Architecture
+
+The **Universal Smart Log** provides unified multi-module natural language data entry for farmers via voice or text.
+
+### Data Flow Pipeline
+1. **Farmer Input:** A single Marathi or English utterance (e.g. *"मी गौरी नावाची नवीन गीर गाय ४५,००० रुपयांना खरेदी केली, वय ३ वर्षे, लाळ्या खुरकूत लस दिली आहे"*).
+2. **Audio Transcription:** Browser Web Speech API (`mr-IN` / `en-IN`) captures realtime speech, with a backend `/api/stt` endpoint powered by Sarvam AI `saaras:v3`.
+3. **Structured Intent Extraction:** Sent to `smart_dispatcher.py`, which prompts `sarvam-105b` returning strict JSON schema actions.
+4. **Deterministic Fallback:** If internet is down or API fails, an offline Marathi/English regex & keyword parser takes over with 100% deterministic accuracy.
+5. **Multi-Module Dispatch:** Automatically mutates `LIVESTOCK_DB` (new cow + tag ID), `EXPENSES_DB` (₹45,000 veterinary/livestock entry), `MARKETPLACE_DB`, and `TASKS_DB` in memory.
+6. **Instant UI Confirmation:** Visual confirmation cards display extracted detail pills and 1-click navigation buttons directly to the updated modules.
+
+---
+
+## 9. Flagship Smart Form Digitizer & Auto-Filler ("स्मार्ट अर्ज भरणे")
+
+The **Smart Form Digitizer & Auto-Filler** eliminates the primary friction point for rural farmers applying for central and state agricultural schemes (PM-KISAN, Pradhan Mantri Fasal Bima Yojana, Magel Tyala Shettale).
+
+### Architecture & Data Pipeline
+1. **Document Intake (Upload or 1-Click Sample Form):**
+   - Farmers or CSC operators upload a phone photo/scan of any paper application sheet (PNG, JPG) or trigger the **1-Click Sample Form** button pre-loaded with an authentic Maharashtra PM-KISAN / Crop Insurance application.
+2. **Sarvam AI Vision OCR & Document Intelligence:**
+   - Evaluates the document structure via Sarvam AI's Document Intelligence / Vision APIs and `sarvam-105b` to parse scheme headers, field boxes, and normalized positional coordinates (`x_pct`, `y_pct`).
+   - If offline or operating without external internet, it automatically falls back to our internal Maharashtra scheme schema.
+3. **Smart Profile Auto-Fill Mapping:**
+   - Pre-populates all known farmer data directly from `session['farmer_profile']` (Applicant Name, Phone Number, Village, Taluka, District, Land Holding, and Crops Cultivated), tagging them with an emerald `"Auto-filled from Profile"` badge so the farmer only types missing transaction fields (e.g., Bank Account, IFSC, Survey/Gat number).
+4. **Interactive Digital Form Editor:**
+   - Provides a side-by-side verification interface where the uploaded paper image is displayed alongside accessible digital web inputs in the active language (`English` or `मराठी`).
+5. **Dual-Mode Completed Document Generator:**
+   - **Annotated Form Overlay View:** Uses a responsive container (`position: relative`) placing crisp digital values at exact coordinates (`x_pct`, `y_pct`) on top of the original form image, complete with a digital signature stamp.
+   - **Clean Official A4 Print-Ready Application Sheet:** Formats a government-standard bordered application table containing applicant details, land data, DBT bank accounts, and signature blocks.
+6. **Print & Standalone Download:**
+   - `@media print` CSS cleanly strips navigation bars and sidebars, outputting an official single-page A4 application.
+   - The **Download Filled Form** endpoint delivers a standalone printable HTML/PDF file with auto-print triggers.
+
+---
+
+## 10. How to Run KrishiVaani
 
 ```bash
-# 1. Install Flask
-pip install flask
+# 1. Install Flask and requirements
+pip install flask pillow sarvamai python-dotenv
 
 # 2. Run the application
 python app.py

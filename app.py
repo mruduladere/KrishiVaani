@@ -5,9 +5,11 @@ Strictly NO external database (uses Python in-memory state + flask.session).
 Bilingual English & Marathi support via translations.py.
 """
 
+import re
 import copy
 import datetime
 import urllib.parse
+from pathlib import Path
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from sample_data import (
     SAMPLE_FARMER,
@@ -22,6 +24,8 @@ from sample_data import (
 )
 from translations import t, pick, TRANSLATIONS
 from ai_router import route_farmer_query
+from smart_dispatcher import extract_and_dispatch
+from form_digitizer import digitize_form
 
 app = Flask(__name__)
 app.secret_key = "krishivaani-secret-key-sih2026-pure-python"
@@ -71,11 +75,16 @@ def pick_filter(val):
 
 
 def get_current_farmer():
-    """Retrieves active farmer profile from in-memory database."""
+    """Retrieves active farmer profile from session or in-memory database."""
+    if session.get("farmer_profile"):
+        return session["farmer_profile"]
     phone = session.get("phone")
     if phone and phone in FARMERS_DB:
-        return FARMERS_DB[phone]
-    return FARMERS_DB.get("9822012345", SAMPLE_FARMER)
+        session["farmer_profile"] = copy.deepcopy(FARMERS_DB[phone])
+        return session["farmer_profile"]
+    sample = copy.deepcopy(FARMERS_DB.get("9822012345", SAMPLE_FARMER))
+    session["farmer_profile"] = sample
+    return sample
 
 
 def normalize_phone(phone_str):
@@ -89,7 +98,7 @@ def normalize_phone(phone_str):
 
 
 def detect_crop_key(crop_name):
-    """Maps farmer crop profile strings or dicts to standardized CROP_GUIDES keys."""
+    """Maps farmer crop profile strings or dicts to standardized CROP_GUIDES keys or None if unknown."""
     if isinstance(crop_name, dict):
         if "key" in crop_name:
             return crop_name["key"]
@@ -107,7 +116,242 @@ def detect_crop_key(crop_name):
         return "Sugarcane"
     elif "wheat" in crop_lower or "गहू" in crop_lower:
         return "Wheat"
-    return "Grapes"
+    return None
+
+
+def get_crop_slug(crop_name):
+    """Generates a clean URL slug / dictionary key from any crop string or dict."""
+    if isinstance(crop_name, dict):
+        name_str = crop_name.get("en") or crop_name.get("key") or crop_name.get("mr") or "Crop"
+    else:
+        name_str = str(crop_name).strip()
+    # Normalize
+    slug = re.sub(r"[^a-zA-Z0-9_\u0900-\u097F]+", "_", name_str).strip("_")
+    return slug if slug else "Crop"
+
+
+def generate_custom_crop_guide(crop_name):
+    """
+    Dynamically generates a realistic 4-stage general agronomy guide
+    for custom crops (e.g. Wheat, Tomato, Cotton, Pomegranate).
+    """
+    if isinstance(crop_name, dict):
+        name_en = crop_name.get("en", "Crop")
+        name_mr = crop_name.get("mr", "पीक")
+    else:
+        name_str = str(crop_name).strip()
+        # Heuristic translation/display
+        marathi_crop_map = {
+            "wheat": ("Wheat", "गहू"),
+            "tomato": ("Tomato", "टोमॅटो"),
+            "cotton": ("Cotton", "कापूस"),
+            "sugarcane": ("Sugarcane", "ऊस"),
+            "pomegranate": ("Pomegranate", "डाळिंब"),
+            "turmeric": ("Turmeric", "हळद"),
+            "maize": ("Maize", "मका"),
+            "chilli": ("Chilli", "मिरची"),
+            "gram": ("Bengal Gram", "हरभरा"),
+            "bajra": ("Pearl Millet (Bajra)", "बाजरी"),
+            "rice": ("Paddy / Rice", "भात / तांदूळ"),
+        }
+        lower = name_str.lower()
+        matched = False
+        for k, (en_val, mr_val) in marathi_crop_map.items():
+            if k in lower:
+                name_en, name_mr = en_val, mr_val
+                matched = True
+                break
+        if not matched:
+            name_en = name_str
+            name_mr = name_str
+
+    return {
+        "display_name": {
+            "en": name_en,
+            "mr": name_mr
+        },
+        "season": {
+            "en": "Current Season (Maharashtra Agro-Climatic Zone)",
+            "mr": "चालू हंगाम (महाराष्ट्र कृषी हवामान विभाग)"
+        },
+        "recommended_soil": {
+            "en": "Well-drained fertile black to medium loam soil with good aeration",
+            "mr": "उत्तम निचरा होणारी कसदार मध्यम ते काळी पोयट्याची जमीन"
+        },
+        "stages": [
+            {
+                "stage_name": {
+                    "en": f"Stage 1: Land Prep, Seed Treatment & Sowing",
+                    "mr": f"टप्पा १: जमीन पूर्वमशागत, बीजप्रक्रिया व पेरणी"
+                },
+                "duration": {
+                    "en": "Day 1 to 20",
+                    "mr": "दिवस १ ते २०"
+                },
+                "fertilizer": {
+                    "en": f"Basal application of well-rotted FYM (5 tons/acre) + balanced DAP/SSP & Potash. Apply Trichoderma for root health in {name_en}.",
+                    "mr": f"पायाभूत खत: एकरी ५ टन चांगले कुजलेले शेणखत + डीएपी/सुपर फॉस्फेट आणि पोटॅश. {name_mr} पिकासाठी ट्रायकोडर्मा बुरशीनाशक प्रक्रिया करा."
+                },
+                "irrigation": {
+                    "en": "Ensure field capacity moisture before planting; provide light first irrigation after seed emergence.",
+                    "mr": "वाफसा आल्यावर पेरणी/लागवड करा; रोपे/दाणे रुजल्यानंतर लगेच हलके पाणी द्या."
+                },
+                "pest_disease": {
+                    "en": "Seed treatment with biological or chemical fungicide to shield early seedlings from damping-off and soil pathogens.",
+                    "mr": "मर रोग व बुरशी प्रतिबंधासाठी बीजप्रक्रिया किंवा मुळे बुडवून पुनर्लागवड करा."
+                },
+                "pro_tip": {
+                    "en": f"Maintain recommended row-to-row spacing to enable unhindered canopy aeration and sunlight penetration for {name_en}.",
+                    "mr": f"{name_mr} पिकाच्या निरोगी वाढीसाठी योग्य ओळीतील व रोपांमधील अंतर ठेवा, ज्यामुळे पुरेसा सूर्यप्रकाश व हवा खेळती राहते."
+                }
+            },
+            {
+                "stage_name": {
+                    "en": f"Stage 2: Vegetative Canopy & Tillering / Branching",
+                    "mr": f"टप्पा २: शाकीय वाढ व फुटवे फुटणे"
+                },
+                "duration": {
+                    "en": "Day 21 to 50",
+                    "mr": "दिवस २१ ते ५०"
+                },
+                "fertilizer": {
+                    "en": f"Top dress with Urea/Nitrogen in split doses. Foliar spray of 19:19:19 (5 g/L) + micronutrients for lush foliage.",
+                    "mr": f"युरिया/नत्र खताचा हप्ता विभागून द्या. १९:१९:१९ विद्राव्य खत (५ ग्रॅम/लिटर) व सूक्ष्मअन्नद्रव्यांची फवारणी करा."
+                },
+                "irrigation": {
+                    "en": "Maintain consistent drip/furrow irrigation intervals. Avoid waterlogging around root zones.",
+                    "mr": "ठिबक किंवा पाटाने नियमित पाणी द्या. मुळांपाशी पाणी साचू देऊ नका."
+                },
+                "pest_disease": {
+                    "en": "Inspect under-surfaces of leaves for sucking pests (Aphids, Thrips, Mites). Install yellow/blue sticky traps.",
+                    "mr": "पानांच्या खालच्या बाजूस मावा, तुडतुडे व फुलकिड्यांचे निरीक्षण करा. एकरी १५ चिकट सापळे लावा."
+                },
+                "pro_tip": {
+                    "en": "Timely weeding within first 35 days prevents nutrition theft and creates natural soil mulch.",
+                    "mr": "पहिल्या ३५ दिवसांत खुरपणी करून शेत तणमुक्त ठेवा; त्यामुळे पिकाला संपूर्ण खते मिळतात."
+                }
+            },
+            {
+                "stage_name": {
+                    "en": f"Stage 3: Flowering, Setting & Grain/Fruit Development",
+                    "mr": f"टप्पा ३: फुलधारणा व दाणे / फळ फुगवण"
+                },
+                "duration": {
+                    "en": "Day 51 to 85",
+                    "mr": "दिवस ५१ ते ८५"
+                },
+                "fertilizer": {
+                    "en": "Supply 0:52:34 MKP + 13:00:45 or Calcium Boron to maximize flower retention and grain/fruit weight.",
+                    "mr": "०:५२:३४ व १३:००:४५ पोटॅशियम नायट्रेट + बोरॉन फवारणी द्या, ज्यामुळे फुलगळ थांबते व वजन वाढते."
+                },
+                "irrigation": {
+                    "en": "Critical moisture period. Strictly avoid severe water stress during flowering and grain fill.",
+                    "mr": "हा संवेदनशील काळ आहे. फुलोरा व दाणे भरण्याच्या टप्प्यात पाण्याचा ताण अजिबात पडू देऊ नका."
+                },
+                "pest_disease": {
+                    "en": "Spray preventive bio-fungicide or contact-systemic spray against blight, powdery mildew, and fruit/pod borers.",
+                    "mr": "करपा, भुरी व अळीच्या नियंत्रणासाठी वेळेवर प्रतिबंधक बुरशीनाशक व कीटकनाशक फवारणी करा."
+                },
+                "pro_tip": {
+                    "en": "Never spray strong chemical insecticides during peak morning pollinator hours (8 AM - 11 AM).",
+                    "mr": "सकाळी ८ ते ११ दरम्यान मधमाश्यांच्या परागीभवनाच्या काळात कोणतीही विषारी कीटकनाशक फवारणी टाळा."
+                }
+            },
+            {
+                "stage_name": {
+                    "en": f"Stage 4: Maturation, Harvesting & Safe Storage",
+                    "mr": f"टप्पा ४: पक्वता, काढणी व साठवणूक"
+                },
+                "duration": {
+                    "en": "Day 86 to 120",
+                    "mr": "दिवस ८६ ते १२०"
+                },
+                "fertilizer": {
+                    "en": "Withhold all chemical nitrogen fertilizer; permit natural translocation of reserves.",
+                    "mr": "रासायनिक खते पूर्णपणे बंद करा; पिकातील अन्नघटक नैसर्गिकरीत्या फळांत/दाण्यांत भरू द्या."
+                },
+                "irrigation": {
+                    "en": "Taper off irrigation 8-12 days before final harvest to boost keeping quality and prevent rot.",
+                    "mr": "काढणीच्या ८-१२ दिवस आधी पाणी बंद करा, जेणेकरून साठवणूक क्षमता सुधारते व सड टळते."
+                },
+                "pest_disease": {
+                    "en": "Protect harvested produce from dew or unseasonal showers. Ensure storage humidity under 12-14%.",
+                    "mr": "कापणी केलेला शेतमाल कोरड्या जागी ठेवा. ओलावा १२% पेक्षा कमी झाल्यावरच साठवणूक करा."
+                },
+                "pro_tip": {
+                    "en": f"Grade and sort {name_en} according to APMC standards to secure premium price discovery on KrishiVaani Marketplace.",
+                    "mr": f"{name_mr} शेतमालाची गुणवत्ता प्रतवारी करा जेणेकरून कृषीवाणी बाजारपेठेत उत्तम बाजारभाव मिळेल."
+                }
+            }
+        ]
+    }
+
+
+def generate_starter_tasks_for_crops(crops_list):
+    """Generates starter tasks checklist matching the farmer's specific active crops."""
+    matched_tasks = []
+    task_idx = 1
+    
+    # 1. First search in existing SAMPLE_CROP_TASKS
+    for crop_item in crops_list:
+        c_key = detect_crop_key(crop_item)
+        c_name = pick(crop_item, lang="en") if isinstance(crop_item, dict) else str(crop_item).strip()
+        c_name_mr = pick(crop_item, lang="mr") if isinstance(crop_item, dict) else str(crop_item).strip()
+
+        found_existing = False
+        if c_key:
+            for tsk in SAMPLE_CROP_TASKS:
+                tsk_crop_key = detect_crop_key(tsk.get("crop"))
+                if tsk_crop_key == c_key:
+                    task_copy = copy.deepcopy(tsk)
+                    task_copy["id"] = f"TSK-{task_idx:02d}"
+                    matched_tasks.append(task_copy)
+                    task_idx += 1
+                    found_existing = True
+        
+        # 2. If no pre-existing tasks found for this custom crop, generate clean custom starter tasks
+        if not found_existing:
+            matched_tasks.append({
+                "id": f"TSK-{task_idx:02d}",
+                "crop": {"en": c_name, "mr": c_name_mr},
+                "title": {
+                    "en": f"Apply basal dose FYM and NPK fertilizer for {c_name}",
+                    "mr": f"{c_name_mr} पिकासाठी शेणखत व एनपीके खताचा पायाभूत डोस देणे"
+                },
+                "stage": {"en": "Land Prep", "mr": "पूर्वमशागत"},
+                "due_date": {"en": "Immediate", "mr": "तातडीने"},
+                "priority": {"en": "High", "mr": "उच्च"},
+                "status": True
+            })
+            task_idx += 1
+            matched_tasks.append({
+                "id": f"TSK-{task_idx:02d}",
+                "crop": {"en": c_name, "mr": c_name_mr},
+                "title": {
+                    "en": f"Foliar spray of 19:19:19 + micronutrients for {c_name} vegetative vigor",
+                    "mr": f"{c_name_mr} पिकाच्या शाकीय वाढीसाठी १९:१९:१९ व सूक्ष्मअन्नद्रव्य फवारणी"
+                },
+                "stage": {"en": "Vegetative Growth", "mr": "शाकीय वाढ"},
+                "due_date": {"en": "Next 3 Days", "mr": "पुढील ३ दिवसांत"},
+                "priority": {"en": "Medium", "mr": "मध्यम"},
+                "status": False
+            })
+            task_idx += 1
+            matched_tasks.append({
+                "id": f"TSK-{task_idx:02d}",
+                "crop": {"en": c_name, "mr": c_name_mr},
+                "title": {
+                    "en": f"Install 15 yellow sticky traps per acre for pest prevention in {c_name}",
+                    "mr": f"{c_name_mr} पिकात कीड नियंत्रणासाठी एकरी १५ पिवळे चिकट सापळे लावणे"
+                },
+                "stage": {"en": "Crop Protection", "mr": "पीक संरक्षण"},
+                "due_date": {"en": "This Week", "mr": "या आठवड्यात"},
+                "priority": {"en": "Medium", "mr": "मध्यम"},
+                "status": False
+            })
+            task_idx += 1
+
+    return matched_tasks
 
 
 # ---------------------------------------------------------
@@ -141,6 +385,8 @@ def login():
         session["is_authenticated"] = True
         session["phone"] = cleaned_phone
         session["farmer_name"] = matched_farmer.get("name", "Farmer")
+        session["farmer_profile"] = copy.deepcopy(matched_farmer)
+        session["crop_tasks"] = generate_starter_tasks_for_crops(matched_farmer.get("crops_grown", []))
         flash(t("login_success"), "success")
         return redirect(url_for("dashboard"))
 
@@ -154,6 +400,8 @@ def demo_login():
     session["is_authenticated"] = True
     session["phone"] = "9822012345"
     session["farmer_name"] = SAMPLE_FARMER["name"]
+    session["farmer_profile"] = copy.deepcopy(SAMPLE_FARMER)
+    session["crop_tasks"] = generate_starter_tasks_for_crops(SAMPLE_FARMER.get("crops_grown", []))
     flash("Welcome to KrishiVaani Demo Account (Ramesh Patil)", "success")
     return redirect(url_for("dashboard"))
 
@@ -208,6 +456,8 @@ def register():
     session["is_authenticated"] = True
     session["phone"] = cleaned_phone
     session["farmer_name"] = name
+    session["farmer_profile"] = copy.deepcopy(new_farmer)
+    session["crop_tasks"] = generate_starter_tasks_for_crops(new_farmer["crops_grown"])
     flash(t("reg_success"), "success")
     return redirect(url_for("dashboard"))
 
@@ -218,6 +468,8 @@ def logout():
     session.pop("is_authenticated", None)
     session.pop("phone", None)
     session.pop("farmer_name", None)
+    session.pop("farmer_profile", None)
+    session.pop("crop_tasks", None)
     return redirect(url_for("index"))
 
 
@@ -239,6 +491,7 @@ def dashboard():
         return redirect(url_for("index"))
 
     farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
 
     # Dynamic calculation of stats
     nov_expenses = sum(
@@ -254,18 +507,69 @@ def dashboard():
         + livestock.get("goats", 0)
     )
 
+    # Use session['crop_tasks'] if present, else fallback
+    current_tasks = session.get("crop_tasks")
+    if current_tasks is None:
+        current_tasks = generate_starter_tasks_for_crops(farmer.get("crops_grown", []))
+        session["crop_tasks"] = current_tasks
+
     stats = {
         "nov_expenses": nov_expenses,
         "total_livestock": total_livestock,
         "active_crops_count": len(farmer.get("crops_grown", [])),
-        "total_tasks": len(TASKS_DB)
+        "total_tasks": len(current_tasks)
     }
+
+    # Dynamically resolve crop overview cards matching farmer's current crops
+    crop_cards = []
+    for raw_crop in farmer.get("crops_grown", []):
+        crop_name = pick(raw_crop, lang=active_lang) if isinstance(raw_crop, dict) else str(raw_crop).strip()
+        matched_key = detect_crop_key(raw_crop)
+
+        if matched_key and matched_key in CROP_GUIDES:
+            guide = CROP_GUIDES[matched_key]
+            disp_name = pick(guide.get("display_name", crop_name), lang=active_lang)
+            # Pick representative stage (Stage 3 for Grapes, Stage 2 for Onion, Stage 4 for Soybean)
+            stages = guide.get("stages", [])
+            stage_idx = 2 if matched_key == "Grapes" else (1 if matched_key == "Onion" else (3 if len(stages) > 3 else 0))
+            if stage_idx >= len(stages):
+                stage_idx = 0
+            stage_data = stages[stage_idx] if stages else {}
+
+            crop_cards.append({
+                "crop_key": matched_key,
+                "display_name": disp_name,
+                "stage_badge": {"en": f"Stage {stage_idx + 1}", "mr": f"टप्पा {stage_idx + 1}"},
+                "stage_title": stage_data.get("stage_name", {}),
+                "stage_duration": stage_data.get("duration", {}),
+                "summary": stage_data.get("fertilizer", stage_data.get("pro_tip", {})),
+                "footer_tag": {"en": f"{matched_key} Advisory Plan", "mr": f"{disp_name} कृषी सल्ला"},
+                "has_guide": True,
+                "guide_url": url_for("crop_helper", crop=matched_key)
+            })
+        else:
+            # Custom crop entered by farmer (e.g. "Tomato", "Wheat", "Sugarcane")
+            custom_guide = generate_custom_crop_guide(raw_crop)
+            disp_name = pick(custom_guide["display_name"], lang=active_lang)
+            first_stage = custom_guide["stages"][1] if len(custom_guide["stages"]) > 1 else custom_guide["stages"][0]
+            crop_cards.append({
+                "crop_key": get_crop_slug(raw_crop),
+                "display_name": disp_name,
+                "stage_badge": {"en": "Stage 2", "mr": "टप्पा २"},
+                "stage_title": first_stage.get("stage_name", {}),
+                "stage_duration": first_stage.get("duration", {}),
+                "summary": first_stage.get("fertilizer", {}),
+                "footer_tag": {"en": "General Agronomy Guidance", "mr": "सर्वसाधारण पीक सल्ला"},
+                "has_guide": True,
+                "guide_url": url_for("crop_helper", crop=get_crop_slug(raw_crop))
+            })
 
     return render_template(
         "dashboard.html",
         farmer=farmer,
         stats=stats,
-        tasks=TASKS_DB,
+        tasks=current_tasks,
+        crop_cards=crop_cards,
         active_nav="dashboard"
     )
 
@@ -287,7 +591,18 @@ def update_profile():
     
     crops_raw = request.form.get("crops", "")
     if crops_raw:
-        farmer["crops_grown"] = [c.strip() for c in crops_raw.split(",") if c.strip()]
+        new_crops = [c.strip() for c in crops_raw.split(",") if c.strip()]
+        farmer["crops_grown"] = new_crops
+        # Update session copy and regenerate synchronized crop tasks
+        session["farmer_profile"] = farmer
+        session["crop_tasks"] = generate_starter_tasks_for_crops(new_crops)
+    else:
+        session["farmer_profile"] = farmer
+
+    # Also sync back into FARMERS_DB if phone is registered
+    phone = session.get("phone")
+    if phone:
+        FARMERS_DB[phone] = copy.deepcopy(farmer)
 
     flash(t("profile_updated_success"), "success")
     return redirect(url_for("dashboard"))
@@ -304,6 +619,9 @@ def reset_defaults():
     MARKETPLACE_DB = copy.deepcopy(SAMPLE_MARKETPLACE)
     EXPENSES_DB = copy.deepcopy(SAMPLE_EXPENSES)
 
+    session["farmer_profile"] = copy.deepcopy(SAMPLE_FARMER)
+    session["crop_tasks"] = generate_starter_tasks_for_crops(SAMPLE_FARMER.get("crops_grown", []))
+
     flash(t("reset_success"), "success")
     return redirect(url_for("dashboard"))
 
@@ -318,30 +636,43 @@ def crop_helper():
         return redirect(url_for("index"))
 
     farmer = get_current_farmer()
-    farmer_crop_keys = [detect_crop_key(c) for c in farmer.get("crops_grown", [])]
     active_lang = session.get("lang", "mr")
 
-    # Selected crop from query parameter or default to first farmer crop
+    # 1. Build dynamically resolved crops knowledge base matching the farmer's active crops
+    # farmer['crops_grown'] is the single source of truth!
+    farmer_crops = farmer.get("crops_grown", [])
+    if not farmer_crops:
+        farmer_crops = ["Grapes", "Onion"]
+
+    # Build crop guides dictionary for all farmer crops
+    farmer_crop_tabs = {}
+    for crop_item in farmer_crops:
+        matched_key = detect_crop_key(crop_item)
+        slug = get_crop_slug(crop_item)
+
+        if matched_key and matched_key in CROP_GUIDES:
+            guide = copy.deepcopy(CROP_GUIDES[matched_key])
+            tab_key = matched_key
+        else:
+            guide = generate_custom_crop_guide(crop_item)
+            tab_key = slug
+
+        # Resolve display name for the selector tab
+        guide["display_name"] = pick(guide.get("display_name", tab_key), lang=active_lang)
+        farmer_crop_tabs[tab_key] = guide
+
+    # Determine active crop
     requested_crop = request.args.get("crop")
-    if requested_crop and requested_crop in CROP_GUIDES:
+    if requested_crop and requested_crop in farmer_crop_tabs:
         active_crop = requested_crop
-    elif farmer_crop_keys and farmer_crop_keys[0] in CROP_GUIDES:
-        active_crop = farmer_crop_keys[0]
     else:
-        active_crop = "Grapes"
+        # Default to first crop in farmer's active list
+        active_crop = list(farmer_crop_tabs.keys())[0]
 
-    raw_guide = CROP_GUIDES.get(active_crop, CROP_GUIDES["Grapes"])
+    raw_guide = farmer_crop_tabs[active_crop]
 
-    # Resolve bilingual display_name for the selector tabs (all crops)
-    resolved_all_crops = {}
-    for key, guide in CROP_GUIDES.items():
-        g = copy.deepcopy(guide)
-        g["display_name"] = pick(guide.get("display_name", key), lang=active_lang)
-        resolved_all_crops[key] = g
-
-    # Resolve bilingual fields in the current guide
+    # Resolve bilingual fields in current active guide
     current_guide = copy.deepcopy(raw_guide)
-    current_guide["display_name"] = pick(raw_guide.get("display_name", active_crop), lang=active_lang)
     current_guide["season"] = pick(raw_guide.get("season", ""), lang=active_lang)
     current_guide["recommended_soil"] = pick(raw_guide.get("recommended_soil", ""), lang=active_lang)
     resolved_stages = []
@@ -356,37 +687,67 @@ def crop_helper():
         resolved_stages.append(rs)
     current_guide["stages"] = resolved_stages
 
-    # Resolve crop tasks
-    crop_tasks_raw = [tsk for tsk in TASKS_DB if tsk.get("crop") == active_crop]
-    crop_tasks = []
-    for tsk in crop_tasks_raw:
-        rt = copy.deepcopy(tsk)
-        rt["title"] = pick(tsk.get("title", ""), lang=active_lang)
-        rt["crop"] = pick(tsk.get("crop", ""), lang=active_lang)
-        rt["stage"] = pick(tsk.get("stage", ""), lang=active_lang)
-        rt["due_date"] = pick(tsk.get("due_date", ""), lang=active_lang)
-        rt["priority"] = pick(tsk.get("priority", ""), lang=active_lang)
-        crop_tasks.append(rt)
+    # 2. Filter tasks strictly matching the currently logged-in farmer's active crops
+    current_tasks = session.get("crop_tasks")
+    if current_tasks is None:
+        current_tasks = generate_starter_tasks_for_crops(farmer_crops)
+        session["crop_tasks"] = current_tasks
 
-    # Active crop display label
-    active_crop_label = pick(raw_guide.get("display_name", active_crop), lang=active_lang)
+    # Filter tasks for active_crop tab (or all farmer crop tasks)
+    # A task matches if its crop matches active_crop (by key or name)
+    active_crop_display = current_guide["display_name"]
+    filtered_tasks = []
+    for tsk in current_tasks:
+        tsk_crop_val = tsk.get("crop", "")
+        tsk_key = detect_crop_key(tsk_crop_val)
+        tsk_slug = get_crop_slug(tsk_crop_val)
+        
+        # Match against active crop tab
+        if (active_crop == tsk_key) or (active_crop == tsk_slug) or (active_crop.lower() in str(tsk_crop_val).lower()):
+            rt = copy.deepcopy(tsk)
+            rt["title"] = pick(tsk.get("title", ""), lang=active_lang)
+            rt["crop"] = pick(tsk.get("crop", ""), lang=active_lang)
+            rt["stage"] = pick(tsk.get("stage", ""), lang=active_lang)
+            rt["due_date"] = pick(tsk.get("due_date", ""), lang=active_lang)
+            rt["priority"] = pick(tsk.get("priority", ""), lang=active_lang)
+            filtered_tasks.append(rt)
+
+    # If no tasks match this specific crop tab, show all tasks for farmer's active crops
+    if not filtered_tasks:
+        for tsk in current_tasks:
+            rt = copy.deepcopy(tsk)
+            rt["title"] = pick(tsk.get("title", ""), lang=active_lang)
+            rt["crop"] = pick(tsk.get("crop", ""), lang=active_lang)
+            rt["stage"] = pick(tsk.get("stage", ""), lang=active_lang)
+            rt["due_date"] = pick(tsk.get("due_date", ""), lang=active_lang)
+            rt["priority"] = pick(tsk.get("priority", ""), lang=active_lang)
+            filtered_tasks.append(rt)
 
     return render_template(
         "crop_helper.html",
         farmer=farmer,
         active_crop=active_crop,
-        active_crop_label=active_crop_label,
+        active_crop_label=active_crop_display,
         current_guide=current_guide,
-        all_crops=resolved_all_crops,
-        farmer_crops_keys=farmer_crop_keys,
-        crop_tasks=crop_tasks,
+        all_crops=farmer_crop_tabs,
+        farmer_crops_keys=list(farmer_crop_tabs.keys()),
+        crop_tasks=filtered_tasks,
         active_nav="crop_helper"
     )
 
 
 @app.route("/toggle-task/<task_id>", methods=["POST"])
 def toggle_task(task_id):
-    """Toggles task completed status in in-memory TASKS_DB."""
+    """Toggles task completed status in session['crop_tasks'] and TASKS_DB."""
+    # 1. Update in session['crop_tasks']
+    tasks_list = session.get("crop_tasks", [])
+    for task in tasks_list:
+        if task.get("id") == task_id:
+            task["status"] = not task.get("status", False)
+            break
+    session["crop_tasks"] = tasks_list
+
+    # 2. Also update global TASKS_DB if present
     for task in TASKS_DB:
         if task.get("id") == task_id:
             task["status"] = not task.get("status", False)
@@ -398,7 +759,7 @@ def toggle_task(task_id):
 
 @app.route("/add-task", methods=["POST"])
 def add_task():
-    """Appends a new farming reminder task to in-memory TASKS_DB."""
+    """Appends a new farming reminder task to session['crop_tasks'] and TASKS_DB."""
     title = request.form.get("title", "").strip()
     crop = request.form.get("crop", "Grapes").strip()
     due_date = request.form.get("due_date", "Pending").strip()
@@ -406,8 +767,13 @@ def add_task():
     current_crop = request.form.get("current_crop", crop)
 
     if title:
-        new_id = f"TSK-{len(TASKS_DB) + 1:02d}"
-        TASKS_DB.append({
+        tasks_list = session.get("crop_tasks")
+        if tasks_list is None:
+            farmer = get_current_farmer()
+            tasks_list = generate_starter_tasks_for_crops(farmer.get("crops_grown", []))
+
+        new_id = f"TSK-{len(tasks_list) + 1:02d}"
+        new_task = {
             "id": new_id,
             "crop": crop,
             "title": title,
@@ -415,7 +781,10 @@ def add_task():
             "due_date": due_date,
             "priority": priority,
             "status": False
-        })
+        }
+        tasks_list.insert(0, new_task)
+        session["crop_tasks"] = tasks_list
+        TASKS_DB.insert(0, new_task)
         flash(t("task_saved_success"), "success")
 
     return redirect(url_for("crop_helper", crop=current_crop))
@@ -1179,6 +1548,232 @@ def smart_add_expense():
         flash("Could not parse expense text. Please try again or use standard form.", "error")
 
     return redirect(url_for("expenses"))
+
+
+@app.route("/smart-log", methods=["GET"])
+def smart_log():
+    """Renders Universal Smart Voice & Text Log page."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    result = session.pop("smart_log_result", None)
+
+    return render_template(
+        "smart_log.html",
+        farmer=farmer,
+        active_nav="smart_log",
+        result=result
+    )
+
+
+@app.route("/smart-log/submit", methods=["POST"])
+def smart_log_submit():
+    """Processes natural language input across multiple modules."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    raw_text = request.form.get("raw_text", "").strip()
+    if not raw_text:
+        flash("Please enter or speak a log statement.", "error")
+        return redirect(url_for("smart_log"))
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+
+    in_memory_dbs = {
+        "livestock": LIVESTOCK_DB,
+        "expenses": EXPENSES_DB,
+        "marketplace": MARKETPLACE_DB,
+        "tasks": TASKS_DB
+    }
+
+    result = extract_and_dispatch(raw_text, farmer, in_memory_dbs, active_lang=active_lang)
+    session["smart_log_result"] = result
+
+    if result.get("success"):
+        flash(t("smart_log_result_success"), "success")
+    else:
+        flash("Could not extract actions from statement. Please verify and try again.", "error")
+
+    return redirect(url_for("smart_log"))
+
+
+# ---------------------------------------------------------
+# FLAGSHIP MODULE: SMART FORM DIGITIZER & AUTO-FILLER
+# ---------------------------------------------------------
+@app.route("/form-filler", methods=["GET"])
+def form_filler():
+    """Renders the Smart Form Digitizer & Auto-Filler interface."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    form_data = session.get("current_form_data")
+    is_generated = session.get("form_is_generated", False)
+
+    # Dictionary of field values for quick template lookups
+    form_dict = {}
+    if form_data and "fields" in form_data:
+        for f in form_data["fields"]:
+            form_dict[f["field_id"]] = f.get("value", "")
+
+    today_str = datetime.date.today().strftime("%d / %m / %Y")
+
+    return render_template(
+        "form_filler.html",
+        farmer=farmer,
+        active_nav="form_filler",
+        form_data=form_data,
+        form_dict=form_dict,
+        is_generated=is_generated,
+        current_date=today_str
+    )
+
+
+@app.route("/form-filler/scan", methods=["POST"])
+def form_filler_scan():
+    """Handles upload of form photo or 1-click sample form scan."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+    use_sample = request.form.get("use_sample") == "true"
+
+    uploads_dir = Path(__file__).parent / "static" / "uploads"
+    try:
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+    if use_sample or "form_image" not in request.files or not request.files["form_image"].filename:
+        # Use sample pre-generated PM-KISAN form
+        target_path = uploads_dir / "sample_pmkisan_form.png"
+    else:
+        file = request.files["form_image"]
+        safe_filename = f"upload_{int(datetime.datetime.now().timestamp())}_{file.filename}"
+        target_path = uploads_dir / safe_filename
+        file.save(str(target_path))
+
+    # Parse and auto-fill from farmer profile
+    parsed_form = digitize_form(str(target_path), farmer, active_lang=active_lang)
+    session["current_form_data"] = parsed_form
+    session["form_is_generated"] = False
+    flash(t("form_filler_success"), "success")
+
+    return redirect(url_for("form_filler"))
+
+
+@app.route("/form-filler/generate", methods=["POST"])
+def form_filler_generate():
+    """Collects reviewed/edited digital form inputs and locks completed document state."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    form_data = session.get("current_form_data")
+    if not form_data:
+        return redirect(url_for("form_filler"))
+
+    # Update field values with farmer's edits
+    for field in form_data.get("fields", []):
+        field_id = field.get("field_id")
+        posted_val = request.form.get(f"field_{field_id}", "").strip()
+        if posted_val:
+            field["value"] = posted_val
+
+    session["current_form_data"] = form_data
+    session["form_is_generated"] = True
+    flash("Application Form finalized and ready for Print / Download!", "success")
+
+    return redirect(url_for("form_filler"))
+
+
+@app.route("/form-filler/download")
+def form_filler_download():
+    """Generates and serves a standalone printable HTML document for download."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    form_data = session.get("current_form_data")
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+
+    if not form_data:
+        return redirect(url_for("form_filler"))
+
+    form_dict = {f["field_id"]: f.get("value", "") for f in form_data.get("fields", [])}
+    today_str = datetime.date.today().strftime("%d-%m-%Y")
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="{active_lang}">
+<head>
+<meta charset="UTF-8">
+<title>Completed_Application_{form_dict.get('farmer_name', 'Farmer').replace(' ', '_')}_{today_str}</title>
+<style>
+body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; margin: 20px; color: #111; }}
+.container {{ max-width: 800px; margin: 0 auto; border: 2px solid #047857; padding: 24px; border-radius: 8px; }}
+h2 {{ text-align: center; color: #064E3B; margin: 0 0 4px; }}
+h3 {{ text-align: center; color: #047857; margin: 0 0 16px; font-size: 14px; }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }}
+th, td {{ border: 1px solid #111; padding: 8px 12px; text-align: left; }}
+th {{ background: #ECFDF5; color: #064E3B; font-weight: bold; }}
+.sig-block {{ margin-top: 40px; display: flex; justify-content: space-between; }}
+@media print {{ body {{ margin: 0; }} .container {{ border: none; }} }}
+</style>
+</head>
+<body onload="window.print()">
+<div class="container">
+<h2>GOVERNMENT OF MAHARASHTRA • DEPARTMENT OF AGRICULTURE</h2>
+<h3>PM-KISAN SAMMAN NIDHI & FASAL PIK VIMA APPLICATION SHEET</h3>
+<table>
+<tr><th colspan="2">1. APPLICANT IDENTIFICATION & LOCATION</th></tr>
+<tr><td width="40%"><strong>Applicant Full Name:</strong></td><td>{form_dict.get('farmer_name', '')}</td></tr>
+<tr><td><strong>Mobile Number:</strong></td><td>{form_dict.get('mobile_number', '')}</td></tr>
+<tr><td><strong>Aadhaar Card No.:</strong></td><td>{form_dict.get('aadhaar_number', '')}</td></tr>
+<tr><td><strong>Village, Taluka, District:</strong></td><td>{form_dict.get('village', '')}, {form_dict.get('taluka', '')}, {form_dict.get('district', '')}</td></tr>
+<tr><td><strong>Survey / Gat Number:</strong></td><td>{form_dict.get('gat_number', '')}</td></tr>
+<tr><th colspan="2">2. LAND HOLDING & CROPS REGISTERED</th></tr>
+<tr><td><strong>Total Land Holding:</strong></td><td>{form_dict.get('land_size', '')} Acres</td></tr>
+<tr><td><strong>Irrigation Source:</strong></td><td>{form_dict.get('irrigation_type', '')}</td></tr>
+<tr><td><strong>Cultivated Crops:</strong></td><td>{form_dict.get('crops_cultivated', '')}</td></tr>
+<tr><th colspan="2">3. DIRECT BENEFIT TRANSFER (DBT) BANK DETAILS</th></tr>
+<tr><td><strong>Bank Account Number:</strong></td><td>{form_dict.get('bank_account', '')}</td></tr>
+<tr><td><strong>IFSC Code:</strong></td><td>{form_dict.get('ifsc_code', '')}</td></tr>
+<tr><td><strong>Bank & Branch:</strong></td><td>{form_dict.get('bank_name', '')}</td></tr>
+</table>
+<div class="sig-block" style="display:flex; justify-content:space-between; margin-top:40px;">
+<div><p>Place: {form_dict.get('taluka', 'Niphad')}, {form_dict.get('district', 'Nashik')}</p><p>Date: {today_str}</p></div>
+<div style="text-align:center;"><p style="font-family:cursive; font-size:16px; margin:0;">{form_dict.get('farmer_name', '')}</p><p style="border-top:1px solid #000; padding-top:4px; margin:0;">Applicant Farmer Signature</p></div>
+</div>
+</div>
+</body>
+</html>"""
+
+    from flask import Response
+    return Response(
+        html_content,
+        mimetype="text/html",
+        headers={"Content-Disposition": f"attachment;filename=Filled_Application_{today_str}.html"}
+    )
+
+
+@app.route("/api/stt", methods=["POST"])
+def api_speech_to_text():
+    """Speech-to-text endpoint powered by Sarvam AI saaras:v3."""
+    if "audio" not in request.files:
+        return {"status": "error", "message": "No audio file provided"}, 400
+
+    audio_file = request.files["audio"]
+    language_code = request.form.get("language_code", "mr-IN")
+
+    from sarvam_client import speech_to_text
+    audio_bytes = audio_file.read()
+    transcript = speech_to_text(audio_bytes, language_code=language_code, model="saaras:v3")
+
+    if transcript:
+        return {"status": "ok", "transcript": transcript}
+    return {"status": "error", "message": "STT conversion failed or offline"}, 500
 
 
 @app.route("/api/tts", methods=["POST"])

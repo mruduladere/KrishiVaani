@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-6">
+            <i data-lucide="mic" class="w-64 h-64 text-white"></i>
+        </div>
+        <div class="relative z-10 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur rounded-full text-xs font-semibold mb-3 border border-white/20">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                <span>Sarvam AI (sarvam-105b) + Web Speech • Multi-Module Voice Log</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {{ t('smart_log_title') }}
+            </h1>
+            <p class="mt-2 text-sm sm:text-base text-emerald-100/90 leading-relaxed">
+                {{ t('smart_log_subtitle') }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Voice & Text Input Card -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
+        <form method="POST" action="/smart-log/submit" id="smartLogForm" class="space-y-4">
+            
+            <div class="flex items-center justify-between">
+                <label for="smartLogInput" class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-4 h-4 text-emerald-600"></i>
+                    <span>{{ t('smart_log_title') }}</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <span id="speechStatus" class="hidden text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1.5 animate-pulse">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                        <span id="speechStatusText">{{ t('smart_log_btn_listening') }}</span>
+                    </span>
+                    <button type="button" id="micBtn" onclick="toggleSpeechRecognition()" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-sm">
+                        <i data-lucide="mic" id="micIcon" class="w-4 h-4"></i>
+                        <span id="micLabel">{{ t('smart_log_btn_speak') }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Large Textarea -->
+            <div class="relative">
+                <textarea 
+                    id="smartLogInput" 
+                    name="raw_text" 
+                    rows="4" 
+                    required
+                    placeholder="{{ t('smart_log_input_placeholder') }}"
+                    class="w-full rounded-2xl border-slate-200 bg-slate-50/50 p-4 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all leading-relaxed placeholder:text-slate-400"
+                ></textarea>
+            </div>
+
+            <!-- Submit Button & Action Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Strict No Database • 100% In-Memory State • Offline Fallback Enabled</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="clearInput()" class="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition">
+                        {{ t('btn_cancel') }}
+                    </button>
+                    <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-700/20 transition-all">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>{{ t('smart_log_btn_process') }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- 1-Click Demo Examples (In Marathi & English) -->
+        <div class="pt-4 border-t border-slate-100 space-y-3">
+            <p class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="play-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>{{ t('smart_log_demo_chips_title') }}</span>
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <!-- Chip 1: Livestock + Expense -->
+                <button type="button" onclick="loadChip(1)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-emerald-50 hover:border-emerald-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="layers" class="w-3 h-3"></i>
+                            <span>Livestock + Expense</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "{{ t('smart_log_chip_1') }}"
+                    </p>
+                </button>
+
+                <!-- Chip 2: Farm Expense -->
+                <button type="button" onclick="loadChip(2)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-amber-50 hover:border-amber-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="receipt" class="w-3 h-3"></i>
+                            <span>Farm Expense</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "{{ t('smart_log_chip_2') }}"
+                    </p>
+                </button>
+
+                <!-- Chip 3: Marketplace Listing -->
+                <button type="button" onclick="loadChip(3)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-blue-50 hover:border-blue-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-blue-800 bg-blue-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="shopping-bag" class="w-3 h-3"></i>
+                            <span>Marketplace Listing</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "{{ t('smart_log_chip_3') }}"
+                    </p>
+                </button>
+
+                <!-- Chip 4: Crop Calendar Task -->
+                <button type="button" onclick="loadChip(4)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-purple-50 hover:border-purple-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-purple-800 bg-purple-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i>
+                            <span>Crop Task / Spray</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "{{ t('smart_log_chip_4') }}"
+                    </p>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Confirmation Cards Section -->
+    {% if result %}
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/60 shadow-lg space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                    <i data-lucide="check-circle" class="w-6 h-6 text-emerald-700"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">
+                        {{ t('smart_log_result_success') }}
+                    </h3>
+                    <p class="text-xs text-slate-500">
+                        "{{ result.raw_text }}"
+                    </p>
+                </div>
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>{{ t('smart_log_result_engine') }}: <strong>{{ result.engine }}</strong></span>
+            </div>
+        </div>
+
+        <!-- Dispatched Action Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for action in result.actions_taken %}
+            <div class="p-5 rounded-2xl border border-slate-200/90 bg-slate-50/50 flex flex-col justify-between space-y-4 hover:shadow-md transition">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold {% if action.module_id == 'livestock' %}bg-emerald-100 text-emerald-800{% elif action.module_id == 'expenses' %}bg-amber-100 text-amber-800{% elif action.module_id == 'marketplace' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                            <i data-lucide="{% if action.module_id == 'livestock' %}heart-pulse{% elif action.module_id == 'expenses' %}receipt{% elif action.module_id == 'marketplace' %}shopping-bag{% else %}calendar{% endif %}" class="w-3.5 h-3.5"></i>
+                            <span>{{ action.module_name | pick }}</span>
+                        </span>
+                        <span class="text-[11px] font-semibold text-slate-400">Allocated</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-slate-800 mb-3">
+                        {{ action.action_desc | pick }}
+                    </h4>
+
+                    <!-- Key-Value Detail Pills -->
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        {% for detail in action.details %}
+                        <div class="bg-white p-2 rounded-xl border border-slate-100">
+                            <span class="text-[10px] text-slate-400 block font-medium">{{ detail.label | pick }}</span>
+                            <span class="font-semibold text-slate-800 truncate block">{{ detail.value }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Redirection Button -->
+                <div class="pt-2">
+                    <a href="{{ action.view_url }}" class="inline-flex items-center justify-center gap-1.5 w-full py-2 px-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 transition">
+                        <span>{{ t('smart_log_btn_view') }} {{ action.module_name | pick }}</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-500"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Demo chips mapping
+    const DEMO_CHIPS = {
+        1: {{ t('smart_log_chip_1') | tojson }},
+        2: {{ t('smart_log_chip_2') | tojson }},
+        3: {{ t('smart_log_chip_3') | tojson }},
+        4: {{ t('smart_log_chip_4') | tojson }}
+    };
+
+    function loadChip(id) {
+        const text = DEMO_CHIPS[id];
+        if (text) {
+            const input = document.getElementById("smartLogInput");
+            input.value = text;
+            input.focus();
+        }
+    }
+
+    function clearInput() {
+        document.getElementById("smartLogInput").value = "";
+    }
+
+    // Voice Input: Browser SpeechRecognition with Sarvam STT Fallback
+    let recognition = null;
+    let isListening = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRec();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        // Language matching active session
+        recognition.lang = "{{ 'mr-IN' if lang == 'mr' else 'en-IN' }}";
+
+        recognition.onstart = function() {
+            isListening = true;
+            document.getElementById("speechStatus").classList.remove("hidden");
+            document.getElementById("micIcon").classList.add("text-rose-600", "animate-pulse");
+            document.getElementById("micBtn").classList.add("bg-rose-50", "border-rose-300", "text-rose-700");
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            const input = document.getElementById("smartLogInput");
+            if (input.value.trim().length > 0) {
+                input.value += " " + transcript;
+            } else {
+                input.value = transcript;
+            }
+        };
+
+        recognition.onerror = function(event) {
+            console.warn("Speech recognition error:", event.error);
+            stopListening();
+        };
+
+        recognition.onend = function() {
+            stopListening();
+        };
+    }
+
+    function toggleSpeechRecognition() {
+        if (!recognition) {
+            alert("Speech recognition is not supported in this browser. Please type or paste your log above.");
+            return;
+        }
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    }
+
+    function stopListening() {
+        isListening = false;
+        document.getElementById("speechStatus").classList.add("hidden");
+        document.getElementById("micIcon").classList.remove("text-rose-600", "animate-pulse");
+        document.getElementById("micBtn").classList.remove("bg-rose-50", "border-rose-300", "text-rose-700");
+    }
+</script>
+{% endblock %}

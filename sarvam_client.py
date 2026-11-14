@@ -7,6 +7,7 @@ Integrated with:
 - 100% offline fallback when SARVAM_API_KEY is not set or network is unreachable.
 """
 
+import io
 import os
 import re
 import json
@@ -107,6 +108,44 @@ def text_to_speech(text: str, language_code: str = "mr-IN", speaker: str = "ritu
             return response.audios[0]
     except Exception as e:
         logger.warning(f"Sarvam TTS failed: {e}")
+        return None
+    return None
+
+
+def speech_to_text(audio_file_or_bytes, language_code: str = "mr-IN", model: str = "saaras:v3") -> str:
+    """
+    Transcribes audio using Sarvam AI's 'saaras:v3' Speech-to-Text model.
+    Accepts a filepath, file-like object, or raw bytes (e.g. from browser upload).
+    Returns transcribed string on success, or None on failure.
+    """
+    client = get_sarvam_client()
+    if not client:
+        return None
+
+    try:
+        # Prepare file object
+        if isinstance(audio_file_or_bytes, (str, Path)):
+            with open(audio_file_or_bytes, "rb") as f:
+                audio_data = f.read()
+            file_obj = ("audio.wav", io.BytesIO(audio_data), "audio/wav")
+        elif isinstance(audio_file_or_bytes, bytes):
+            file_obj = ("audio.wav", io.BytesIO(audio_file_or_bytes), "audio/wav")
+        else:
+            # Assume file-like object
+            file_obj = audio_file_or_bytes
+
+        # Language code validation
+        target_lang = "mr-IN" if language_code not in ("mr-IN", "en-IN", "hi-IN") else language_code
+
+        response = client.speech_to_text.transcribe(
+            file=file_obj,
+            model=model,
+            language_code=target_lang
+        )
+        if response and hasattr(response, "transcript") and response.transcript:
+            return response.transcript.strip()
+    except Exception as e:
+        logger.warning(f"Sarvam STT failed: {e}")
         return None
     return None
 

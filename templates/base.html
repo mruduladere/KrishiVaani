@@ -17,6 +17,22 @@
             font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #F8FAFC;
         }
+        @media print {
+            aside, header, #actionBtnsBar, .no-print {
+                display: none !important;
+            }
+            .ml-64 {
+                margin-left: 0 !important;
+            }
+            body, html {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -83,6 +99,22 @@
                     <i data-lucide="receipt" class="w-4 h-4 {% if active_nav == 'expense_tracker' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
                     <span>{{ t('nav_expense_tracker') }}</span>
                 </a>
+
+                <!-- Flagship Smart Form Filler -->
+                <a href="/form-filler" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'form_filler' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="file-scan" class="w-4 h-4 {% if active_nav == 'form_filler' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_form_filler') }}</span>
+                </a>
+
+                <!-- Dedicated Smart Log (Universal Voice & Text) -->
+                <div class="pt-2 pb-1">
+                    <div class="h-px bg-slate-200/80 mb-2"></div>
+                    <a href="/smart-log" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 {% if active_nav == 'smart_log' %}bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20{% else %}bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100/70 border border-emerald-200/60{% endif %}">
+                        <i data-lucide="mic" class="w-4 h-4 {% if active_nav == 'smart_log' %}text-white animate-pulse{% else %}text-emerald-700{% endif %}"></i>
+                        <span>{{ t('nav_smart_log') }}</span>
+                        <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md {% if active_nav == 'smart_log' %}bg-white/20 text-white{% else %}bg-emerald-200/60 text-emerald-900{% endif %}">AI</span>
+                    </a>
+                </div>
             </nav>
         </div>
 
@@ -143,9 +175,9 @@
                 </div>
 
                 <!-- Quick Action Button -->
-                <a href="/crop-helper" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium shadow-sm transition">
-                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                    <span>{{ t('btn_open_module') }} {{ t('crop_helper_banner_title') }}</span>
+                <a href="/smart-log" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                    <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('nav_smart_log') }}</span>
                 </a>
             </div>
         </header>

@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('form_filler_banner_title') }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+
+    <!-- Header Banner (hidden on print) -->
+    <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden no-print">
+        <div class="relative z-10 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 mb-3 border border-emerald-600/60 backdrop-blur-sm">
+                <i data-lucide="file-scan" class="w-3.5 h-3.5"></i>
+                <span>Sarvam AI Vision OCR & Doc Intelligence • 100% In-Memory State</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {{ t('form_filler_banner_title') }}
+            </h1>
+            <p class="text-xs sm:text-sm text-emerald-100/90 mt-2 leading-relaxed">
+                {{ t('form_filler_banner_subtitle') }}
+            </p>
+        </div>
+    </div>
+
+    <!-- STEP 1: Upload & 1-Click Scan Card (shown when not viewing completed result) -->
+    {% if not form_data or not is_generated %}
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 no-print">
+        <div>
+            <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-600"></i>
+                <span>{{ t('form_filler_upload_title') }}</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+                {{ t('form_filler_upload_caption') }}
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            
+            <!-- Upload Box -->
+            <form action="/form-filler/scan" method="POST" enctype="multipart/form-data" class="flex flex-col justify-between border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-3xl p-6 bg-slate-50/50 hover:bg-emerald-50/20 transition-all text-center">
+                <div class="my-auto space-y-3">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center">
+                        <i data-lucide="image" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-800">{{ t('form_filler_dropzone') }}</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">PNG, JPG, JPEG (Max 10MB)</p>
+                    </div>
+                    <input type="file" name="form_image" accept="image/*" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="scan" class="w-4 h-4"></i>
+                        <span>{{ t('form_filler_btn_scan') }}</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 1-Click Sample Form (Instant Evaluation) -->
+            <div class="flex flex-col justify-between border border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-teal-50/40 rounded-3xl p-6">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600 text-white mb-3 shadow-sm">
+                        <i data-lucide="zap" class="w-3 h-3"></i>
+                        <span>{{ t('form_filler_or') }}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900 leading-snug">
+                        {{ t('form_filler_btn_sample') }}
+                    </h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                        {{ t('form_filler_sample_desc') }}
+                    </p>
+                    <div class="mt-4 p-3 bg-white/80 rounded-2xl border border-emerald-100 text-[11px] text-slate-700 space-y-1">
+                        <div class="flex items-center gap-1.5 font-semibold text-emerald-800">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>PM-KISAN Samman Nidhi & Pik Vima Application</span>
+                        </div>
+                        <p class="text-slate-500 text-[10px]">Pre-populated with Maharashtra 2026 scheme coordinates & auto-fills farmer profile.</p>
+                    </div>
+                </div>
+
+                <div class="pt-5">
+                    <form action="/form-filler/scan" method="POST">
+                        <input type="hidden" name="use_sample" value="true">
+                        <button type="submit" class="w-full py-2.5 px-4 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-900/10 transition flex items-center justify-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            <span>{{ t('form_filler_btn_sample') }}</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- STEP 2: Interactive Digital Form Editor (Side-by-Side Review) -->
+    {% if form_data and not is_generated %}
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-1">
+                    <i data-lucide="cpu" class="w-3 h-3"></i>
+                    <span>Engine: {{ form_data.engine }}</span>
+                </div>
+                <h2 class="text-lg font-bold text-slate-900 tracking-tight">
+                    {{ t('form_filler_editor_title') }}
+                </h2>
+                <p class="text-xs text-slate-500">
+                    {{ t('form_filler_editor_subtitle') }}
+                </p>
+            </div>
+            <a href="/form-filler" class="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span>{{ t('btn_cancel') }}</span>
+            </a>
+        </div>
+
+        <form action="/form-filler/generate" method="POST">
+            <input type="hidden" name="scheme_code" value="{{ form_data.scheme_code }}">
+            <input type="hidden" name="image_url" value="{{ form_data.image_url }}">
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Form Image Preview with Field Markers -->
+                <div class="lg:col-span-5 bg-slate-50 p-4 rounded-3xl border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+                        <span>Original Form Image Preview</span>
+                        <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Scanned</span>
+                    </div>
+                    <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-inner max-h-[620px] overflow-y-auto">
+                        <img src="{{ form_data.image_url }}" alt="Form Scan" class="w-full h-auto block select-none">
+                    </div>
+                    <p class="text-[10px] text-slate-400 text-center">
+                        Fields detected with normalized coordinates (x_pct, y_pct) for precision print overlay.
+                    </p>
+                </div>
+
+                <!-- Right Column: Clean Digital Web Form Inputs -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {% for field in form_data.fields %}
+                        <div class="{% if field.field_id in ['farmer_name', 'crops_cultivated', 'bank_account'] %}sm:col-span-2{% endif %}">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-slate-700">
+                                    {{ field.label | pick }} {% if field.required %}<span class="text-rose-500">*</span>{% endif %}
+                                </label>
+                                {% if field.is_autofilled %}
+                                <span class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                    <i data-lucide="check" class="w-2.5 h-2.5"></i>
+                                    <span>{{ t('form_filler_autofill_badge') }}</span>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <input 
+                                type="{{ field.field_type }}" 
+                                name="field_{{ field.field_id }}" 
+                                value="{{ field.value }}" 
+                                placeholder="{{ field.placeholder | pick }}"
+                                {% if field.required %}required{% endif %}
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Generate Submit Button -->
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                        <a href="/form-filler" class="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition">
+                            {{ t('btn_cancel') }}
+                        </a>
+                        <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            <span>{{ t('form_filler_btn_generate') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- STEP 3: Completed Document Output (Switchable Views + Print/Download) -->
+    {% if form_data and is_generated %}
+    <div class="space-y-6">
+        
+        <!-- Controls & Switcher Bar (Hidden during print) -->
+        <div id="actionBtnsBar" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm no-print">
+            <!-- View Mode Switcher -->
+            <div class="inline-flex p-1 bg-slate-100 rounded-2xl text-xs font-semibold">
+                <button type="button" onclick="switchView('overlay')" id="btn-tab-overlay" class="px-3.5 py-1.5 rounded-xl bg-white text-emerald-700 shadow-sm transition">
+                    {{ t('form_filler_tab_overlay') }}
+                </button>
+                <button type="button" onclick="switchView('print')" id="btn-tab-print" class="px-3.5 py-1.5 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                    {{ t('form_filler_tab_print') }}
+                </button>
+            </div>
+
+            <!-- Action Buttons: Print & Download -->
+            <div class="flex items-center gap-2.5">
+                <a href="/form-filler" class="px-3 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    <span>Edit Values</span>
+                </a>
+                <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('form_filler_btn_print') }}</span>
+                </button>
+                <a href="/form-filler/download" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('form_filler_btn_download') }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- VIEW 1: Annotated Form Overlay View (Relative positioned text over original form) -->
+        <div id="view-overlay" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex justify-center overflow-x-auto no-print">
+            <div class="relative w-[800px] max-w-[800px] bg-white rounded-xl shadow-lg border border-slate-300 overflow-hidden select-none" style="aspect-ratio: 800/1130;">
+                <!-- Base Form Image -->
+                <img src="{{ form_data.image_url }}" alt="Form Background" class="w-full h-full object-contain pointer-events-none">
+
+                <!-- Typed Overlay Values Placed Exactly at Normalized Coordinates -->
+                {% for field in form_data.fields %}
+                <div 
+                    class="absolute text-[13px] font-bold text-slate-900 font-mono tracking-tight pointer-events-none"
+                    style="left: {{ field.x_pct }}%; top: {{ field.y_pct }}%; transform: translateY(-50%);">
+                    {{ field.value }}
+                </div>
+                {% endfor %}
+
+                <!-- Date Stamp Overlay -->
+                <div class="absolute text-[12px] font-bold text-slate-800 font-mono" style="right: 8%; top: 10.7%;">
+                    {{ current_date }}
+                </div>
+
+                <!-- Digital Signature Overlay -->
+                <div class="absolute text-center" style="right: 12%; bottom: 15.5%;">
+                    <span class="text-xs font-cursive font-bold text-indigo-900 italic block">{{ farmer.name | pick }}</span>
+                    <span class="text-[9px] text-emerald-700 font-mono font-semibold block">[ Digitally Signed via KrishiVaani ]</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Official A4 Print-Ready Application Sheet (Standard Government Table Format) -->
+        <div id="view-print" class="hidden bg-white p-8 sm:p-12 rounded-3xl border border-slate-300 shadow-sm max-w-4xl mx-auto print:border-0 print:shadow-none print:p-0 print:block">
+            <!-- Official Header -->
+            <div class="text-center pb-6 border-b-2 border-slate-900 space-y-1">
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center font-bold text-sm">MH</span>
+                    <h2 class="text-lg font-black text-slate-900 uppercase tracking-wide">
+                        Government of Maharashtra • Department of Agriculture
+                    </h2>
+                </div>
+                <h3 class="text-base font-extrabold text-slate-800">
+                    {{ form_data.scheme_name | pick }}
+                </h3>
+                <p class="text-xs text-slate-600">
+                    Application Ref Code: <strong class="text-slate-900">{{ form_data.scheme_code }}</strong> | Generated: <strong>{{ current_date }}</strong>
+                </p>
+            </div>
+
+            <!-- Form Details Table -->
+            <div class="mt-6 border border-slate-900 divide-y divide-slate-900 text-xs text-slate-900">
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    1. Applicant Personal & Location Details
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-slate-900">
+                    <div class="p-2.5"><strong>Applicant Full Name:</strong> {{ form_dict.get('farmer_name', '') }}</div>
+                    <div class="p-2.5"><strong>Registered Mobile:</strong> {{ form_dict.get('mobile_number', '') }}</div>
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-slate-900">
+                    <div class="p-2.5"><strong>Aadhaar Card No.:</strong> {{ form_dict.get('aadhaar_number', '') }}</div>
+                    <div class="p-2.5"><strong>Village / Taluka:</strong> {{ form_dict.get('village', '') }}, {{ form_dict.get('taluka', '') }}</div>
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-slate-900">
+                    <div class="p-2.5"><strong>District:</strong> {{ form_dict.get('district', '') }}</div>
+                    <div class="p-2.5"><strong>Survey / Gat No.:</strong> {{ form_dict.get('gat_number', '') }}</div>
+                </div>
+
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    2. Land Holding & Cultivation Details
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-slate-900">
+                    <div class="p-2.5"><strong>Total Land Size:</strong> {{ form_dict.get('land_size', '') }} Acres</div>
+                    <div class="p-2.5"><strong>Irrigation Source:</strong> {{ form_dict.get('irrigation_type', '') }}</div>
+                </div>
+                <div class="p-2.5">
+                    <strong>Insured / Registered Crops:</strong> {{ form_dict.get('crops_cultivated', '') }}
+                </div>
+
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    3. Direct Benefit Transfer (DBT) Bank Credentials
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-slate-900">
+                    <div class="p-2.5"><strong>Bank Account No.:</strong> {{ form_dict.get('bank_account', '') }}</div>
+                    <div class="p-2.5"><strong>IFSC Code:</strong> {{ form_dict.get('ifsc_code', '') }}</div>
+                </div>
+                <div class="p-2.5">
+                    <strong>Bank & Branch Name:</strong> {{ form_dict.get('bank_name', '') }}
+                </div>
+
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    4. Applicant Declaration & Verification
+                </div>
+                <div class="p-3 text-[11px] leading-relaxed text-slate-700 space-y-1">
+                    <p>I hereby certify that all information submitted above is true and verified against my land revenue 7/12 record. I consent to Aadhaar-based DBT direct benefit transfers for crop compensation and subsidies.</p>
+                </div>
+            </div>
+
+            <!-- Signature & Stamp Block -->
+            <div class="mt-10 pt-6 border-t border-slate-300 flex items-end justify-between text-xs">
+                <div>
+                    <p><strong>Place:</strong> {{ form_dict.get('taluka', 'Niphad') }}, {{ form_dict.get('district', 'Nashik') }}</p>
+                    <p class="mt-1"><strong>Date:</strong> {{ current_date }}</p>
+                    <div class="mt-4 border border-dashed border-slate-400 p-3 rounded-lg w-44 text-center text-[10px] text-slate-500">
+                        Official Tahsil / Krishi Office Stamp
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div class="h-12 flex items-center justify-center">
+                        <span class="font-cursive text-sm text-slate-900 italic font-bold">{{ form_dict.get('farmer_name', '') }}</span>
+                    </div>
+                    <div class="border-t border-slate-900 pt-1 w-52">
+                        <p class="font-bold text-slate-900">Applicant Farmer Signature</p>
+                        <p class="text-[10px] text-slate-500">(अर्जदार शेतकऱ्याची सही / अंगठा)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center text-[10px] text-slate-400 border-t border-slate-200 pt-3">
+                Printed via KrishiVaani Smart Form Digitizer • Strictly Pure Python • SIH 2026 Prototype
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    function switchView(mode) {
+        const overlay = document.getElementById('view-overlay');
+        const printView = document.getElementById('view-print');
+        const btnOverlay = document.getElementById('btn-tab-overlay');
+        const btnPrint = document.getElementById('btn-tab-print');
+
+        if (mode === 'overlay') {
+            overlay.classList.remove('hidden');
+            printView.classList.add('hidden');
+            btnOverlay.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+            btnOverlay.classList.remove('text-slate-600');
+            btnPrint.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+            btnPrint.classList.add('text-slate-600');
+        } else {
+            overlay.classList.add('hidden');
+            printView.classList.remove('hidden');
+            btnPrint.classList.add('bg-white', 'text-emerald-700', 'shadow-sm');
+            btnPrint.classList.remove('text-slate-600');
+            btnOverlay.classList.remove('bg-white', 'text-emerald-700', 'shadow-sm');
+            btnOverlay.classList.add('text-slate-600');
+        }
+    }
+</script>
+{% endblock %}
