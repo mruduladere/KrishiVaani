@@ -21,6 +21,7 @@ from sample_data import (
     EXPENSE_CATEGORIES
 )
 from translations import t, pick, TRANSLATIONS
+from ai_router import route_farmer_query
 
 app = Flask(__name__)
 app.secret_key = "krishivaani-secret-key-sih2026-pure-python"
@@ -512,48 +513,239 @@ def add_service():
 
 
 # ---------------------------------------------------------
-# ROADMAP PLACEHOLDER MODULES (MODULES 3, 5, 6, 7)
+# MODULE 3: MULTILINGUAL FARMER AI ASSISTANT
 # ---------------------------------------------------------
 @app.route("/ai-assistant")
 def ai_assistant():
-    """Module 3 placeholder."""
+    """Module 3: Multilingual Farmer AI Assistant with Live Farm Data Context."""
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
-    info = {
-        "title": "Module 3: Multilingual Farmer AI Assistant",
-        "marathi_subtitle": "मराठी व इंग्रजी AI शेती सहाय्यक",
-        "step": "Step 3",
-        "icon": "bot",
-        "scope": "Text-based Marathi and English intent router providing instant answers to farming queries, crop diseases, government subsidies, and soil management without speech-to-text latency.",
-        "planned": [
-            "Fast intent classification for Marathi and English text queries",
-            "Instant guidance on PM-KISAN, MahaDBT schemes, and crop insurance",
-            "Organic farming tips and natural pesticide formulations (Jeevamrut, Dashparni)",
-            "Interactive question-answering for common agronomy doubts"
-        ]
+
+    farmer = get_current_farmer()
+    chat_history = session.get("chat_history", [])
+    return render_template(
+        "ai_assistant.html",
+        farmer=farmer,
+        chat_history=chat_history,
+        active_nav="ai_assistant"
+    )
+
+
+@app.route("/ai-assistant/ask", methods=["POST"])
+def ai_assistant_ask():
+    """Processes farmer's query and routes to the appropriate knowledge domain or module."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    query = request.form.get("query", "").strip()
+    if not query:
+        return redirect(url_for("ai_assistant"))
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+
+    # Compute live farm context figures
+    current_month_spend = sum(
+        float(e.get("amount", 0))
+        for e in EXPENSES_DB
+        if "11" in str(e.get("date", ""))[:7]
+    )
+    total_spend = sum(float(e.get("amount", 0)) for e in EXPENSES_DB)
+
+    # Compute top category
+    cat_counts = {}
+    for e in EXPENSES_DB:
+        c_en = pick(e.get("category", ""), lang="en")
+        c_mr = pick(e.get("category", ""), lang="mr")
+        amt = float(e.get("amount", 0))
+        cat_counts[(c_en, c_mr)] = cat_counts.get((c_en, c_mr), 0) + amt
+    top_cat = max(cat_counts.items(), key=lambda x: x[1])[0] if cat_counts else ("Fertilizers & Nutrients", "खते व पोषण")
+
+    # Livestock overdue calculations
+    today = datetime.date.today()
+    overdue_count = 0
+    overdue_names = []
+    for a in LIVESTOCK_DB:
+        for v in a.get("vaccination_history", []):
+            try:
+                due = datetime.datetime.strptime(v.get("due_date", ""), "%Y-%m-%d").date()
+                if (due - today).days < 0:
+                    overdue_count += 1
+                    a_name = pick(a.get("name", ""), lang=active_lang)
+                    v_name = pick(v.get("vaccine", ""), lang=active_lang)
+                    overdue_names.append(f"{a_name} ({v_name})")
+            except Exception:
+                pass
+
+    farmer_crops = farmer.get("crops_grown", [])
+    crops_en = ", ".join(pick(c, lang="en") for c in farmer_crops)
+    crops_mr = ", ".join(pick(c, lang="mr") for c in farmer_crops)
+    pending_tasks = len([t for t in TASKS_DB if not t.get("status", False)])
+
+    live_context = {
+        "expenses": {
+            "current_month_spend": int(current_month_spend),
+            "total_spend": int(total_spend),
+            "top_category_en": top_cat[0],
+            "top_category_mr": top_cat[1]
+        },
+        "livestock": {
+            "total_animals": len(LIVESTOCK_DB),
+            "daily_milk": round(sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB), 1),
+            "overdue_count": overdue_count,
+            "overdue_details": ", ".join(overdue_names) if overdue_names else "None"
+        },
+        "crops": {
+            "crops_en": crops_en,
+            "crops_mr": crops_mr,
+            "pending_tasks": pending_tasks
+        },
+        "services": {
+            "total_services": len(SERVICES_DB),
+            "sample_en": "Dr. Deshmukh Vet Clinic & Kisan Krishi Seva Kendra",
+            "sample_mr": "डॉ. देशमुख पशुवैद्यक क्लिनिक व किसान कृषी सेवा केंद्र"
+        },
+        "marketplace": {
+            "total_listings": len(MARKETPLACE_DB)
+        }
     }
-    return render_template("placeholder.html", farmer=get_current_farmer(), info=info, active_nav="ai_assistant")
+
+    result = route_farmer_query(query, farmer, live_context, lang=active_lang)
+
+    # Save to session chat history
+    chat_history = session.get("chat_history", [])
+    chat_history.append({"role": "user", "text": query})
+    chat_history.append({
+        "role": "assistant",
+        "text": result.get("response_text", ""),
+        "recommended_module": result.get("recommended_module"),
+        "intent": result.get("intent", "")
+    })
+    session["chat_history"] = chat_history
+    session.modified = True
+
+    return redirect(url_for("ai_assistant"))
 
 
+@app.route("/ai-assistant/clear", methods=["POST"])
+def ai_assistant_clear():
+    """Clears assistant chat history from session."""
+    session.pop("chat_history", None)
+    session.modified = True
+    return redirect(url_for("ai_assistant"))
+
+
+# ---------------------------------------------------------
+# MODULE 5: FARMER-TO-BUYER MARKETPLACE
+# ---------------------------------------------------------
 @app.route("/marketplace")
 def marketplace():
-    """Module 5 placeholder."""
+    """Module 5: Direct Farmer-to-Buyer Produce Marketplace."""
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
-    info = {
-        "title": "Module 5: Simple Farmer-to-Buyer Marketplace",
-        "marathi_subtitle": "थेट शेतकरी ते खरेदीदार बाजारपेठ",
-        "step": "Step 5",
-        "icon": "store",
-        "scope": "Direct farmer-to-buyer listing portal eliminating middleman commissions. Enables farmers to post harvest lots and connect directly with wholesale buyers.",
-        "planned": [
-            "Farmer harvest posting form (crop, variety, quantity in quintals, price/quintal)",
-            "Buyer enquiry contact generator via direct phone and WhatsApp connection",
-            "Active regional commodity listings with quality specifications",
-            "Zero online payment or logistics complications (direct peer-to-peer enquiry)"
-        ]
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+
+    selected_category = request.args.get("cat", "").strip()
+    search_query = request.args.get("q", "").strip().lower()
+
+    # Resolve all listings to active language
+    resolved_listings = []
+    for item in MARKETPLACE_DB:
+        ri = copy.deepcopy(item)
+        ri["crop_name"] = pick(item.get("crop_name", ""), lang=active_lang)
+        ri["category"] = pick(item.get("category", ""), lang=active_lang)
+        ri["variety"] = pick(item.get("variety", ""), lang=active_lang)
+        ri["quality_grade"] = pick(item.get("quality_grade", ""), lang=active_lang)
+        ri["seller_name"] = pick(item.get("seller_name", ""), lang=active_lang)
+        ri["village"] = pick(item.get("village", ""), lang=active_lang)
+        ri["taluka"] = pick(item.get("taluka", ""), lang=active_lang)
+        ri["district"] = pick(item.get("district", ""), lang=active_lang)
+        ri["status"] = pick(item.get("status", ""), lang=active_lang)
+        ri["notes"] = pick(item.get("notes", ""), lang=active_lang)
+
+        # Category matching: check both en and mr versions of category
+        raw_cat_en = pick(item.get("category", ""), lang="en")
+        raw_cat_mr = pick(item.get("category", ""), lang="mr")
+        if selected_category and (selected_category not in (raw_cat_en, raw_cat_mr, ri["category"])):
+            continue
+
+        # Search matching: crop_name, village, taluka, variety
+        if search_query:
+            searchable = f"{ri['crop_name']} {ri['variety']} {ri['village']} {ri['taluka']} {ri['quality_grade']}".lower()
+            if search_query not in searchable:
+                continue
+
+        resolved_listings.append(ri)
+
+    # Compute overall statistics
+    total_volume = sum(int(i.get("quantity_quintals", 0)) for i in MARKETPLACE_DB)
+    avg_price = int(sum(float(i.get("expected_price_per_quintal", 0)) for i in MARKETPLACE_DB) / len(MARKETPLACE_DB)) if MARKETPLACE_DB else 0
+
+    return render_template(
+        "marketplace.html",
+        farmer=farmer,
+        listings=resolved_listings,
+        selected_category=selected_category,
+        search_query=request.args.get("q", "").strip(),
+        total_volume=total_volume,
+        avg_price=avg_price,
+        active_nav="marketplace"
+    )
+
+
+@app.route("/marketplace/add", methods=["POST"])
+def add_marketplace_listing():
+    """Adds a new produce harvest lot to in-memory MARKETPLACE_DB."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    crop_name = request.form.get("crop_name", "").strip()
+    category = request.form.get("category", "Vegetables").strip()
+    variety = request.form.get("variety", "").strip()
+    qty_str = request.form.get("quantity_quintals", "10").strip()
+    price_str = request.form.get("expected_price", "2000").strip()
+    quality_grade = request.form.get("quality_grade", "Grade A").strip()
+    seller_phone = request.form.get("seller_phone", farmer.get("phone", "")).strip()
+    notes = request.form.get("notes", "").strip()
+
+    try:
+        qty = int(qty_str)
+    except ValueError:
+        qty = 10
+
+    try:
+        price = float(price_str)
+    except ValueError:
+        price = 2000.0
+
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    new_id = f"MKT-{len(MARKETPLACE_DB) + 101}"
+
+    new_listing = {
+        "id": new_id,
+        "crop_name": {"en": crop_name, "mr": crop_name},
+        "category": {"en": category, "mr": pick(category, lang="mr")},
+        "variety": {"en": variety, "mr": variety},
+        "quality_grade": {"en": quality_grade, "mr": quality_grade},
+        "quantity_quintals": qty,
+        "expected_price_per_quintal": price,
+        "seller_name": farmer.get("name", {"en": "Farmer", "mr": "शेतकरी"}),
+        "seller_phone": seller_phone,
+        "village": farmer.get("village", {"en": "Niphad", "mr": "निफाड"}),
+        "taluka": farmer.get("taluka", {"en": "Niphad", "mr": "निफाड"}),
+        "district": farmer.get("district", {"en": "Nashik", "mr": "नाशिक"}),
+        "location": {"en": "Niphad, Nashik", "mr": "निफाड, नाशिक"},
+        "harvest_date": today,
+        "status": {"en": "Available", "mr": "उपलब्ध"},
+        "notes": {"en": notes, "mr": notes}
     }
-    return render_template("placeholder.html", farmer=get_current_farmer(), info=info, active_nav="marketplace")
+
+    MARKETPLACE_DB.insert(0, new_listing)
+    flash(t("mkt_added_success"), "success")
+    return redirect(url_for("marketplace"))
 
 
 # ---------------------------------------------------------

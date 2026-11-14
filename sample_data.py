@@ -953,12 +953,17 @@ SAMPLE_MARKETPLACE = [
     {
         "id": "MKT-101",
         "crop_name": {"en": "Gavran Red Onion", "mr": "गावरान लाल कांदा"},
+        "category": {"en": "Vegetables", "mr": "भाजीपाला"},
         "variety": {"en": "Nashik Garwa Quality", "mr": "नाशिक गरवा प्रत"},
+        "quality_grade": {"en": "Grade A (Export / Storage)", "mr": "अ दर्जा (निर्यात व साठवणूक)"},
         "quantity_quintals": 55,
         "expected_price_per_quintal": 1950,
         "seller_name": {"en": "Ramesh Tukaram Patil", "mr": "रमेश तुकाराम पाटील"},
         "seller_phone": "+91 98220 12345",
-        "location": {"en": "Pimpalgaon Baswant, Nashik", "mr": "पिंपळगाव बसवंत, नाशिक"},
+        "village": {"en": "Pimpalgaon Baswant", "mr": "पिंपळगाव बसवंत"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Pimpalgaon Baswant, Niphad", "mr": "पिंपळगाव बसवंत, निफाड"},
         "harvest_date": "2026-10-25",
         "status": {"en": "Available", "mr": "उपलब्ध"},
         "notes": {
@@ -968,18 +973,107 @@ SAMPLE_MARKETPLACE = [
     },
     {
         "id": "MKT-102",
-        "crop_name": {"en": "Export Grade Grapes", "mr": "निर्यातक्षम द्राक्ष"},
-        "variety": {"en": "Thomson Seedless", "mr": "थॉमसन सिडलेस"},
+        "crop_name": {"en": "Thomson Seedless Grapes", "mr": "थॉमसन सिडलेस द्राक्ष"},
+        "category": {"en": "Fruits", "mr": "फळे"},
+        "variety": {"en": "European Export Standard", "mr": "युरोपियन निर्यात मानक"},
+        "quality_grade": {"en": "Export Quality (18mm+)", "mr": "निर्यात प्रत (१८ मिमी+)"},
         "quantity_quintals": 30,
         "expected_price_per_quintal": 6200,
         "seller_name": {"en": "Ramesh Tukaram Patil", "mr": "रमेश तुकाराम पाटील"},
         "seller_phone": "+91 98220 12345",
-        "location": {"en": "Pimpalgaon Baswant, Nashik", "mr": "पिंपळगाव बसवंत, नाशिक"},
+        "village": {"en": "Pimpalgaon Baswant", "mr": "पिंपळगाव बसवंत"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Pimpalgaon Baswant, Niphad", "mr": "पिंपळगाव बसवंत, निफाड"},
         "harvest_date": "Expected Feb 2027",
         "status": {"en": "Advance Booking", "mr": "आगाऊ नोंदणी सुरू"},
         "notes": {
-            "en": "18mm+ berry size, residue-free spray schedule maintained.",
-            "mr": "१८ मिमी+ मणी आकार, कीटकनाशक अवशेषमुक्त नियोजन केलेले."
+            "en": "18mm+ berry size, residue-free spray schedule maintained for overseas export.",
+            "mr": "१८ मिमी+ मणी आकार, परदेशी निर्यातीसाठी कीटकनाशक अवशेषमुक्त नियोजन केलेले."
+        }
+    },
+    {
+        "id": "MKT-103",
+        "crop_name": {"en": "JS 335 Soybean", "mr": "जेएस ३३५ सोयाबीन"},
+        "category": {"en": "Grains & Pulses", "mr": "धान्य व कडधान्ये"},
+        "variety": {"en": "Certified Seed Grade", "mr": "प्रमाणित बियाणे प्रत"},
+        "quality_grade": {"en": "Grade A (Clean & Bold)", "mr": "अ दर्जा (स्वच्छ व टपोरे)"},
+        "quantity_quintals": 42,
+        "expected_price_per_quintal": 4650,
+        "seller_name": {"en": "Kailas Bhikaji Shinde", "mr": "कैलास भिकाजी शिंदे"},
+        "seller_phone": "+91 98501 23456",
+        "village": {"en": "Lasalgaon", "mr": "लासलगाव"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Lasalgaon, Niphad", "mr": "लासलगाव, निफाड"},
+        "harvest_date": "2026-10-18",
+        "status": {"en": "Available", "mr": "उपलब्ध"},
+        "notes": {
+            "en": "11% moisture level, double-cleaned by grader machine, ready for oil mills or seed.",
+            "mr": "११% ओलावा, ग्रेडर मशीनने स्वच्छ केलेले, तेल गिरणी किंवा बियाण्यासाठी तयार."
+        }
+    },
+    {
+        "id": "MKT-104",
+        "crop_name": {"en": "Bhagwa Pomegranate", "mr": "भगवा डाळिंब"},
+        "category": {"en": "Fruits", "mr": "फळे"},
+        "variety": {"en": "Solapur Super Bhagwa", "mr": "सोलापूर सुपर भगवा"},
+        "quality_grade": {"en": "Premium (350g+ Arils)", "mr": "प्रीमियम (३५० ग्रॅम+ फळे)"},
+        "quantity_quintals": 25,
+        "expected_price_per_quintal": 8400,
+        "seller_name": {"en": "Dattatraya Shripad More", "mr": "दत्तात्रय श्रीपाद मोरे"},
+        "seller_phone": "+91 97631 89012",
+        "village": {"en": "Chandori", "mr": "चांदोरी"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Chandori, Niphad", "mr": "चांदोरी, निफाड"},
+        "harvest_date": "2026-11-05",
+        "status": {"en": "Available", "mr": "उपलब्ध"},
+        "notes": {
+            "en": "Deep red shining arils, zero fungal spots, packed in 10 kg paper corrugated boxes.",
+            "mr": "गडद लाल दाणे, डाग विरहित फळे, १० किलो बॉक्सेसमध्ये पॅकिंग केलेले."
+        }
+    },
+    {
+        "id": "MKT-105",
+        "crop_name": {"en": "Fresh Green Turmeric", "mr": "ओली हिरवी हळद"},
+        "category": {"en": "Vegetables", "mr": "भाजीपाला"},
+        "variety": {"en": "Salem High Curcumin", "mr": "सेलम उच्च करक्युमिन"},
+        "quality_grade": {"en": "Organic Certified (5.2% Curcumin)", "mr": "सेंद्रिय प्रमाणित (५.२% करक्युमिन)"},
+        "quantity_quintals": 18,
+        "expected_price_per_quintal": 3200,
+        "seller_name": {"en": "Sunita Sanjay Gaikwad", "mr": "सुनिता संजय गायकवाड"},
+        "seller_phone": "+91 94231 67890",
+        "village": {"en": "Saikheda", "mr": "सायखेडा"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Saikheda, Niphad", "mr": "सायखेडा, निफाड"},
+        "harvest_date": "2026-11-10",
+        "status": {"en": "Available", "mr": "उपलब्ध"},
+        "notes": {
+            "en": "Freshly harvested, washed organic turmeric fingers ideal for pickle, extract, and medicine.",
+            "mr": "ताजी काढलेली स्वच्छ सेंद्रिय हळद, लोणचे, अर्क व औषध निर्मितीसाठी उत्तम."
+        }
+    },
+    {
+        "id": "MKT-106",
+        "crop_name": {"en": "Lokwan Sharbati Wheat", "mr": "लोकवन शरबती गहू"},
+        "category": {"en": "Grains & Pulses", "mr": "धान्य व कडधान्ये"},
+        "variety": {"en": "Bhal Golden Grain", "mr": "सुवर्ण दाणा"},
+        "quality_grade": {"en": "Grade A (Bold & Heavy)", "mr": "अ दर्जा (टपोरा व वजनदार)"},
+        "quantity_quintals": 50,
+        "expected_price_per_quintal": 3150,
+        "seller_name": {"en": "Ramesh Tukaram Patil", "mr": "रमेश तुकाराम पाटील"},
+        "seller_phone": "+91 98220 12345",
+        "village": {"en": "Pimpalgaon Baswant", "mr": "पिंपळगाव बसवंत"},
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {"en": "Pimpalgaon Baswant, Niphad", "mr": "पिंपळगाव बसवंत, निफाड"},
+        "harvest_date": "Expected March 2027",
+        "status": {"en": "Advance Booking", "mr": "आगाऊ नोंदणी सुरू"},
+        "notes": {
+            "en": "Golden heavy grain with high gluten quality for soft chapatis. Booking open for retail/wholesale.",
+            "mr": "मऊ चपातीसाठी उत्तम ग्लूटेनयुक्त टपोरा गहू. घाऊक व किरकोळ नोंदणी सुरू."
         }
     }
 ]
