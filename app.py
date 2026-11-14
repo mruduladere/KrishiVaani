@@ -1599,6 +1599,10 @@ def smart_log_submit():
     return redirect(url_for("smart_log"))
 
 
+# Global in-memory storage for active digitized form sessions: { phone_or_session_id: form_dict }
+FORM_SESSIONS = {}
+
+
 # ---------------------------------------------------------
 # FLAGSHIP MODULE: SMART FORM DIGITIZER & AUTO-FILLER
 # ---------------------------------------------------------
@@ -1609,7 +1613,10 @@ def form_filler():
         return redirect(url_for("index"))
 
     farmer = get_current_farmer()
-    form_data = session.get("current_form_data")
+    user_id = session.get("phone", "demo_user")
+    
+    # Retrieve form data primarily from lightweight in-memory dictionary
+    form_data = FORM_SESSIONS.get(user_id)
     is_generated = session.get("form_is_generated", False)
 
     # Dictionary of field values for quick template lookups
@@ -1631,6 +1638,26 @@ def form_filler():
     )
 
 
+@app.route("/form-filler/sample", methods=["GET", "POST"])
+def form_filler_sample():
+    """Direct route for 1-click PM-KISAN / Pik Vima Sample Form testing."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+    user_id = session.get("phone", "demo_user")
+
+    # Digitize sample form immediately into server memory
+    parsed_form = digitize_form("sample_pmkisan_form.png", farmer, active_lang=active_lang, is_sample=True)
+    FORM_SESSIONS[user_id] = parsed_form
+    session["has_form"] = True
+    session["form_is_generated"] = False
+    flash(t("form_filler_success"), "success")
+
+    return redirect(url_for("form_filler"))
+
+
 @app.route("/form-filler/scan", methods=["POST"])
 def form_filler_scan():
     """Handles upload of form photo or 1-click sample form scan."""
@@ -1639,7 +1666,8 @@ def form_filler_scan():
 
     farmer = get_current_farmer()
     active_lang = session.get("lang", "mr")
-    use_sample = request.form.get("use_sample") == "true"
+    user_id = session.get("phone", "demo_user")
+    use_sample = request.form.get("use_sample") == "true" or request.args.get("sample") == "1"
 
     uploads_dir = Path(__file__).parent / "static" / "uploads"
     try:
@@ -1654,11 +1682,15 @@ def form_filler_scan():
         file = request.files["form_image"]
         safe_filename = f"upload_{int(datetime.datetime.now().timestamp())}_{file.filename}"
         target_path = uploads_dir / safe_filename
-        file.save(str(target_path))
+        try:
+            file.save(str(target_path))
+        except Exception:
+            target_path = uploads_dir / "sample_pmkisan_form.png"
 
-    # Parse and auto-fill from farmer profile
-    parsed_form = digitize_form(str(target_path), farmer, active_lang=active_lang)
-    session["current_form_data"] = parsed_form
+    # Parse and auto-fill from farmer profile into server memory
+    parsed_form = digitize_form(str(target_path), farmer, active_lang=active_lang, is_sample=use_sample)
+    FORM_SESSIONS[user_id] = parsed_form
+    session["has_form"] = True
     session["form_is_generated"] = False
     flash(t("form_filler_success"), "success")
 
@@ -1671,18 +1703,19 @@ def form_filler_generate():
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
 
-    form_data = session.get("current_form_data")
+    user_id = session.get("phone", "demo_user")
+    form_data = FORM_SESSIONS.get(user_id)
     if not form_data:
         return redirect(url_for("form_filler"))
 
-    # Update field values with farmer's edits
+    # Update field values with farmer's edits in server memory
     for field in form_data.get("fields", []):
         field_id = field.get("field_id")
         posted_val = request.form.get(f"field_{field_id}", "").strip()
         if posted_val:
             field["value"] = posted_val
 
-    session["current_form_data"] = form_data
+    FORM_SESSIONS[user_id] = form_data
     session["form_is_generated"] = True
     flash("Application Form finalized and ready for Print / Download!", "success")
 
@@ -1695,7 +1728,8 @@ def form_filler_download():
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
 
-    form_data = session.get("current_form_data")
+    user_id = session.get("phone", "demo_user")
+    form_data = FORM_SESSIONS.get(user_id)
     farmer = get_current_farmer()
     active_lang = session.get("lang", "mr")
 
@@ -1705,16 +1739,41 @@ def form_filler_download():
     form_dict = {f["field_id"]: f.get("value", "") for f in form_data.get("fields", [])}
     today_str = datetime.date.today().strftime("%d-%m-%Y")
 
+    scheme_title = (
+        form_data.get("scheme_name", {}).get(active_lang)
+        or form_data.get("scheme_name", {}).get("en")
+        or "PM-KISAN Samman Nidhi & Pik Vima Application"
+    )
+    scheme_code = form_data.get("scheme_code", "MH-AGRI-2026")
+    applicant_name = (
+        form_dict.get("farmer_name")
+        or form_dict.get("full_name")
+        or form_dict.get("name")
+        or pick(farmer.get("name", ""), lang=active_lang)
+    )
+    taluka_val = form_dict.get("taluka") or pick(farmer.get("taluka", ""), lang=active_lang)
+    district_val = form_dict.get("district") or pick(farmer.get("district", ""), lang=active_lang)
+
+    table_rows = ""
+    for field in form_data.get("fields", []):
+        lbl = (
+            field.get("label", {}).get(active_lang)
+            or field.get("label", {}).get("en")
+            or field.get("field_id", "")
+        )
+        val = field.get("value", "")
+        table_rows += f"<tr><td width='40%'><strong>{lbl}:</strong></td><td>{val}</td></tr>\n"
+
     html_content = f"""<!DOCTYPE html>
 <html lang="{active_lang}">
 <head>
 <meta charset="UTF-8">
-<title>Completed_Application_{form_dict.get('farmer_name', 'Farmer').replace(' ', '_')}_{today_str}</title>
+<title>Completed_Application_{applicant_name.replace(' ', '_')}_{today_str}</title>
 <style>
 body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; margin: 20px; color: #111; }}
 .container {{ max-width: 800px; margin: 0 auto; border: 2px solid #047857; padding: 24px; border-radius: 8px; }}
 h2 {{ text-align: center; color: #064E3B; margin: 0 0 4px; }}
-h3 {{ text-align: center; color: #047857; margin: 0 0 16px; font-size: 14px; }}
+h3 {{ text-align: center; color: #047857; margin: 0 0 16px; font-size: 14px; text-transform: uppercase; }}
 table {{ width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }}
 th, td {{ border: 1px solid #111; padding: 8px 12px; text-align: left; }}
 th {{ background: #ECFDF5; color: #064E3B; font-weight: bold; }}
@@ -1725,26 +1784,14 @@ th {{ background: #ECFDF5; color: #064E3B; font-weight: bold; }}
 <body onload="window.print()">
 <div class="container">
 <h2>GOVERNMENT OF MAHARASHTRA • DEPARTMENT OF AGRICULTURE</h2>
-<h3>PM-KISAN SAMMAN NIDHI & FASAL PIK VIMA APPLICATION SHEET</h3>
+<h3>{scheme_title} ({scheme_code})</h3>
 <table>
-<tr><th colspan="2">1. APPLICANT IDENTIFICATION & LOCATION</th></tr>
-<tr><td width="40%"><strong>Applicant Full Name:</strong></td><td>{form_dict.get('farmer_name', '')}</td></tr>
-<tr><td><strong>Mobile Number:</strong></td><td>{form_dict.get('mobile_number', '')}</td></tr>
-<tr><td><strong>Aadhaar Card No.:</strong></td><td>{form_dict.get('aadhaar_number', '')}</td></tr>
-<tr><td><strong>Village, Taluka, District:</strong></td><td>{form_dict.get('village', '')}, {form_dict.get('taluka', '')}, {form_dict.get('district', '')}</td></tr>
-<tr><td><strong>Survey / Gat Number:</strong></td><td>{form_dict.get('gat_number', '')}</td></tr>
-<tr><th colspan="2">2. LAND HOLDING & CROPS REGISTERED</th></tr>
-<tr><td><strong>Total Land Holding:</strong></td><td>{form_dict.get('land_size', '')} Acres</td></tr>
-<tr><td><strong>Irrigation Source:</strong></td><td>{form_dict.get('irrigation_type', '')}</td></tr>
-<tr><td><strong>Cultivated Crops:</strong></td><td>{form_dict.get('crops_cultivated', '')}</td></tr>
-<tr><th colspan="2">3. DIRECT BENEFIT TRANSFER (DBT) BANK DETAILS</th></tr>
-<tr><td><strong>Bank Account Number:</strong></td><td>{form_dict.get('bank_account', '')}</td></tr>
-<tr><td><strong>IFSC Code:</strong></td><td>{form_dict.get('ifsc_code', '')}</td></tr>
-<tr><td><strong>Bank & Branch:</strong></td><td>{form_dict.get('bank_name', '')}</td></tr>
+<tr><th colspan="2">DIGITIZED APPLICATION DETAILS / अर्जाचा तपशील</th></tr>
+{table_rows}
 </table>
 <div class="sig-block" style="display:flex; justify-content:space-between; margin-top:40px;">
-<div><p>Place: {form_dict.get('taluka', 'Niphad')}, {form_dict.get('district', 'Nashik')}</p><p>Date: {today_str}</p></div>
-<div style="text-align:center;"><p style="font-family:cursive; font-size:16px; margin:0;">{form_dict.get('farmer_name', '')}</p><p style="border-top:1px solid #000; padding-top:4px; margin:0;">Applicant Farmer Signature</p></div>
+<div><p>Place: {taluka_val}, {district_val}</p><p>Date: {today_str}</p></div>
+<div style="text-align:center;"><p style="font-family:cursive; font-size:16px; margin:0;">{applicant_name}</p><p style="border-top:1px solid #000; padding-top:4px; margin:0;">Applicant Farmer Signature</p></div>
 </div>
 </div>
 </body>

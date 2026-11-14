@@ -217,24 +217,26 @@ The **Universal Smart Log** provides unified multi-module natural language data 
 
 ## 9. Flagship Smart Form Digitizer & Auto-Filler ("स्मार्ट अर्ज भरणे")
 
-The **Smart Form Digitizer & Auto-Filler** eliminates the primary friction point for rural farmers applying for central and state agricultural schemes (PM-KISAN, Pradhan Mantri Fasal Bima Yojana, Magel Tyala Shettale).
+The **Smart Form Digitizer & Auto-Filler** eliminates the primary friction point for rural farmers applying for central and state agricultural schemes (PM-KISAN, Pradhan Mantri Fasal Bima Yojana, Magel Tyala Shettale, and State Farmer Registration Portals).
 
 ### Architecture & Data Pipeline
 1. **Document Intake (Upload or 1-Click Sample Form):**
-   - Farmers or CSC operators upload a phone photo/scan of any paper application sheet (PNG, JPG) or trigger the **1-Click Sample Form** button pre-loaded with an authentic Maharashtra PM-KISAN / Crop Insurance application.
-2. **Sarvam AI Vision OCR & Document Intelligence:**
-   - Evaluates the document structure via Sarvam AI's Document Intelligence / Vision APIs and `sarvam-105b` to parse scheme headers, field boxes, and normalized positional coordinates (`x_pct`, `y_pct`).
-   - If offline or operating without external internet, it automatically falls back to our internal Maharashtra scheme schema.
-3. **Smart Profile Auto-Fill Mapping:**
-   - Pre-populates all known farmer data directly from `session['farmer_profile']` (Applicant Name, Phone Number, Village, Taluka, District, Land Holding, and Crops Cultivated), tagging them with an emerald `"Auto-filled from Profile"` badge so the farmer only types missing transaction fields (e.g., Bank Account, IFSC, Survey/Gat number).
-4. **Interactive Digital Form Editor:**
-   - Provides a side-by-side verification interface where the uploaded paper image is displayed alongside accessible digital web inputs in the active language (`English` or `मराठी`).
-5. **Dual-Mode Completed Document Generator:**
-   - **Annotated Form Overlay View:** Uses a responsive container (`position: relative`) placing crisp digital values at exact coordinates (`x_pct`, `y_pct`) on top of the original form image, complete with a digital signature stamp.
-   - **Clean Official A4 Print-Ready Application Sheet:** Formats a government-standard bordered application table containing applicant details, land data, DBT bank accounts, and signature blocks.
-6. **Print & Standalone Download:**
-   - `@media print` CSS cleanly strips navigation bars and sidebars, outputting an official single-page A4 application.
-   - The **Download Filled Form** endpoint delivers a standalone printable HTML/PDF file with auto-print triggers.
+   - **Custom Uploads (`is_sample=False`):** Farmers or CSC operators upload a phone photo or scan of ANY paper application sheet or digital registration portal form (PNG, JPG).
+   - **1-Click Sample Form (`is_sample=True`):** Provides instant evaluation capability using an authentic Maharashtra PM-KISAN & Crop Insurance form (with embedded vector SVG fallback if offline).
+2. **Dynamic Vision OCR & Field Extraction Pipeline (`form_digitizer.py`):**
+   - **Dynamic Uploads:** When a custom image is uploaded, `extract_fields_from_image()` submits the document to Sarvam AI's Document Intelligence API (`doc_ai.parse`) and prompts **`sarvam-105b`** with a strict schema prompt to extract every blank form field (`field_id`, `label_en`, `label_mr`, `field_type`, `x_pct`, `y_pct`). If the network is disconnected, an intelligent offline heuristic engine analyzes the document structure and extracts dynamic fields (such as Full Name, DOB, Gender, Mobile, Email, Farm Size, Crops Grown, Livestock Holding, Annual Yield).
+   - **Sample Form:** Strictly adheres to the official PM-KISAN & Pik Vima schema with verified baseline coordinates.
+3. **Smart Profile Auto-Fill Matching (`_match_and_autofill_profile`):**
+   - Performs flexible keyword matching across `field_id`, English labels, and Marathi labels against `session['farmer_profile']` (Farmer Name, Phone, Email, Village, Taluka, District, State, Farm Size, Crops Cultivated, Livestock Holding, Irrigation Type).
+   - **Strict Pre-Fill Boundary:** Pre-fills **ONLY** fields that genuinely appear on the uploaded form, tagging them with an emerald `"Auto-filled from Profile"` (`प्रोफाइलमधून भरले`) badge, while leaving form-specific blanks (DOB, Gender, Annual Yield, Bank Account) for farmer review.
+4. **Lightweight In-Memory State Architecture (No Cookie Overflow):**
+   - To strictly obey Flask's 4KB cookie threshold without a persistent database, all parsed forms, extracted fields, and coordinate maps are stored in a server-side Python dictionary: `FORM_SESSIONS = { user_phone: parsed_form_dict }`.
+   - The user's cookie session stores only lightweight boolean flags (`has_form`, `form_is_generated`), preventing silent browser cookie drops.
+5. **Interactive Digital Form Editor & Coordinate Overlay:**
+   - **Side-by-Side Review:** Renders the scanned document alongside clean, responsive web form inputs in pure English or pure Marathi.
+   - **Precision Overlay (`x_pct`, `y_pct`):** Places digitized values directly onto the scanned form image at detected relative percentage coordinates, with date stamp and applicant signature.
+6. **Dynamic Print & Standalone Download (`/form-filler/download`):**
+   - Generates a standalone, print-optimized (`@media print`) HTML document dynamically constructed from all extracted fields in the active language, complete with an official bordered application table, applicant signature block, and auto-print triggers.
 
 ---
 
