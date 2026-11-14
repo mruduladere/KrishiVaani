@@ -1,6 +1,6 @@
 # KrishiVaani (Voice of Agriculture) — Architecture Documentation
 
-KrishiVaani is a unified, pure-Python digital platform designed for Indian farmers, specifically tailored to the agro-climatic context of Maharashtra (starting with the Niphad/Nashik belt).
+KrishiVaani is a unified, pure-Python digital platform designed for Indian farmers, tailored specifically to the agro-climatic context of Maharashtra (starting with the Niphad/Nashik belt).
 
 This document serves as the project's living architectural manual, written in plain English for developers and Smart India Hackathon (SIH) evaluators.
 
@@ -10,12 +10,13 @@ This document serves as the project's living architectural manual, written in pl
 
 | Dimension | Specification | Rationale |
 | :--- | :--- | :--- |
-| **Framework** | Streamlit (Pure Python) | Fast, responsive web UI with state preservation, zero JavaScript/CSS compilation overhead, and high readability for educational presentation. |
-| **Database** | **Zero External Database** | Strict project constraint. Runtime state is maintained via `st.session_state` and initialized from realistic Maharashtra sample datasets. |
-| **Persistence** | In-Memory Session State | Prevents setup barriers (no MySQL/PostgreSQL/Firebase configuration needed). The app boots with rich data out-of-the-box on any computer. |
-| **Architecture** | Modular Controller Pattern | `app.py` acts as a central router; distinct domain modules live in the `modules/` package. |
-| **Authentication** | Session-Based Gatekeeper | `modules/auth.py` gates the dashboard until authenticated. Supports 1-Click Demo login, phone + PIN credentials, and in-memory registration. |
-| **Language Support** | Separate English & Marathi Modes | Managed via `translations.py` dictionary lookups; user toggles language at login or in sidebar with instant whole-app re-rendering. |
+| **Backend Framework** | **Flask 3.1 (Pure Python)** | Ultra-lightweight, beginner-friendly web server. Clean RESTful routing without Streamlit layout constraints or unexpected re-execution bugs. |
+| **Frontend Framework** | **HTML5 + Tailwind CSS (via CDN)** | Clean, modern, Dribbble-grade SaaS aesthetics with zero compilation overhead. Full control over padding, shadows, responsiveness, and viewport height. |
+| **Iconography** | **Lucide Icons (via CDN)** | Crisp, professional SVG line icons (`data-lucide="..."`) replacing inconsistent platform emojis. |
+| **Typography** | **Inter & Noto Sans Devanagari** | Professional dual-language font stack rendering English and Marathi Devanagari with crisp legibility. |
+| **Database** | **STRICTLY ZERO DATABASE** | Core project constraint. Runtime state is maintained entirely in Python memory (`FARMERS_DB`, `SERVICES_DB`, `TASKS_DB`, etc.) and `flask.session`. Zero SQL/NoSQL setup required. |
+| **Persistence** | In-Memory Global Dictionaries + Session Cookie | Boots immediately with rich pre-loaded Maharashtra farming datasets. Edits, new tasks, and new services persist during the server lifecycle. |
+| **Bilingual Architecture** | First-Class English & Marathi | Managed via `translations.py` dictionary lookups. Jinja2 context processor injects `t(key)` and active `lang` automatically into every template. |
 
 ---
 
@@ -24,231 +25,136 @@ This document serves as the project's living architectural manual, written in pl
 ```text
 KrishiVaani/
 │
-├── app.py                  # Main controller, authentication gate & navigation controller
-├── sample_data.py          # Pre-loaded Maharashtra farming datasets, accounts & session initializer
-├── translations.py         # Bilingual dictionary (English & Marathi) and UI switcher toggle
-├── ARCHITECTURE.md         # Plain-English technical documentation & SIH judge defense manual
-├── INSTRUCTIONS.md         # Hackathon project constraints & development rules
-├── .gitignore              # Ignores __pycache__ and bytecode
+├── app.py                      # Flask application controller & route handlers
+├── sample_data.py              # Pre-loaded Maharashtra farming datasets & knowledge base
+├── translations.py             # Complete bilingual dictionaries (English & Marathi) + t() helper
+├── ARCHITECTURE.md             # Technical documentation & SIH defense guide
+├── INSTRUCTIONS.md             # Hackathon project rules & constraints
+├── .gitignore                  # Ignores __pycache__ and bytecode
 │
-└── modules/                # Modular domain implementations
-    ├── __init__.py         # Python package marker
-    ├── auth.py             # Login, 1-Click Demo Login & New Farmer Registration
-    ├── dashboard.py        # Module 1: Farmer Profile & Dashboard Hub (Active)
-    ├── crop_helper.py      # Module 2: Crop & Farming Helper (Active)
-    └── nearby_services.py  # Module 4: Nearby Agricultural Services (Active)
+├── templates/                  # Dribbble-grade HTML + Tailwind templates
+│   ├── base.html               # Main AgFarm shell (fixed sidebar, topbar, user profile card)
+│   ├── login.html              # Minimalist split-screen login card with botanical sprout animation
+│   ├── dashboard.html          # Module 1: 4 KPI metric cards, crop stage cards & task reminders
+│   ├── crop_helper.html        # Module 2: Crop tabs, 4-stage agronomy cards & task checklist
+│   ├── nearby_services.html    # Module 4: Filterable directory with click-to-call & WhatsApp
+│   └── placeholder.html        # Roadmap template for Modules 3, 5, 6, 7
+│
+└── modules/                    # Legacy/modular reference components
+    ├── auth.py
+    ├── dashboard.py
+    ├── crop_helper.py
+    └── nearby_services.py
 ```
 
 ---
 
-## 3. Step 1: Module 1 — Farmer Profile & Dashboard Hub
+## 3. Core Modules & Step-by-Step Implementation
 
-### A. Files Created / Modified
-1. `sample_data.py`:
-   - Contains pre-loaded data for sample farmer **Ramesh Tukaram Patil** (4.5 acres in Pimpalgaon Baswant, Nashik, growing Grapes, Onions, and Soybeans, with Gir cows and Murrah buffaloes).
-   - Contains realistic datasets ready for subsequent modules: `SAMPLE_LIVESTOCK`, `SAMPLE_SERVICES`, `SAMPLE_MARKETPLACE`, and `SAMPLE_EXPENSES`.
-   - Provides `init_session_data(st)` to ensure state loads cleanly on startup without overwriting active edits.
-   - Provides `reset_to_defaults(st)` to allow the farmer to restore sample values.
+### A. Authentication & Session Gate (`templates/login.html` + `app.py`)
+1. **Design & Visual Layout:**
+   - Centered `max-w-4xl` split-screen card with rounded-3xl corners and soft drop shadow.
+   - **Left Panel:** Soft sage gradient (`#F2F7F4` to `#E4EFE8`) with a delicate botanical crop sprout SVG breathing gently via CSS keyframes (`gentleBreath`).
+   - **Right Panel:** Spacious login panel with language switcher pill, 1-Click Demo Login button (Ramesh Patil), 4-digit PIN form, and interactive registration toggle.
+2. **Step-by-Step Data Flow:**
+   - When a user visits `/`, `app.py` checks `session.get('is_authenticated')`. If `False`, it renders `login.html`.
+   - **1-Click Demo Login:** Clicking `/demo-login` bypasses credentials, signs into Ramesh Patil's pre-loaded account (`9822012345`), sets `session['is_authenticated'] = True`, and redirects to `/dashboard`.
+   - **PIN Login:** Entering phone + PIN submits `POST /login`. It cleans the phone number, checks `FARMERS_DB`, validates the PIN, sets session credentials, and redirects.
+   - **Registration:** Entering farmer details submits `POST /register`. It creates a new farmer record in memory inside `FARMERS_DB[phone]`, logs the farmer in, and redirects to their new dashboard.
+   - **Logout:** Clicking `/logout` clears session data and returns to the login screen.
 
-2. `modules/dashboard.py`:
-   - `render_dashboard()`: Main view rendering the farmer greeting, farm summary metrics, profile manager, and module navigation cards.
-   - `calculate_quick_stats()`: Computes dynamic statistics on-the-fly directly from memory.
-   - `render_profile_view()`: Displays a summary of farmer credentials, land holding, soil type, irrigation setup, crops, and dairy production.
-   - `render_profile_edit()`: Provides an interactive Streamlit form allowing farmers to modify profile fields in-place.
-   - `render_module_placeholders()`: Interactive 3x2 card grid providing shortcuts to Modules 2 through 7.
+### B. Base Application Shell (`templates/base.html`)
+1. **Fixed Left Sidebar (`w-64`):**
+   - Branded header with sprout icon.
+   - 7 navigation links with crisp Lucide line icons (Dashboard, Crop Helper, AI Assistant, Nearby Services, Marketplace, Livestock, Expense Tracker). Active route highlighted with emerald tint.
+   - Bottom farmer snapshot card with name, village, land size, and logout button.
+2. **Sticky Topbar (`h-16`):**
+   - Dynamic greeting in active language ("Welcome back, Ramesh / स्वागत आहे, रमेश").
+   - Season indicator (`Rabi Season 2026-27`).
+   - Dual-language toggle pill (`मराठी | English`) linking to `/set-lang/mr` and `/set-lang/en`.
+   - `+ Quick Action` button.
 
-3. `app.py`:
-   - Sets global page metadata (title, wide layout, agricultural favicon).
-   - Initializes session state on startup.
-   - Renders a clean sidebar featuring farmer identity snapshot and radio navigation.
+### C. Module 1: Farmer Profile & Dashboard (`templates/dashboard.html`)
+1. **4 KPI Summary Cards:**
+   - **Land Holding:** 4.5 Acres (Medium Black Soil, Drip Irrigated).
+   - **Active Crops:** 3 Crops (Grapes, Onion, Soybean).
+   - **Livestock Holding:** 7 Animals (2 Cows, 1 Buffalo, 4 Goats • 22 L daily milk).
+   - **Monthly Spend:** ₹18,500 (November 2026 input costs).
+2. **Active Crop Stage Cards:**
+   - Shows active lifecycle stage for each of the farmer's crops (e.g. Grapes - Stage 3 Flowering & Berry Setting; Onion - Stage 2 Vegetative Canopy).
+3. **Task Reminders & Checklist:**
+   - Live checklist showing pending agronomy tasks with priority pills (`High`, `Medium`, `Low`).
+   - Farmers toggle status with 1 click (`POST /toggle-task/<id>`).
+4. **In-Memory Profile Editor:**
+   - Clean modal form submitting `POST /update-profile` to modify land size, crops, and soil type in memory.
+   - "Restore Defaults" button (`GET /reset-defaults`) restores initial sample records.
 
-### B. Step-by-Step Data Flow
-1. **App Boot:** When the farmer opens the app, `app.py` runs and calls `init_session_data(st)`.
-2. **Dashboard Render:** If authenticated and `active_nav == "dashboard"`, `render_dashboard()` calculates current monthly expenditure and livestock numbers from memory and shows dynamic metric cards.
-3. **Profile Toggle & Edit:** When the user clicks Edit Profile, the form opens with current values. Submitting updates `st.session_state.farmer_profile` and calls `st.rerun()`.
+### D. Module 2: Crop & Farming Helper (`templates/crop_helper.html`)
+1. **Crop Selector Tabs:**
+   - Pill tabs for Grapes, Onion, Soybean, Cotton, Sugarcane, Wheat, with a `★ Farm` indicator for crops on the farmer's own land.
+2. **4-Stage Agronomy Cards:**
+   - 1. Sowing / Forward Pruning
+   - 2. Vegetative Canopy & Shoot Growth
+   - 3. Flowering & Berry Setting
+   - 4. Harvesting, Threshing & Post-Harvest Storage
+   - Each stage provides 4 detailed breakdown cards: Fertilizer & Nutrition, Irrigation Schedules, Pest & Disease Protection, and Agronomy Pro-Tips.
+3. **Task Management:**
+   - Filterable checklist for the active crop.
+   - "Add Farm Task" form allows adding custom tasks directly to in-memory state.
+
+### E. Module 4: Nearby Agricultural Services (`templates/nearby_services.html`)
+1. **Directory & Multi-Tier Filter:**
+   - Category filter pills (Veterinary Doctors, Seed & Fertilizer Shops, Machinery Rental, Fodder, Service Centres).
+   - Taluka dropdown (Niphad, Nashik, Dindori, Chandwad, Sinnar, Yeola).
+   - Keyword search input.
+2. **Provider Cards:**
+   - Displays provider name, verified badge, rating (⭐ 4.9), category tag, location, operating hours, and speciality list.
+   - **Direct Call:** `tel:` button for immediate phone contact.
+   - **WhatsApp Inquiry:** `https://wa.me/...` with pre-filled greeting in the farmer's active language.
+3. **Add New Service Provider:**
+   - Modal form enabling farmers to register trusted local agri-dealers directly in memory (`POST /add-service`).
+
+### F. Roadmap Placeholders (Modules 3, 5, 6, 7)
+- Standardized `templates/placeholder.html` rendering scope, badge, and planned capabilities for upcoming steps.
 
 ---
 
-## 4. Step 2: Module 2 — Crop & Farming Helper (`modules/crop_helper.py`)
+## 4. Why Flask + Tailwind CSS Was Chosen Over Alternatives (SIH Defense)
 
-### A. Files Created / Modified
-1. `modules/crop_helper.py`:
-   - `detect_crop_key()`: Maps varied crop profile strings to standardized knowledge base keys.
-   - `render_crop_stages()`: Generates structured tabs for the 4 core stages: Sowing/Planting, Vegetative Growth, Flowering/Fruiting, and Harvesting.
-   - `render_task_checklist()`: Interactive checklist allowing farmers to filter tasks by current crop vs all crops, toggle completion status, view priority badges, and add new custom farm tasks.
-   - `render_crop_helper()`: Main view controller rendering the top agricultural banner, crop metadata card, stages, and checklist.
-
-2. `sample_data.py`:
-   - Added `CROP_GUIDES` comprehensive knowledge base covering Grapes, Onion, Soybean, and Sugarcane across all 4 stages.
-   - Added `SAMPLE_CROP_TASKS` with pre-populated tasks, priority tags, due periods, and boolean statuses.
-
-### B. Step-by-Step Data Flow
-1. **Crop Synchronization:** Reads `farmer_profile["crops_grown"]` from `st.session_state` and surfaces the farmer's crops in the selector.
-2. **Knowledge Retrieval:** Retrieves stage-specific fertilizers, irrigation timing, pest control remedies, and expert tips from `CROP_GUIDES`.
-3. **Interactive Checklist:** Toggling a checkbox immediately flips the task's status boolean in `st.session_state.crop_tasks` and recalculates the progress meter. Adding a new task appends directly to the session list.
+1. **Freedom from Streamlit's Rigid Box-in-Box Layout:**
+   - Streamlit automatically wraps forms and containers in nested gray borders, forcing vertical scrolling and preventing clean split-screen layouts.
+   - Flask + Tailwind CSS allows precise CSS grid, single-viewport fit (`min-h-screen`), and full visual polish matching top SaaS products (Apple, Notion, AgFarm).
+2. **Professional Line Icons Over Emojis:**
+   - Streamlit relies heavily on Unicode emojis which render inconsistently across Windows, Android, and iOS.
+   - Lucide Icons provide uniform, crisp vector line icons that convey modern engineering quality to hackathon judges.
+3. **Strict Compliance with "NO DATABASE" Constraint:**
+   - Flask works seamlessly with pure Python in-memory dictionaries (`FARMERS_DB`, `SERVICES_DB`, `TASKS_DB`).
+   - Session cookies (`flask.session`) maintain authentication and language selection across page requests without writing to any SQL or disk database.
+4. **Instant Startup & Zero Build Steps:**
+   - Tailwind CSS and Lucide Icons load directly via CDN. No `npm`, `webpack`, or Node.js toolchains are needed.
+   - Evaluators only need Python to launch: `pip install flask && python app.py`.
 
 ---
 
-## 5. Step 2: Module 4 — Nearby Agricultural Services (`modules/nearby_services.py`)
+## 5. Key Edge Cases Handled
 
-### A. Files Created / Modified
-1. `modules/nearby_services.py`:
-   - `render_service_card()`: Formats provider credentials, category tags, distance, operating hours, speciality list, rating, and direct `tel:` call and WhatsApp inquiry buttons.
-   - `render_add_service_form()`: Form enabling farmers or local dealers to register verified service providers directly into `st.session_state.nearby_services`.
-   - `render_nearby_services()`: Main controller handling 3-tier filtering (Category, Taluka, Keyword) and responsive grid layout.
-
-2. `sample_data.py`:
-   - Enhanced `SAMPLE_SERVICES` with explicit `taluka`, `district`, `verified` flags, and expanded regional coverage across Niphad, Nashik, Dindori, Chandwad, and Sinnar.
-
-### B. Step-by-Step Data Flow
-1. **Location-Aware Defaulting:** Reads the farmer's home taluka from `farmer_profile` and defaults the taluka filter automatically (e.g. Niphad).
-2. **Multi-Parameter Filtering:** Dynamically matches Category, Taluka, and keyword search across provider records in memory.
-3. **Instant Direct Action:** Generates clickable `tel:` links and URL-encoded WhatsApp inquiry messages pre-filled with the farmer's identity.
-4. **In-Memory Registration:** Submitting a new provider appends it to `st.session_state.nearby_services` and re-renders immediately.
+1. **Phone Number Formatting:** `normalize_phone()` strips spaces, hyphens, and `+91` prefixes so farmers can type `9822012345` or `+91 98220 12345` interchangeably.
+2. **Bilingual Fallback:** In `translations.py`, `t(key)` resolves against the active language (`mr` or `en`), falling back gracefully to English and then to the raw key if a translation is missing.
+3. **Crop String Normalization:** `detect_crop_key()` automatically detects the base crop key even if the farmer's profile says `"Grapes - Thomson Seedless (द्राक्ष)"`.
+4. **Session Authentication Protection:** All authenticated routes (`/dashboard`, `/crop-helper`, `/nearby-services`, etc.) check `session.get('is_authenticated')` and redirect unauthenticated requests to `/`.
+5. **In-Memory Mutations Without Persistence Loss:** Global dictionaries allow immediate reactivity during testing; a 1-click "Restore Defaults" button lets evaluators reset the demonstration state anytime.
 
 ---
 
-## 6. Authentication Architecture & Session Gatekeeper (`modules/auth.py` & `app.py`)
+## 6. How to Run KrishiVaani
 
-```mermaid
-flowchart TD
-    AppLaunch([User Launches App]) --> InitState[init_session_data initializes session]
-    InitState --> AuthCheck{st.session_state.is_authenticated?}
-    
-    AuthCheck -->|False| RenderAuth[modules.auth.render_auth]
-    RenderAuth --> AuthChoice{Farmer Authentication Method}
-    
-    AuthChoice -->|Option A: 1-Click Demo Login| DemoClick[Set is_authenticated=True & load Ramesh Patil profile]
-    AuthChoice -->|Option B: Mobile + PIN Login| ValidateCreds[find_farmer_by_credentials in registered_farmers]
-    AuthChoice -->|Option C: New Farmer Registration| RegisterForm[Submit new profile dict & save to registered_farmers]
-    
-    DemoClick --> RerunAuth[st.rerun]
-    ValidateCreds -->|Valid| SetAuth[Set is_authenticated=True & st.rerun]
-    ValidateCreds -->|Invalid| ShowError[Show error message]
-    RegisterForm -->|Valid| SetRegAuth[Set is_authenticated=True & st.rerun]
-    
-    RerunAuth --> AuthCheck
-    SetAuth --> AuthCheck
-    SetRegAuth --> AuthCheck
-    
-    AuthCheck -->|True| RenderMain[Render Sidebar & Active Module View]
-    RenderMain -->|Farmer clicks Log Out| Logout[Set is_authenticated=False & st.rerun]
-    Logout --> AuthCheck
+```bash
+# 1. Install Flask
+pip install flask
+
+# 2. Run the application
+python app.py
+
+# 3. Open your browser
+http://127.0.0.1:5000
 ```
-
-### A. How Authentication Works Without a Database
-1. **Session Gatekeeper in `app.py`:**
-   - At the top of `app.py`, the application checks `if not st.session_state.get("is_authenticated", False):`. If unauthenticated, it calls `render_auth()` and immediately executes `st.stop()`. This ensures no sidebar, dashboard metrics, or farm modules are accessible prior to logging in.
-2. **1-Click Demo Login for SIH Evaluators:**
-   - An evaluator or judge can click **"⚡ 1-Click Demo Login (Ramesh Patil)"** to bypass typing credentials. The button handler sets `st.session_state.is_authenticated = True`, loads a deep copy of `SAMPLE_FARMER`, sets `active_nav = "dashboard"`, and calls `st.rerun()`.
-3. **Phone + 4-Digit PIN Validation:**
-   - Pre-loaded registered accounts are stored in `st.session_state.registered_farmers` (`9822012345` with PIN `1234`).
-   - `normalize_phone()` strips formatting, spaces, and `+91` prefix so farmers can type in any format.
-   - `find_farmer_by_credentials()` looks up the normalized phone and compares the 4-digit PIN in memory.
-4. **New Farmer Registration:**
-   - When a new farmer fills out the registration tab, their profile is saved into `st.session_state.registered_farmers[normalized_phone]`. The newly created profile is assigned to `st.session_state.farmer_profile`, `is_authenticated` is set to `True`, and the farmer enters their dashboard immediately.
-5. **Logout Flow:**
-   - A dedicated **"🚪 Log Out"** button in the sidebar sets `st.session_state.is_authenticated = False` and triggers `st.rerun()`, immediately returning to the login gate.
-
-### B. SIH Judge Q&A Defense for Authentication
-- *Judge Question:* "Why use a 4-digit PIN instead of SMS OTP?"
-- *Engineering Defense:* In an offline hackathon evaluation venue or rural area with fluctuating telecom reception, SMS OTP gateways frequently timeout, incur SMS API billing, or require internet webhooks. A 4-digit PIN is familiar to Indian farmers (similar to ATM and UPI PINs) and allows 100% reliable, zero-latency offline demonstration.
-
----
-
-## 7. Dictionary-Driven Bilingual Architecture (`translations.py`)
-
-```mermaid
-flowchart TD
-    UserToggle[User clicks Marathi or English toggle] --> SetLang[st.session_state.lang = mr or en]
-    SetLang --> TriggerRerun[st.rerun triggers full UI refresh]
-    TriggerRerun --> AppRender[app.py, modules, and auth call t key]
-    AppRender --> LookupDict[translations.t checks TRANSLATIONS lang key]
-    LookupDict --> FallbackCheck{Key exists in active language?}
-    FallbackCheck -->|Yes| ReturnStr[Return translated string]
-    FallbackCheck -->|No| ReturnFallback[Fallback to English or key itself]
-```
-
-### A. How Pure English & Marathi Switching Works
-1. **Central State Source of Truth:**
-   - `st.session_state.lang` stores the active language (`"mr"` for Marathi, `"en"` for English).
-   - Default is `"mr"` (Marathi) to honor the primary user base of Maharashtra farmers.
-2. **Dual Synchronized Mode Switchers:**
-   - A mode switcher (`render_language_switcher()`) is placed on **both the Login screen** and **the top of the sidebar**.
-   - Because both switchers read from and write to `st.session_state.lang`, switching the language on the login screen or inside the app takes effect immediately across all modules.
-3. **`translations.py` Dictionary Engine:**
-   - `TRANSLATIONS` contains comprehensive, culturally authentic translations for both languages.
-   - `t(key)` resolves the string for the active language. If a key is missing in Marathi, it gracefully falls back to English, preventing runtime exceptions.
-4. **Coverage Across Modules:**
-   - Login Portal: Headings, buttons, labels, and error messages.
-   - Sidebar: Branding, farm snapshot labels, navigation radio items, and logout.
-   - Module 1 (Dashboard): KPI metrics, greetings, profile viewer/editor, and service hub cards.
-   - Module 2 (Crop Helper): Stage tabs, duration, agronomy headings, and task checklist.
-   - Module 4 (Nearby Services): Category filters, search labels, provider cards, and WhatsApp inquiry text.
-
-### B. SIH Judge Q&A Defense for Bilingual Architecture
-- *Judge Question:* "Why use a static dictionary instead of an automated translation API (Google Translate API)?"
-- *Engineering Defense:* Machine translation APIs often produce literal, awkward translations of rural agricultural terms (for example, translating "Drip Irrigation" to literal words rather than the colloquial *"ठिबक सिंचन"* or "Downy Mildew" to non-standard terms instead of *"डाऊनी मिल्ड्यू"*). A curated dictionary ensures 100% agronomic terminology accuracy, zero API network latency, zero monthly API cost, and offline readiness.
-
----
-
-## 8. Modern Split-Screen SaaS UI Architecture & Global Polish
-
-### A. Layout Geometry & Visual Hierarchy
-To transition from a prototype look into an enterprise-grade agricultural digital product, `modules/auth.py` and `app.py` were redesigned with a modern split-screen SaaS card pattern:
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             KrishiVaani App Canvas                          │
-│  ┌───────────────────────────────────┬───────────────────────────────────┐  │
-│  │   LEFT PANEL (Rich Visual Brand)  │   RIGHT PANEL (Clean White Form)  │  │
-│  │                                   │                                   │  │
-│  │  [🌾 KrishiVaani • Badge]        │                    [मराठी|English]│  │
-│  │                                   │                                   │  │
-│  │     * Clean Connected Vector *    │   Welcome back, Farmer            │  │
-│  │    * SVG Agricultural Diagram *   │   Enter your mobile & 4-digit PIN │  │
-│  │       (Crop, Cattle, Cost, Serv)  │                                   │  │
-│  │                                   │   [ Mobile Number               ] │  │
-│  │                                   │   [ 4-Digit Security PIN        ] │  │
-│  │   "One unified digital platform   │                                   │  │
-│  │   for everyday Maharashtra farm"  │   [ 🚀 Log In to My Farm (CTA)  ] │  │
-│  │                                   │   ──────────── or ────────────    │  │
-│  │   (Pills: Crop, Cattle, Exp, Serv)│   [ ⚡ 1-Click Demo Login       ] │  │
-│  │                                   │                                   │  │
-│  │                                   │   👉 Don't have an account? Reg   │  │
-│  └───────────────────────────────────┴───────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-1. **Split-Screen Ratio (`st.columns([1.15, 1], gap="large")`):**
-   - **Left Panel (Brand Showcase):** Styled with a full-height deep forest gradient (`#14532D` to `#166534`), generous inner padding (38px), rounded corners (20px), and an ambient drop shadow.
-   - **Right Panel (Minimalist Clean White Form):** White card (`#FFFFFF`) with 16px border-radius, soft elevation (`box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05)`), and top-right language switcher pill.
-2. **Custom Vector SVG Farm Ecosystem:**
-   - Designed in pure vector SVG (`generate_showcase_svg()`) without external raster image files or third-party graphic dependencies.
-   - Features a glowing central KrishiVaani hub connected via dashed signal lines to 4 distinct domain satellites: *Crop Advisory*, *Livestock Care*, *Expense Analytics*, and *Local Services*.
-   - Dynamically renders node labels in Marathi or English matching `st.session_state.lang`.
-3. **Global Chrome Elimination & Typography:**
-   - Injects custom CSS hiding Streamlit's default header, colored decoration ribbon, hamburger menu, and footer (`#MainMenu`, `header`, `footer`, `stToolbar`, `stDecoration`).
-   - Imports Google Fonts (`Inter` for Latin characters, `Noto Sans Devanagari` for Marathi) ensuring razor-sharp rendering on all screens.
-   - Standardizes inputs with `border-radius: 10px`, `#15803D` soft focus glow, and emerald green CTA buttons (`#15803D`).
-
-### B. SIH Judge Q&A Defense for UI/UX Redesign
-- *Judge Question:* "Why invest in a modern SaaS split-screen design for rural agricultural software?"
-- *Engineering Defense:* User adoption among modern farmers, farmer-producer organizations (FPOs), and agri-extension workers demands high visual trust. A cluttered, amateurish prototype suggests unreliability. Clean typography, bilingual clarity, and an uncluttered visual hierarchy reduce cognitive load, making the application immediately intuitive even for first-time smartphone users.
-
-### C. High-End SaaS Card & Animated Agricultural Landscape
-- **Zero Nested Boxes & Single-Viewport Fit:** Removed all `border=True` arguments from `st.container()` and `st.form()` to eliminate nested gray boxes. Styled `div[data-testid="stHorizontalBlock"]` as a unified white card container (`background: #FFFFFF; border-radius: 24px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08); padding: 16px; max-width: 1040px; margin: 0 auto;`), flattening default Streamlit form borders so the entire view fits neatly on a single screen without vertical scrolling.
-- **Rich Animated Sunrise & Swaying Crops (`generate_animated_landscape_svg()`):** Designed a lush SVG landscape featuring a sunrise gradient (`#FEF3C7` to `#DCFCE7`), a pulsing golden sun (`@keyframes pulseGlow`), multi-layered rolling emerald terraces with contour furrows, and foreground golden wheat stalks and green leafy plants gently swaying in the breeze via pure CSS `@keyframes swayLeft` / `swayRight`.
-- **Frosted Glassmorphic Overlay:** Positioned a frosted glass card (`backdrop-filter: blur(12px); background: rgba(20, 83, 45, 0.85);`) at the bottom of the landscape containing a brand badge, headline (*"Empowering Every Harvest"* / *"प्रत्येक हंगामाचे सक्षमीकरण"*), and subtitle.
-- **Zero-Indentation DOM Engine:** All HTML, CSS, and SVG templates are strictly left-aligned to column 0 and parsed via `textwrap.dedent(...)`, completely eliminating Markdown 4-space code-block misinterpretation traps.
-
----
-
-## 9. Summary of Edge Cases Handled
-
-1. **Authentication Gate Bypassing:** Guarded with `st.stop()` to guarantee that unauthenticated sessions cannot execute background module logic.
-2. **Phone Number Format Variations:** Normalizes `+91`, leading zeros, dashes, and whitespace before credentials lookup.
-3. **Bilingual Fallbacks:** Missing keys in `TRANSLATIONS["mr"]` fall back seamlessly to English without breaking page execution.
-4. **Persistent Language Across Navigation:** Switching modules preserves the selected language mode because `st.session_state.lang` is independent of `active_nav`.
-5. **State Reset Isolation:** Restoring sample defaults resets farm records while maintaining the farmer's active session and language preference.
-6. **Responsive Layout Collapse:** The 2-column split-screen layout gracefully stacks vertically on narrow mobile viewport widths without text truncation.

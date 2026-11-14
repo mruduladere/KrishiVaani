@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('app_title') }} - {{ t('app_subtitle') }}</title>
+    <!-- Google Fonts: Inter & Noto Sans Devanagari -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        @keyframes gentleBreath {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-4px) scale(1.015); }
+        }
+        .sprout-anim {
+            animation: gentleBreath 4.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 md:p-8">
+
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 grid md:grid-cols-2 overflow-hidden min-h-[580px]">
+        
+        <!-- Left Panel: Minimalist Sage Botanical Showcase -->
+        <div class="bg-gradient-to-b from-[#F2F7F4] to-[#E4EFE8] p-8 md:p-10 flex flex-col justify-between relative select-none">
+            <!-- Brand Badge -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-600/10 text-emerald-700 flex items-center justify-center">
+                    <i data-lucide="sprout" class="w-4 h-4"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-slate-800 tracking-tight text-sm">KrishiVaani</span>
+                    <span class="text-[11px] text-slate-500 font-medium -mt-0.5">{{ t('app_subtitle') }}</span>
+                </div>
+            </div>
+
+            <!-- Minimal Botanical Crop SVG -->
+            <div class="my-auto py-8 flex flex-col items-center justify-center">
+                <div class="sprout-anim w-48 h-48 flex items-center justify-center">
+                    <svg viewBox="0 0 200 200" width="180" height="180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Soft soil mound -->
+                        <path d="M30 170 C60 156, 140 156, 170 170" stroke="#8DA399" stroke-width="2.5" stroke-linecap="round"/>
+                        <ellipse cx="100" cy="172" rx="42" ry="7" fill="#8DA399" fill-opacity="0.25"/>
+                        
+                        <!-- Tender sprout main stem -->
+                        <path d="M100 168 C100 135, 100 105, 100 75" stroke="#166534" stroke-width="3" stroke-linecap="round"/>
+                        
+                        <!-- Left Leaf -->
+                        <path d="M100 120 C82 110, 68 85, 76 68 C92 72, 98 100, 100 120 Z" fill="#22C55E" fill-opacity="0.85" stroke="#15803D" stroke-width="1.5" stroke-linejoin="round"/>
+                        <!-- Left leaf vein -->
+                        <path d="M100 120 C90 102, 82 82, 76 68" stroke="#15803D" stroke-width="1" stroke-linecap="round"/>
+
+                        <!-- Right Leaf -->
+                        <path d="M100 102 C118 92, 132 68, 124 50 C108 55, 102 82, 100 102 Z" fill="#16A34A" fill-opacity="0.9" stroke="#14532D" stroke-width="1.5" stroke-linejoin="round"/>
+                        <!-- Right leaf vein -->
+                        <path d="M100 102 C110 85, 118 65, 124 50" stroke="#14532D" stroke-width="1" stroke-linecap="round"/>
+
+                        <!-- Little dew drops -->
+                        <circle cx="75" cy="66" r="2.5" fill="#38BDF8" fill-opacity="0.85"/>
+                    </svg>
+                </div>
+                <div class="mt-4 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700/10 text-emerald-800">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                        {{ t('sih_badge') }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Bottom Tagline -->
+            <div class="pt-4 border-t border-emerald-900/10">
+                <p class="text-xs text-slate-600 leading-relaxed font-normal">
+                    {{ t('auth_showcase_tagline') }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Auth Forms Container -->
+        <div class="p-8 md:p-10 flex flex-col justify-between bg-white">
+            
+            <!-- Language Pill Switcher at Top Right -->
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-xs text-slate-400 font-medium">KrishiVaani Portal</span>
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                    <a href="/set-lang/mr" class="px-3 py-1 rounded-lg transition-all {% if lang == 'mr' %}bg-white text-emerald-700 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        मराठी
+                    </a>
+                    <a href="/set-lang/en" class="px-3 py-1 rounded-lg transition-all {% if lang == 'en' %}bg-white text-emerald-700 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        English
+                    </a>
+                </div>
+            </div>
+
+            <!-- Flash Alert Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="p-3 rounded-xl text-xs font-medium flex items-center gap-2 {% if category == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-800 border border-emerald-200{% endif %}">
+                                <i data-lucide="{% if category == 'error' %}alert-circle{% else %}check-circle{% endif %}" class="w-4 h-4 shrink-0"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- LOGIN VIEW -->
+            <div id="login-section" class="flex-1 flex flex-col justify-center">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                        {{ t('auth_welcome_title') }}
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-1">
+                        {{ t('auth_welcome_subtitle') }}
+                    </p>
+                </div>
+
+                <!-- 1-Click Demo Login Button (For Judges) -->
+                <div class="mb-5">
+                    <a href="/demo-login" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-xl shadow-sm shadow-emerald-600/20 transition-all duration-200 text-sm group">
+                        <i data-lucide="zap" class="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform"></i>
+                        <span>{{ t('demo_login_button') }}</span>
+                    </a>
+                    <p class="text-[11px] text-slate-400 text-center mt-1.5 font-normal">
+                        {{ t('demo_login_caption') }}
+                    </p>
+                </div>
+
+                <div class="relative flex py-2 items-center mb-5">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-3 text-[10px] tracking-wider font-semibold text-slate-400 uppercase">{{ t('or_divider') }}</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <!-- Credential Login Form -->
+                <form action="/login" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                            {{ t('phone_label') }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="phone" class="w-4 h-4"></i>
+                            </div>
+                            <input type="text" name="phone" value="9822012345" required placeholder="{{ t('phone_placeholder') }}"
+                                class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-semibold text-slate-700">
+                                {{ t('pin_label') }}
+                            </label>
+                            <span class="text-[11px] text-slate-400">Demo PIN: 1234</span>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </div>
+                            <input type="password" name="pin" value="1234" maxlength="6" required placeholder="{{ t('pin_placeholder') }}"
+                                class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm text-sm transition flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>{{ t('login_button') }}</span>
+                    </button>
+                </form>
+
+                <!-- Switch to Register Toggle -->
+                <div class="mt-6 text-center">
+                    <button type="button" onclick="toggleAuth('register')" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1">
+                        <span>{{ t('auth_switch_to_register') }}</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- REGISTER VIEW (Initially Hidden) -->
+            <div id="register-section" class="hidden flex-1 flex flex-col justify-center">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">
+                        {{ t('auth_register_header') }}
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        {{ t('auth_register_subtitle') }}
+                    </p>
+                </div>
+
+                <form action="/register" method="POST" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_name_label') }} *</label>
+                            <input type="text" name="name" required placeholder="e.g. Anand Shinde"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_phone_label') }} *</label>
+                            <input type="tel" name="phone" required placeholder="10-digit Mobile"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_pin_label') }} *</label>
+                            <input type="password" name="pin" maxlength="4" required placeholder="4-Digit PIN"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_land_label') }}</label>
+                            <input type="number" step="0.5" name="land_size" value="3.0"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_village_label') }}</label>
+                            <input type="text" name="village" value="Ozar"
+                                class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_taluka_label') }}</label>
+                            <input type="text" name="taluka" value="Niphad"
+                                class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_district_label') }}</label>
+                            <input type="text" name="district" value="Nashik"
+                                class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('reg_crops_label') }}</label>
+                        <input type="text" name="crops" value="Grapes, Onion" placeholder="{{ t('reg_crops_placeholder') }}"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                    </div>
+
+                    <button type="submit" class="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>{{ t('register_button') }}</span>
+                    </button>
+                </form>
+
+                <div class="mt-4 text-center">
+                    <button type="button" onclick="toggleAuth('login')" class="text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline inline-flex items-center gap-1">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                        <span>{{ t('auth_switch_to_login') }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer note -->
+            <div class="mt-6 pt-3 border-t border-slate-100 text-center">
+                <span class="text-[11px] text-slate-400">
+                    Pure Python • In-Memory Session • Strictly No Database
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        function toggleAuth(mode) {
+            const loginSec = document.getElementById('login-section');
+            const regSec = document.getElementById('register-section');
+            if (mode === 'register') {
+                loginSec.classList.add('hidden');
+                regSec.classList.remove('hidden');
+            } else {
+                regSec.classList.add('hidden');
+                loginSec.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+        lucide.createIcons();
+    </script>
+</body>
+</html>

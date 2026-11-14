@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ t('app_title') }}{% endblock %} - {{ t('app_subtitle') }}</title>
+    <!-- Google Fonts: Inter & Noto Sans Devanagari -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F8FAFC;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen text-slate-800 antialiased flex">
+
+    <!-- Fixed Left Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200/80 fixed left-0 top-0 bottom-0 z-30 flex flex-col justify-between p-4">
+        <div>
+            <!-- App Branding -->
+            <div class="flex items-center gap-3 px-2 py-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+                    <i data-lucide="sprout" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold text-slate-900 tracking-tight leading-none">{{ t('app_title') }}</h1>
+                    <span class="text-[11px] font-medium text-emerald-700 tracking-tight">{{ t('app_subtitle') }}</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="px-2 mb-2">
+                <span class="text-[11px] font-bold tracking-wider uppercase text-slate-400">{{ t('nav_header') }}</span>
+            </div>
+            
+            <nav class="space-y-1">
+                <!-- 1. Dashboard -->
+                <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'dashboard' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 {% if active_nav == 'dashboard' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_dashboard').split(' ')[1:] | join(' ') if ' ' in t('nav_dashboard') else t('nav_dashboard') }}</span>
+                </a>
+
+                <!-- 2. Crop Helper -->
+                <a href="/crop-helper" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'crop_helper' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="sprout" class="w-4 h-4 {% if active_nav == 'crop_helper' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_crop_helper').split(' ')[1:] | join(' ') if ' ' in t('nav_crop_helper') else t('nav_crop_helper') }}</span>
+                </a>
+
+                <!-- 3. Multilingual AI Assistant -->
+                <a href="/ai-assistant" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'ai_assistant' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="bot" class="w-4 h-4 {% if active_nav == 'ai_assistant' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_ai_assistant').split(' ')[1:] | join(' ') if ' ' in t('nav_ai_assistant') else t('nav_ai_assistant') }}</span>
+                </a>
+
+                <!-- 4. Nearby Services -->
+                <a href="/nearby-services" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'nearby_services' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="map-pin" class="w-4 h-4 {% if active_nav == 'nearby_services' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_nearby_services').split(' ')[1:] | join(' ') if ' ' in t('nav_nearby_services') else t('nav_nearby_services') }}</span>
+                </a>
+
+                <!-- 5. Marketplace -->
+                <a href="/marketplace" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'marketplace' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="store" class="w-4 h-4 {% if active_nav == 'marketplace' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_marketplace').split(' ')[1:] | join(' ') if ' ' in t('nav_marketplace') else t('nav_marketplace') }}</span>
+                </a>
+
+                <!-- 6. Livestock -->
+                <a href="/livestock" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'livestock' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="heart-pulse" class="w-4 h-4 {% if active_nav == 'livestock' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_livestock').split(' ')[1:] | join(' ') if ' ' in t('nav_livestock') else t('nav_livestock') }}</span>
+                </a>
+
+                <!-- 7. Expenses -->
+                <a href="/expenses" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'expense_tracker' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="receipt" class="w-4 h-4 {% if active_nav == 'expense_tracker' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_expense_tracker').split(' ')[1:] | join(' ') if ' ' in t('nav_expense_tracker') else t('nav_expense_tracker') }}</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Bottom: Farmer Profile Snapshot & Logout -->
+        <div class="space-y-3 pt-3 border-t border-slate-100">
+            <!-- Farmer Profile Card -->
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-sm">
+                    {{ farmer.name[0] if farmer.name else 'F' }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-semibold text-slate-900 truncate">{{ farmer.name.split('(')[0] }}</p>
+                    <p class="text-[11px] text-slate-500 truncate">{{ farmer.village.split('(')[0] }}, {{ farmer.taluka.split('(')[0] }}</p>
+                    <span class="inline-block mt-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded-md">
+                        {{ farmer.land_size_acres }} Acres
+                    </span>
+                </div>
+            </div>
+
+            <!-- Logout Link -->
+            <a href="/logout" class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 transition-all">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span>{{ t('logout_button') }}</span>
+            </a>
+
+            <p class="text-[10px] text-center text-slate-400">
+                SIH 2026 Prototype • No DB
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="ml-64 flex-1 flex flex-col min-h-screen">
+        
+        <!-- Top Navigation Header -->
+        <header class="h-16 bg-white/90 backdrop-blur sticky top-0 z-20 border-b border-slate-200/80 px-8 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <h2 class="text-base font-bold text-slate-800">
+                    {{ t('greeting_welcome') }}, <span class="text-emerald-700">{{ farmer.name.split('(')[0] }}</span>
+                </h2>
+                <span class="text-slate-300">|</span>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>{{ t('greeting_season') }}</span>
+                </div>
+            </div>
+
+            <!-- Right Controls: Language Switcher & Quick Action -->
+            <div class="flex items-center gap-3">
+                <!-- Dual Language Switcher Pill -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                    <a href="/set-lang/mr" class="px-3 py-1 rounded-lg transition-all {% if lang == 'mr' %}bg-white text-emerald-700 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        मराठी
+                    </a>
+                    <a href="/set-lang/en" class="px-3 py-1 rounded-lg transition-all {% if lang == 'en' %}bg-white text-emerald-700 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                        English
+                    </a>
+                </div>
+
+                <!-- Quick Action Button -->
+                <a href="/crop-helper" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium shadow-sm transition">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('btn_open_module') }} {{ t('crop_helper_banner_title') }}</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Messages on Authenticated Pages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="px-8 pt-4 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-xl text-xs font-medium flex items-center gap-2 {% if category == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-800 border border-emerald-200{% endif %}">
+                            <i data-lucide="{% if category == 'error' %}alert-circle{% else %}check-circle{% endif %}" class="w-4 h-4 shrink-0"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Specific Body Content -->
+        <main class="p-8 flex-1">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Global Subtle Footer -->
+        <footer class="py-4 px-8 border-t border-slate-200/80 text-center text-xs text-slate-400">
+            {{ t('footer_text') }}
+        </footer>
+
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

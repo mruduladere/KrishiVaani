@@ -8,7 +8,15 @@ Provides:
 - render_language_switcher(key) for synchronized dual-mode switching across views.
 """
 
-import streamlit as st
+try:
+    from flask import session as flask_session
+except ImportError:
+    flask_session = None
+
+try:
+    import streamlit as st
+except ImportError:
+    st = None
 
 TRANSLATIONS = {
     "en": {
@@ -409,8 +417,18 @@ TRANSLATIONS = {
 
 
 def get_lang():
-    """Returns active language string ('mr' or 'en') from session state."""
-    return st.session_state.get("lang", "mr")
+    """Returns active language string ('mr' or 'en') from session state or Flask session."""
+    if flask_session is not None:
+        try:
+            return flask_session.get("lang", "mr")
+        except RuntimeError:
+            pass
+    if st is not None and hasattr(st, "session_state"):
+        try:
+            return st.session_state.get("lang", "mr")
+        except Exception:
+            pass
+    return "mr"
 
 
 def t(key, lang=None):
@@ -420,15 +438,16 @@ def t(key, lang=None):
     """
     if lang is None:
         lang = get_lang()
-    lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["mr"])
-    return lang_dict.get(key, TRANSLATIONS["en"].get(key, key))
+    lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS.get("mr", {}))
+    return lang_dict.get(key, TRANSLATIONS.get("en", {}).get(key, key))
 
 
 def render_language_switcher(key="global"):
     """
-    Renders an interactive language mode selector.
-    Updates st.session_state.lang and triggers st.rerun() on user switch.
+    Renders an interactive language mode selector (Streamlit compatibility).
     """
+    if st is None or not hasattr(st, "session_state"):
+        return
     current_lang = get_lang()
     current_idx = 0 if current_lang == "mr" else 1
 

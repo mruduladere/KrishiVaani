@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nearby_banner_title') }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+
+    <!-- Header Banner -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                <span>Module 4 • Regional Agro Services</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                {{ t('nearby_banner_title') }}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+                {{ t('nearby_banner_subtitle') }}
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="document.getElementById('add-service-modal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>{{ t('add_service_expander') }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <form action="/nearby-services" method="GET" class="space-y-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- Search Keyword -->
+                <div class="md:col-span-1">
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        {{ t('keyword_search_label') }}
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="{{ t('keyword_placeholder') }}"
+                            class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                    </div>
+                </div>
+
+                <!-- Taluka Filter -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        {{ t('taluka_filter_label') }}
+                    </label>
+                    <select name="taluka" onchange="this.form.submit()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                        <option value="">{{ t('all_talukas') }}</option>
+                        {% for tal in talukas %}
+                            <option value="{{ tal }}" {% if tal == selected_taluka %}selected{% endif %}>{{ tal }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit / Clear Actions -->
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="flex-1 py-2 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        <span>Apply Filters</span>
+                    </button>
+                    {% if search_query or selected_category or selected_taluka %}
+                        <a href="/nearby-services" class="py-2 px-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition" title="Clear all filters">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="pt-2 border-t border-slate-100">
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                    {{ t('category_filter_label') }}
+                </span>
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <a href="/nearby-services?cat=&taluka={{ selected_taluka }}&q={{ search_query }}" 
+                       class="px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all {% if not selected_category %}bg-emerald-600 text-white font-semibold shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        {{ t('all_categories') }}
+                    </a>
+                    {% for cat_label in categories %}
+                        {% set is_cat_active = (cat_label == selected_category) %}
+                        <a href="/nearby-services?cat={{ cat_label }}&taluka={{ selected_taluka }}&q={{ search_query }}"
+                           class="px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all {% if is_cat_active %}bg-emerald-600 text-white font-semibold shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                            {{ cat_label.split('(')[0] }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Results Header -->
+    <div class="flex items-center justify-between text-xs text-slate-500 px-2">
+        <span>{{ t('showing_label') }} <strong class="text-slate-800 font-semibold">{{ services | length }}</strong> {{ t('providers_label') }}</span>
+        <span class="flex items-center gap-1 text-emerald-700 font-medium">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            Verified regional directory
+        </span>
+    </div>
+
+    <!-- Services Grid -->
+    {% if services %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {% for srv in services %}
+        <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition-colors">
+            <div>
+                <!-- Top Row: Name & Rating -->
+                <div class="flex items-start justify-between gap-3 mb-2">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-sm text-slate-900 leading-snug">
+                            {{ srv.name }}
+                        </h3>
+                        {% if srv.verified %}
+                            <span title="Verified by KrishiVaani" class="text-emerald-600">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-lg text-xs font-bold shrink-0">
+                        <i data-lucide="star" class="w-3 h-3 fill-amber-500 text-amber-500"></i>
+                        <span>{{ srv.rating }}</span>
+                    </div>
+                </div>
+
+                <!-- Category & Location Tags -->
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                    <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        {{ srv.category.split('(')[0] }}
+                    </span>
+                    <span class="text-[10px] text-slate-500 flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
+                        {{ srv.location }}
+                    </span>
+                </div>
+
+                <!-- Timings -->
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span><strong>{{ t('timings_label') }}:</strong> {{ srv.timings }}</span>
+                </div>
+
+                <!-- Specialities -->
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 mb-4 leading-relaxed">
+                    <span class="block font-semibold text-slate-700 mb-0.5">{{ t('available_services_label') }}</span>
+                    {{ srv.speciality }}
+                </div>
+            </div>
+
+            <!-- Action Buttons: Direct Call & WhatsApp -->
+            <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
+                {% set phone_clean = srv.phone.replace(' ', '').replace('-', '') %}
+                
+                <!-- Call button -->
+                <a href="tel:{{ phone_clean }}" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                    <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('btn_call_now') }}</span>
+                </a>
+
+                <!-- WhatsApp button -->
+                {% set wa_text = "Namaskar, I am " + farmer.name.split('(')[0] + ". Contacting via KrishiVaani regarding agro services." %}
+                <a href="https://wa.me/{{ phone_clean.replace('+', '') }}?text={{ wa_text | urlencode }}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('btn_whatsapp') }}</span>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white p-12 rounded-3xl border border-slate-200/80 text-center space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <i data-lucide="map-pin-off" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-bold text-slate-800 text-sm">No Service Providers Found</h3>
+        <p class="text-xs text-slate-500 max-w-md mx-auto">{{ t('no_providers_found') }}</p>
+        <a href="/nearby-services" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline">
+            <span>Clear search filters</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Add In-Memory Service Modal (Hidden by Default) -->
+<div id="add-service-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+                <span>{{ t('add_service_expander') }}</span>
+            </h3>
+            <button onclick="document.getElementById('add-service-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="/add-service" method="POST" class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_name_label') }} *</label>
+                <input type="text" name="name" required placeholder="e.g. Sahyadri Kisan Seva Kendra"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_cat_label') }}</label>
+                    <select name="category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                        {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat.split('(')[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_taluka_label') }}</label>
+                    <select name="taluka" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
+                        {% for tal in talukas %}
+                            <option value="{{ tal }}">{{ tal.split('(')[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_phone_label') }} *</label>
+                    <input type="tel" name="phone" required placeholder="+91 98220 00000"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_location_label') }}</label>
+                    <input type="text" name="location" value="Main APMC Market (2.5 km)"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_timings_label') }}</label>
+                <input type="text" name="timings" value="8:30 AM - 7:30 PM"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('provider_speciality_label') }}</label>
+                <textarea name="speciality" rows="2" placeholder="e.g. Certified onion seeds, organic fertilizer, spray equipment"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"></textarea>
+            </div>
+
+            <div class="pt-3 flex items-center justify-end gap-2">
+                <button type="button" onclick="document.getElementById('add-service-modal').classList.add('hidden')" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold">
+                    {{ t('btn_cancel') }}
+                </button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm">
+                    {{ t('btn_save_service') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
