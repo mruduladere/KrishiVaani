@@ -17,7 +17,7 @@ This document serves as the project's living architectural manual, written in pl
 | **Typography** | **Inter & Noto Sans Devanagari** | Professional dual-language font stack rendering English and Marathi Devanagari with crisp legibility. |
 | **Database** | **STRICTLY ZERO DATABASE** | Core project constraint. Runtime state is maintained entirely in Python memory (`FARMERS_DB`, `SERVICES_DB`, `TASKS_DB`, `LIVESTOCK_DB`, `EXPENSES_DB`) and `flask.session`. Zero SQL/NoSQL setup required. |
 | **Persistence** | In-Memory Global Dictionaries + Session Cookie | Boots immediately with rich pre-loaded Maharashtra farming datasets. Edits, vaccinations, new animals, and expense logs persist during the server lifecycle. |
-| **Bilingual Architecture** | First-Class English & Marathi | Managed via `translations.py` dictionary lookups. Jinja2 context processor injects `t(key)` and active `lang` automatically into every template. |
+| **Bilingual Architecture** | First-Class Pure English & Pure Marathi (100% Separation) | Managed via `translations.py` dictionary lookups, `pick()` resolver, and `@app.template_filter('pick')`. Backend routes resolve dynamic bilingual dictionaries before rendering. Zero mixed parentheses like `"Seeds (बियाणे)"` or cross-language leakage. |
 
 ---
 
@@ -115,6 +115,18 @@ KrishiVaani/
 
 ### H. Roadmap Placeholders (Modules 3 and 5)
 - Standardized `templates/placeholder.html` rendering scope, badge, and planned capabilities for Module 3 (Multilingual AI Assistant) and Module 5 (Direct Marketplace).
+
+### I. Strict 100% Pure-Language Separation Architecture
+1. **Zero Cross-Language Leakage & No Mixed Parentheses:**
+   - When Marathi (`lang == 'mr'`) is active, zero raw English strings or parenthesized combinations (e.g., `"Seeds (बियाणे)"`) appear anywhere—including in dynamic tables, KPI cards, badges, and Chart.js tooltips/labels.
+   - When English (`lang == 'en'`) is active, 100% pure English text appears with zero Devanagari characters.
+2. **Backend Pre-Resolution Pattern:**
+   - Backend Flask routes (`/crop-helper`, `/nearby-services`, `/livestock`, `/expenses`) deep-copy and resolve all bilingual dictionaries (`{"en": "...", "mr": "..."}`) into pure strings using `pick(field, lang=active_lang)` before passing datasets to Jinja2 templates.
+   - Multi-dimensional aggregations (categories, crops, months, seasons) operate directly on resolved active-language strings.
+3. **Bilingual Utility Suite (`translations.py`):**
+   - `t(key, lang)`: UI string translator with language fallback.
+   - `pick(val, lang)`: Universal language selector handling bilingual dicts, reverse lookup for submitted strings, and regex-based stripping of legacy parenthetical text.
+   - `@app.template_filter('pick')`: Enables `{{ val | pick }}` in Jinja2 templates for raw farmer profile dictionaries.
 
 ---
 

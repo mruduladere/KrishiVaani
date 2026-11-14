@@ -10,7 +10,7 @@
         <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
                 <i data-lucide="sprout" class="w-3.5 h-3.5"></i>
-                <span>Module 2 • Maharashtra Agronomy Guide</span>
+                <span>{{ t('module_2_badge') if t('module_2_badge') != 'module_2_badge' else 'Module 2 • Maharashtra Agronomy Guide' }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
                 {{ t('crop_helper_banner_title') }}
@@ -23,7 +23,7 @@
         <!-- Quick filter / badge -->
         <div class="flex items-center gap-2">
             <span class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
-                🌱 Active Crop: <strong class="text-emerald-700">{{ active_crop }}</strong>
+                🌱 {{ t('active_crop_label') if t('active_crop_label') != 'active_crop_label' else 'Active Crop' }}: <strong class="text-emerald-700">{{ active_crop_label }}</strong>
             </span>
         </div>
     </div>
@@ -42,7 +42,7 @@
                     <span>{{ c_val.display_name }}</span>
                     {% if is_farmer_crop %}
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full {% if is_active %}bg-emerald-500 text-white{% else %}bg-emerald-50 text-emerald-700{% endif %}">
-                            ★ Farm
+                            ★ {{ t('farm_crop_badge') if t('farm_crop_badge') != 'farm_crop_badge' else 'Farm' }}
                         </span>
                     {% endif %}
                 </a>
@@ -54,7 +54,7 @@
     <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-                <span class="text-xs font-semibold tracking-wider text-emerald-300 uppercase">Agronomic Knowledge Base</span>
+                <span class="text-xs font-semibold tracking-wider text-emerald-300 uppercase">{{ t('agronomy_knowledge_base') if t('agronomy_knowledge_base') != 'agronomy_knowledge_base' else 'Agronomic Knowledge Base' }}</span>
                 <h2 class="text-2xl font-bold tracking-tight text-white mt-1">
                     {{ current_guide.display_name }}
                 </h2>
@@ -71,8 +71,8 @@
             </div>
 
             <div class="shrink-0 bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 text-center">
-                <div class="text-xl font-black text-white">{{ current_guide.stages | length }} Stages</div>
-                <span class="text-[11px] text-emerald-200">Lifecycle Advisory</span>
+                <div class="text-xl font-black text-white">{{ current_guide.stages | length }} {{ t('stages_count_suffix') }}</div>
+                <span class="text-[11px] text-emerald-200">{{ t('lifecycle_advisory') }}</span>
             </div>
         </div>
     </div>
@@ -81,9 +81,9 @@
     <div class="space-y-4">
         <div>
             <h2 class="text-lg font-bold text-slate-900 tracking-tight">
-                Stage-by-Stage Agricultural Lifecycle
+                {{ t('growth_lifecycle_title') }}
             </h2>
-            <p class="text-xs text-slate-500">Step-by-step nutrition, water management, and disease prophylaxis</p>
+            <p class="text-xs text-slate-500">{{ t('growth_lifecycle_sub') }}</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -176,13 +176,13 @@
         <div id="add-task-form-container" class="hidden p-5 bg-slate-50 rounded-2xl border border-slate-200">
             <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5">
                 <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
-                <span>Add In-Memory Farm Task</span>
+                <span>{{ t('add_inmemory_task') }}</span>
             </h3>
             <form action="/add-task" method="POST" class="space-y-3">
                 <input type="hidden" name="current_crop" value="{{ active_crop }}">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('task_desc_label') }} *</label>
-                    <input type="text" name="title" required placeholder="e.g. Bordeaux spray on outer vines"
+                    <input type="text" name="title" required placeholder="{{ t('task_placeholder') if t('task_placeholder') != 'task_placeholder' else 'e.g. Bordeaux spray on outer vines' }}"
                         class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
                 
@@ -191,21 +191,21 @@
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('task_crop_label') }}</label>
                         <select name="crop" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900">
                             {% for c_key, c_val in all_crops.items() %}
-                                <option value="{{ c_key }}" {% if c_key == active_crop %}selected{% endif %}>{{ c_key }}</option>
+                                <option value="{{ c_key }}" {% if c_key == active_crop %}selected{% endif %}>{{ c_val.display_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('task_due_label') }}</label>
-                        <input type="text" name="due_date" value="Next 3 Days"
+                        <input type="text" name="due_date" value="{{ t('next_3_days') }}"
                             class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1">{{ t('task_priority_label') }}</label>
                         <select name="priority" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900">
-                            <option value="High">High</option>
-                            <option value="Medium" selected>Medium</option>
-                            <option value="Low">Low</option>
+                            <option value="High">{{ t('high_priority') }}</option>
+                            <option value="Medium" selected>{{ t('medium_priority') }}</option>
+                            <option value="Low">{{ t('low_priority') }}</option>
                         </select>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
                     <span class="text-[11px] font-medium text-slate-500">
                         {{ task.due_date }}
                     </span>
-                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {% if task.priority == 'High' %}bg-rose-50 text-rose-700 border border-rose-200{% elif task.priority == 'Medium' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {% if task.priority == t('high_priority') or task.priority == 'High' %}bg-rose-50 text-rose-700 border border-rose-200{% elif task.priority == t('medium_priority') or task.priority == 'Medium' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-600{% endif %}">
                         {{ task.priority }}
                     </span>
                 </div>

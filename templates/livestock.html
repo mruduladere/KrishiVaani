@@ -10,7 +10,7 @@
         <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
                 <i data-lucide="heart-pulse" class="w-3.5 h-3.5"></i>
-                <span>Module 6 • Maharashtra Dairy & Cattle Care</span>
+                <span>{{ t('module_6_badge') }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
                 {{ t('livestock_banner_title') }}
@@ -30,7 +30,7 @@
 
     <!-- 4 KPI Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
+
         <!-- KPI 1: Total Animals -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 transition-colors">
             <div class="flex items-center justify-between mb-3">
@@ -44,7 +44,7 @@
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>
-                <span>Registered in farm registry</span>
+                <span>{{ t('registered_in_registry') }}</span>
             </div>
         </div>
 
@@ -57,11 +57,11 @@
                 </div>
             </div>
             <div class="text-2xl font-black text-slate-900 tracking-tight">
-                {{ "%.1f"|format(total_milk) }} <span class="text-sm font-semibold text-slate-500">L / day</span>
+                {{ "%.1f"|format(total_milk) }} <span class="text-sm font-semibold text-slate-500">{{ t('L / day') }}</span>
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="activity" class="w-3 h-3 text-sky-600"></i>
-                <span>Average: {{ "%.1f"|format(total_milk / (total_animals if total_animals > 0 else 1)) }} L / animal</span>
+                <span>{{ t('average_yield_prefix') }} {{ "%.1f"|format(total_milk / (total_animals if total_animals > 0 else 1)) }} {{ t('per_animal_suffix') }}</span>
             </div>
         </div>
 
@@ -74,11 +74,11 @@
                 </div>
             </div>
             <div class="text-2xl font-black text-rose-700 tracking-tight">
-                {{ overdue_count }} <span class="text-sm font-semibold text-slate-500">Vaccines</span>
+                {{ overdue_count }} <span class="text-sm font-semibold text-slate-500">{{ t('vaccines_count_suffix') }}</span>
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="clock" class="w-3 h-3 text-rose-500"></i>
-                <span>Requires immediate vet scheduling</span>
+                <span>{{ t('requires_immediate_vet') }}</span>
             </div>
         </div>
 
@@ -91,11 +91,11 @@
                 </div>
             </div>
             <div class="text-2xl font-black text-amber-700 tracking-tight">
-                {{ upcoming_count }} <span class="text-sm font-semibold text-slate-500">Vaccines</span>
+                {{ upcoming_count }} <span class="text-sm font-semibold text-slate-500">{{ t('vaccines_count_suffix') }}</span>
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="calendar" class="w-3 h-3 text-amber-500"></i>
-                <span>Next 14 days calendar window</span>
+                <span>{{ t('next_14_days_window') }}</span>
             </div>
         </div>
 
@@ -106,12 +106,12 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-900 tracking-tight">
-                    Individual Animal Health & Vaccine Registry
+                    {{ t('livestock_registry_title') }}
                 </h2>
-                <p class="text-xs text-slate-500">Vaccination overdue calculation evaluated automatically with Python datetime</p>
+                <p class="text-xs text-slate-500">{{ t('livestock_registry_subtitle') }}</p>
             </div>
             <span class="text-xs font-semibold text-slate-500">
-                Today: <strong class="text-slate-800">{{ today_str }}</strong>
+                {{ t('today_label') }}: <strong class="text-slate-800">{{ today_str }}</strong>
             </span>
         </div>
 
@@ -132,7 +132,7 @@
                             </div>
                             <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
                                 <i data-lucide="tag" class="w-3.5 h-3.5 text-slate-400"></i>
-                                <span>{{ animal.type }} • <strong>{{ animal.breed }}</strong></span>
+                                <span>{{ animal.type }} &bull; <strong>{{ animal.breed }}</strong></span>
                             </p>
                         </div>
 
@@ -143,18 +143,18 @@
                         </span>
                     </div>
 
-                    <!-- Metrics Grid: Age, Yield, Status -->
+                    <!-- Metrics Grid: Age, Yield, Vaccines -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
                         <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">{{ t('animal_age_label') }}</span>
-                            <span class="text-sm font-extrabold text-slate-800">{{ animal.age_years }} Yrs</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ animal.age_years }} {{ t('Yrs') }}</span>
                         </div>
                         <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">{{ t('animal_milk_label') }}</span>
-                            <span class="text-sm font-extrabold text-slate-800">{{ animal.daily_milk_yield_litres }} L/day</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ animal.daily_milk_yield_litres }} {{ t('L / day') }}</span>
                         </div>
                         <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-center col-span-2 sm:col-span-1">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Vaccines Tracked</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">{{ t('vaccines_tracked') }}</span>
                             <span class="text-sm font-extrabold text-slate-800">{{ animal.vaccination_history | length }}</span>
                         </div>
                     </div>
@@ -177,15 +177,15 @@
                                             <span>{{ v.badge_label }}</span>
                                         </span>
                                     </div>
-                                    <div class="text-[11px] text-slate-500 flex items-center gap-2">
-                                        <span>Last: {{ v.date_given }}</span>
-                                        <span>•</span>
-                                        <span>Due: <strong class="text-slate-700">{{ v.due_date }}</strong></span>
+                                    <div class="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                                        <span>{{ t('last_dose_label') }} {{ v.date_given }}</span>
+                                        <span>&bull;</span>
+                                        <span>{{ t('due_date_label') }} <strong class="text-slate-700">{{ v.due_date }}</strong></span>
                                         {% if v.days_diff is not none %}
                                             {% if v.days_diff < 0 %}
-                                                <span class="text-rose-600 font-bold">({{ v.days_diff | abs }} days late)</span>
+                                                <span class="text-rose-600 font-bold">({{ v.days_diff | abs }} {{ t('days_late') }})</span>
                                             {% elif v.days_diff <= 14 %}
-                                                <span class="text-amber-600 font-bold">(in {{ v.days_diff }} days)</span>
+                                                <span class="text-amber-600 font-bold">({{ t('in_days') }} {{ v.days_diff }} {{ t('days_suffix') }})</span>
                                             {% endif %}
                                         {% endif %}
                                     </div>
@@ -196,7 +196,7 @@
                                     {% if v.status_code in ['overdue', 'upcoming'] %}
                                     <form action="/livestock/vaccinate" method="POST" class="inline">
                                         <input type="hidden" name="animal_id" value="{{ animal.tag_id }}">
-                                        <input type="hidden" name="vaccine_name" value="{{ v.vaccine }}">
+                                        <input type="hidden" name="vaccine_name" value="{{ v.vaccine_key }}">
                                         <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
                                             <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
                                             <span>{{ t('btn_mark_vaccinated') }}</span>
@@ -205,7 +205,7 @@
                                     {% else %}
                                     <span class="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg">
                                         <i data-lucide="check" class="w-3 h-3"></i>
-                                        <span>Scheduled</span>
+                                        <span>{{ t('status_scheduled') }}</span>
                                     </span>
                                     {% endif %}
                                 </div>
@@ -244,7 +244,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_name_label') }} *</label>
-                    <input type="text" name="name" required placeholder="e.g. Radhika (राधिका)"
+                    <input type="text" name="name" required placeholder="e.g. Radhika"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
             </div>
@@ -253,16 +253,16 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_type_label') }}</label>
                     <select name="type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
-                        <option value="Cow">Cow (गाय)</option>
-                        <option value="Buffalo">Buffalo (म्हैस)</option>
-                        <option value="Goat">Goat (शेळी)</option>
-                        <option value="Bull">Bull (बैल)</option>
-                        <option value="Sheep">Sheep (मेंढी)</option>
+                        <option value="Cow">{{ t('Cow') }}</option>
+                        <option value="Buffalo">{{ t('Buffalo') }}</option>
+                        <option value="Goat">{{ t('Goat') }}</option>
+                        <option value="Bull">{{ t('Bull') }}</option>
+                        <option value="Sheep">{{ t('Sheep') }}</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('animal_breed_label') }}</label>
-                    <input type="text" name="breed" value="Gir (गीर)" required
+                    <input type="text" name="breed" value="Gir" required
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
             </div>
@@ -281,12 +281,12 @@
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Initial Vaccine Schedule</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('initial_vaccine_label') }}</label>
                 <select name="initial_vaccine" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
-                    <option value="FMD">Foot & Mouth Disease (FMD - खुरखूत)</option>
-                    <option value="HS">Hemorrhagic Septicemia (HS - घटसर्प)</option>
-                    <option value="BQ">Black Quarter (BQ - फऱ्या)</option>
-                    <option value="Brucellosis">Brucellosis (ब्रुसेलोसिस)</option>
+                    <option value="FMD">Foot &amp; Mouth Disease (FMD)</option>
+                    <option value="HS">Hemorrhagic Septicemia (HS)</option>
+                    <option value="BQ">Black Quarter (BQ)</option>
+                    <option value="Brucellosis">Brucellosis</option>
                 </select>
             </div>
 

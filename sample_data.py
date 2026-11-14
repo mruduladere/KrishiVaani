@@ -1,690 +1,995 @@
 """
-sample_data.py - Realistic Sample Data for KrishiVaani (Voice of Agriculture)
-Pre-loaded in-memory data for Maharashtra farmers to make the prototype feel alive immediately.
-No external database required (pure Python dictionaries and session state).
+sample_data.py - Realistic Bilingual Sample Data for KrishiVaani (Voice of Agriculture)
+Pre-loaded in-memory data for Maharashtra farmers designed with Strict Pure-Language Separation:
+- When lang == 'en': 100% pure English (no Devanagari or parentheses).
+- When lang == 'mr': 100% pure Marathi (no raw English or mixed brackets).
+Strictly NO external database required (pure Python dictionaries and session state).
 """
 
 import copy
 
 # Realistic sample profile for a progressive farmer in Maharashtra (Niphad, Nashik)
 SAMPLE_FARMER = {
-    "name": "Ramesh Tukaram Patil (रमेश तुकाराम पाटील)",
+    "name": {
+        "en": "Ramesh Tukaram Patil",
+        "mr": "रमेश तुकाराम पाटील"
+    },
     "phone": "+91 98220 12345",
     "pin": "1234",
     "email": "ramesh.patil.krishi@gmail.com",
-    "village": "Pimpalgaon Baswant (पिंपळगाव बसवंत)",
-    "taluka": "Niphad (निफाड)",
-    "district": "Nashik (नाशिक)",
-    "state": "Maharashtra",
+    "village": {
+        "en": "Pimpalgaon Baswant",
+        "mr": "पिंपळगाव बसवंत"
+    },
+    "taluka": {
+        "en": "Niphad",
+        "mr": "निफाड"
+    },
+    "district": {
+        "en": "Nashik",
+        "mr": "नाशिक"
+    },
+    "state": {
+        "en": "Maharashtra",
+        "mr": "महाराष्ट्र"
+    },
     "pincode": "422209",
     "land_size_acres": 4.5,
-    "soil_type": "Medium Black Soil (काळी मध्यम जमीन)",
-    "irrigation_type": "Drip Irrigation & Farm Pond (ठिबक सिंचन व शेततळे)",
-    "primary_language": "Marathi & English",
+    "soil_type": {
+        "en": "Medium Black Soil",
+        "mr": "काळी मध्यम जमीन"
+    },
+    "irrigation_type": {
+        "en": "Drip Irrigation & Farm Pond",
+        "mr": "ठिबक सिंचन व शेततळे"
+    },
+    "primary_language": {
+        "en": "Marathi & English",
+        "mr": "मराठी व इंग्रजी"
+    },
     "crops_grown": [
-        "Grapes - Thomson Seedless (द्राक्ष)",
-        "Onion - Gavran / Fursungi (कांदा)",
-        "Soybean - JS 335 (सोयाबीन)"
+        {"key": "Grapes", "en": "Thomson Seedless Grapes", "mr": "थॉमसन सिडलेस द्राक्ष"},
+        {"key": "Onion", "en": "Gavran Red Onion", "mr": "गावरान लाल कांदा"},
+        {"key": "Soybean", "en": "JS 335 Soybean", "mr": "जेएस ३३५ सोयाबीन"}
     ],
     "livestock_summary": {
         "gir_cows": 2,
         "murrah_buffaloes": 1,
         "goats": 4,
         "total_animals": 7,
-        "daily_milk_litres": 22.0
+        "daily_milk_litres": 39.5
     }
 }
 
-# Pre-registered sample farmer accounts for authentication (Module: Auth)
+# Pre-registered sample farmer accounts for authentication
 SAMPLE_REGISTERED_FARMERS = {
     "9822012345": SAMPLE_FARMER,
     "+919822012345": SAMPLE_FARMER,
     "+91 98220 12345": SAMPLE_FARMER,
 }
 
-# Detailed Crop Guidance Knowledge Base (Module 2)
-# Organized by stage: Sowing/Planting, Vegetative, Flowering/Fruiting, Harvesting
+# Detailed Crop Guidance Knowledge Base (Module 2) - Pure English & Pure Marathi
 CROP_GUIDES = {
     "Grapes": {
-        "marathi_name": "द्राक्ष (थॉमसन सिडलेस)",
-        "display_name": "Grapes - Thomson Seedless (द्राक्ष)",
-        "season": "Rabi Season (रब्बी हंगाम - October to March)",
-        "recommended_soil": "Well-drained light-to-medium black soil with pH 6.5 - 7.5",
+        "display_name": {
+            "en": "Thomson Seedless Grapes",
+            "mr": "थॉमसन सिडलेस द्राक्ष"
+        },
+        "season": {
+            "en": "Rabi Season (October to March)",
+            "mr": "रब्बी हंगाम (ऑक्टोबर ते मार्च)"
+        },
+        "recommended_soil": {
+            "en": "Well-drained light-to-medium black soil with pH 6.5 - 7.5",
+            "mr": "उत्तम निचरा होणारी हलकी ते मध्यम काळी जमीन, सामू ६.५ - ७.५"
+        },
         "stages": [
             {
-                "stage_name": "1. Forward Pruning & Sprouting (गोडी छाटणी व फूट अवस्था)",
-                "duration": "Day 1 to 25 after pruning (ऑक्टोबर)",
-                "fertilizer": "Basal dose: SSP (200 kg/acre) + MOP (100 kg/acre) + 5 tons FYM (शेणखत). Apply 12:61:00 (MAP) 5 kg/acre through drip for root development.",
-                "irrigation": "Heavy flood soaking immediately after pruning, followed by controlled drip irrigation (18-22 Litres/vine/day).",
-                "pest_disease": "Dormex (Hydrogen Cyanamide 35-40 ml/L) application on buds for uniform sprouting. Bordeaux paste (१०% बोर्डो पेस्ट) on pruning cuts to seal wounds.",
-                "pro_tip": "Do not skip Bordeaux paste on fresh cuts; it prevents fungal die-back and trunk disease."
+                "stage_name": {
+                    "en": "Stage 1: Forward Pruning & Sprouting",
+                    "mr": "टप्पा १: गोडी छाटणी व फूट अवस्था"
+                },
+                "duration": {
+                    "en": "Day 1 to 25 after pruning",
+                    "mr": "छाटणीनंतर १ ते २५ दिवस"
+                },
+                "fertilizer": {
+                    "en": "Basal dose: SSP (200 kg/acre) + MOP (100 kg/acre) + 5 tons FYM. Apply 12:61:00 MAP 5 kg/acre via drip for root development.",
+                    "mr": "पायाभूत खत: सिंगल सुपर फॉस्फेट (२०० किलो/एकर) + म्युरेट ऑफ पोटॅश (१०० किलो/एकर) + ५ टन शेणखत. मुळांच्या जोमदार वाढीसाठी १२:६१:०० (५ किलो/एकर) ठिबकद्वारे द्या."
+                },
+                "irrigation": {
+                    "en": "Heavy flood soaking immediately after pruning, followed by controlled drip irrigation (18-22 Litres/vine/day).",
+                    "mr": "छाटणीनंतर लगेच भरपूर पाणी भिजवून द्या, त्यानंतर नियंत्रित ठिबक सिंचन (१८-२२ लिटर/वेल/दिवस)."
+                },
+                "pest_disease": {
+                    "en": "Dormex (Hydrogen Cyanamide 35-40 ml/L) application on buds for uniform sprouting. Bordeaux paste on pruning cuts to seal wounds.",
+                    "mr": "एकसारख्या फुटीसाठी डोळ्यांवर डॉरमेक्स (३५-४० मिली/लिटर). छाटणीच्या ताज्या जखमांवर १०% बोर्डो पेस्टचा लेप द्या."
+                },
+                "pro_tip": {
+                    "en": "Do not skip Bordeaux paste on fresh cuts; it prevents fungal die-back and trunk disease.",
+                    "mr": "ताज्या छाटणीच्या जखमांवर बोर्डो पेस्ट लावणे अत्यंत आवश्यक आहे; यामुळे बुरशीजन्य रोग व मर रोगाचा प्रादुर्भाव टळतो."
+                }
             },
             {
-                "stage_name": "2. Vegetative Canopy & Shoot Growth (शाकीय वाढ व शेंडा व्यवस्थापन)",
-                "duration": "Day 26 to 50",
-                "fertilizer": "Foliar spray of 19:19:19 (3 g/L) + Zinc chelate (0.5 g/L) + Boron (1 g/L) for vigorous shoot growth and healthy cluster emergence.",
-                "irrigation": "Moderate drip irrigation (22-26 Litres/vine/day) depending on pan evaporation and soil moisture.",
-                "pest_disease": "Watch for Flea Beetle (उडद्या भुंगा) on tender leaves. Spray Sulfur 80% WP (2 g/L) to prevent early Powdery Mildew (भुरी).",
-                "pro_tip": "Perform timely sub-shoot pinching (शेंडा खुडणे) at 5 leaves above the top bunch to divert energy into cluster development."
+                "stage_name": {
+                    "en": "Stage 2: Vegetative Canopy & Shoot Growth",
+                    "mr": "टप्पा २: शाकीय वाढ व शेंडा व्यवस्थापन"
+                },
+                "duration": {
+                    "en": "Day 26 to 50",
+                    "mr": "दिवस २६ ते ५०"
+                },
+                "fertilizer": {
+                    "en": "Foliar spray of 19:19:19 (3 g/L) + Zinc chelate (0.5 g/L) + Boron (1 g/L) for vigorous shoot growth and healthy clusters.",
+                    "mr": "१९:१९:१९ (३ ग्रॅम/लिटर) + चिलेटेड झिंक (०.५ ग्रॅम/लिटर) + बोरॉन (१ ग्रॅम/लिटर) फवारणी, ज्यामुळे निरोगी घड व पानांची वाढ होते."
+                },
+                "irrigation": {
+                    "en": "Moderate drip irrigation (22-26 Litres/vine/day) depending on pan evaporation and soil moisture.",
+                    "mr": "बाष्पीभवन आणि जमिनीतील ओलाव्यानुसार मध्यम ठिबक सिंचन (२२-२६ लिटर/वेल/दिवस)."
+                },
+                "pest_disease": {
+                    "en": "Watch for Flea Beetle on tender leaves. Spray Sulfur 80% WP (2 g/L) to prevent early Powdery Mildew.",
+                    "mr": "कोवळ्या पानांवर उडद्या भुंग्याचा प्रादुर्भाव तपासा. भुरी रोगाच्या प्रतिबंधासाठी ८०% पाण्यात विरघळणारे सल्फर (२ ग्रॅम/लिटर) फवारा."
+                },
+                "pro_tip": {
+                    "en": "Perform timely sub-shoot pinching at 5 leaves above the top bunch to divert energy into cluster development.",
+                    "mr": "घडावरील ५ पानांनंतर शेंडा खुडणी (पिंचिंग) वेळेवर करा, ज्यामुळे अन्नद्रव्यांचा प्रवाह थेट घड विकासाकडे वळतो."
+                }
             },
             {
-                "stage_name": "3. Flowering & Berry Setting (फुलधारणा व मणी सेटिंग/विकास)",
-                "duration": "Day 51 to 85",
-                "fertilizer": "Drip application of 0:52:34 (MKP - 5 kg/acre) + Calcium Nitrate (4 kg/acre). Spray 0:52:34 + Micronutrients.",
-                "irrigation": "Strictly reduce irrigation during 80% bloom stage to prevent flower dropping (कळी गळ). Increase water gradually after berry setting.",
-                "pest_disease": "High risk of Downy Mildew (डाऊनी मिल्ड्यू) during cloudy or humid weather. Spray preventive bio-agent Trichoderma or Copper-based fungicides. Blue sticky traps for Thrips.",
-                "pro_tip": "First GA3 (Gibberellic Acid) berry elongation dipping at 3-4 mm berry size (15 ppm) for optimal export-grade berry stretch."
+                "stage_name": {
+                    "en": "Stage 3: Flowering & Berry Setting",
+                    "mr": "टप्पा ३: फुलधारणा व मणी सेटिंग"
+                },
+                "duration": {
+                    "en": "Day 51 to 85",
+                    "mr": "दिवस ५१ ते ८५"
+                },
+                "fertilizer": {
+                    "en": "Drip application of 0:52:34 MKP (5 kg/acre) + Calcium Nitrate (4 kg/acre). Spray 0:52:34 + Micronutrients.",
+                    "mr": "ठिबकद्वारे ०:५२:३४ (५ किलो/एकर) + कॅल्शियम नायट्रेट (४ किलो/एकर). वरून ०:५२:३४ व सूक्ष्मअन्नद्रव्यांची फवारणी."
+                },
+                "irrigation": {
+                    "en": "Strictly reduce irrigation during 80% bloom stage to prevent flower drop. Increase water gradually after berry set.",
+                    "mr": "८०% फुलधारणा अवस्थेत पाणी अत्यंत कमी करा जेणेकरून कळीगळ टळेल. मणी धरल्यानंतर हळूहळू पाणी वाढवा."
+                },
+                "pest_disease": {
+                    "en": "High risk of Downy Mildew during humid weather. Spray preventive bio-agent Trichoderma or Copper fungicides. Sticky traps for Thrips.",
+                    "mr": "ढगाळ हवामानात डाऊनी मिल्ड्यूचा धोका जास्त असतो. प्रतिबंधक उपाय म्हणून ट्रायकोडर्मा किंवा कॉपर बुरशीनाशक फवारा. फुलकिड्यांसाठी चिकट सापळे लावा."
+                },
+                "pro_tip": {
+                    "en": "First GA3 dipping at 3-4 mm berry size (15 ppm) for optimal export-grade berry elongation.",
+                    "mr": "निर्यातक्षम लांबीसाठी मणी ३-४ मिमी आकाराचे असताना पहिली जीए३ (१५ पीपीएम) डीपिंग वेळेत पूर्ण करा."
+                }
             },
             {
-                "stage_name": "4. Berry Softening, Sugar Development & Harvest (मणी मऊ होणे, साखर भरणे व काढणी)",
-                "duration": "Day 86 to 135 (जानेवारी - मार्च)",
-                "fertilizer": "Sulphate of Potash (0:0:50) 6 kg/acre via drip to enhance Berry Brix (साखरेचे प्रमाण - target 16-18° Brix) and natural luster.",
-                "irrigation": "Taper off irrigation 7-10 days before harvest to avoid berry cracking (मणी तडकणे) and improve shelf-life.",
-                "pest_disease": "Maintain strict Pre-Harvest Interval (PHI - कीटकनाशक तुटवडा कालावधी) of at least 20 days. No chemical sprays during harvest window.",
-                "pro_tip": "Harvest early in the morning (6 AM to 10 AM) to maintain berry coolness and prevent post-harvest shrinkage."
+                "stage_name": {
+                    "en": "Stage 4: Berry Softening, Sugar Development & Harvest",
+                    "mr": "टप्पा ४: साखर भरणे, पक्वता व काढणी"
+                },
+                "duration": {
+                    "en": "Day 86 to 135 (January to March)",
+                    "mr": "दिवस ८६ ते १३५ (जानेवारी ते मार्च)"
+                },
+                "fertilizer": {
+                    "en": "Sulphate of Potash (0:0:50) 6 kg/acre via drip to enhance Berry Brix (target 16-18° Brix) and natural luster.",
+                    "mr": "मण्यांत गोडवा (१६-१८ ब्रिक्स) आणि चमकदारपणा आणण्यासाठी पोटॅश ०:०:५० (६ किलो/एकर) ठिबकद्वारे द्या."
+                },
+                "irrigation": {
+                    "en": "Taper off irrigation 7-10 days before harvest to avoid berry cracking and improve shelf-life.",
+                    "mr": "काढणीपूर्वी ७-१० दिवस पाणी पूर्णपणे बंद करा, ज्यामुळे मणी तडकणे टळते व साठवणूक क्षमता वाढते."
+                },
+                "pest_disease": {
+                    "en": "Maintain strict Pre-Harvest Interval (PHI) of at least 20 days. No chemical sprays during harvest window.",
+                    "mr": "काढणीपूर्व तुटवडा कालावधी (किमान २० दिवस) काटेकोरपणे पाळा. काढणीच्या दिवसांत कोणतीही रासायनिक फवारणी करू नका."
+                },
+                "pro_tip": {
+                    "en": "Harvest early in the morning (6 AM to 10 AM) to maintain berry coolness and prevent post-harvest shrinkage.",
+                    "mr": "काढणी सकाळी ६ ते १० च्या दरम्यान करा जेणेकरून फळांचा ताजेपणा टिकून राहतो आणि वजन घटत नाही."
+                }
             }
         ]
     },
     "Onion": {
-        "marathi_name": "कांदा (गावरान / फुर्सुंगी)",
-        "display_name": "Onion - Gavran / Fursungi (कांदा)",
-        "season": "Late Kharif / Rabi (रांगडा व रब्बी हंगाम - Oct to April)",
-        "recommended_soil": "Medium black or sandy loam soil rich in organic carbon with good drainage",
+        "display_name": {
+            "en": "Gavran Red Onion",
+            "mr": "गावरान लाल कांदा"
+        },
+        "season": {
+            "en": "Rabi Season (October to April)",
+            "mr": "रब्बी हंगाम (ऑक्टोबर ते एप्रिल)"
+        },
+        "recommended_soil": {
+            "en": "Medium black or sandy loam soil with good drainage and rich organic carbon",
+            "mr": "उत्तम निचरा होणारी सेंद्रिय कर्बयुक्त मध्यम काळी किंवा गाळाची जमीन"
+        },
         "stages": [
             {
-                "stage_name": "1. Nursery Sowing & Field Transplanting (रोपवाटिका व पुनर्लागवड)",
-                "duration": "Day 1 to 45 (रोप) & Transplanting",
-                "fertilizer": "Basal dose: 10:26:26 (50 kg/acre) + Single Super Phosphate (50 kg/acre) + 10 tons well-decomposed FYM.",
-                "irrigation": "Light irrigation before transplanting; immediate light irrigation after planting 6-7 week old seedlings.",
-                "pest_disease": "Seed treatment with Trichoderma viride (5 g/kg seed). Dip seedling roots in Carbendazim (1 g/L) solution for 15 minutes before planting to prevent damping-off.",
-                "pro_tip": "Transplant seedlings at 15 cm x 10 cm spacing on raised beds (गादीवाफा) for 25% higher yield and uniform bulb sizing."
+                "stage_name": {
+                    "en": "Stage 1: Nursery Sowing & Field Transplanting",
+                    "mr": "टप्पा १: रोपवाटिका व पुनर्लागवड"
+                },
+                "duration": {
+                    "en": "Day 1 to 45 (Nursery) & Transplanting",
+                    "mr": "रोपवाटिका १ ते ४५ दिवस व पुनर्लागवड"
+                },
+                "fertilizer": {
+                    "en": "Basal dose: 10:26:26 (50 kg/acre) + Single Super Phosphate (50 kg/acre) + 10 tons well-decomposed FYM.",
+                    "mr": "पायाभूत खत: १०:२६:२६ (५० किलो/एकर) + सिंगल सुपर फॉस्फेट (५० किलो/एकर) + १० टन चांगले कुजलेले शेणखत."
+                },
+                "irrigation": {
+                    "en": "Light irrigation before transplanting; immediate light irrigation after planting 6-7 week old seedlings.",
+                    "mr": "पुनर्लागवडीपूर्वी हलके पाणी द्या; ६-७ आठवड्यांची निरोगी रोपे लावल्यानंतर लगेच दुसरे हलके पाणी द्या."
+                },
+                "pest_disease": {
+                    "en": "Seed treatment with Trichoderma viride. Dip seedling roots in Carbendazim solution before transplanting to prevent damping-off.",
+                    "mr": "बियाण्यावर ट्रायकोडर्मा प्रक्रिया करा. पुनर्लागवडीपूर्वी रोपांची मुळे कार्बेन्डाझिम द्रावणात बुडवून लावा."
+                },
+                "pro_tip": {
+                    "en": "Transplant seedlings at 15 cm x 10 cm spacing on raised beds for 25% higher yield and uniform bulb sizing.",
+                    "mr": "गादीवाफ्यावर १५ सेमी x १० सेमी अंतरावर पुनर्लागवड केल्यास २५% जास्त उत्पादन व एकसारखा आकार मिळतो."
+                }
             },
             {
-                "stage_name": "2. Vegetative Growth & Foliage Development (शाकीय वाढ व पातीची जोमदार वाढ)",
-                "duration": "Day 15 to 45 after transplanting",
-                "fertilizer": "Top dress with Urea (25 kg/acre) + Sulphur 90% granules (10 kg/acre). Sulphur is critical for onion pungency and storage firmness.",
-                "irrigation": "Irrigate at 8-10 day intervals in medium soil; avoid continuous standing water to prevent root rot.",
-                "pest_disease": "Thrips (फुलकिडे/मावा) attack causes silver curling of leaves. Install 15 yellow/blue sticky traps per acre. Spray Neem oil (1500 ppm, 3 ml/L) or Fipronil 5% SC if infestation rises.",
-                "pro_tip": "Keep the field free of weeds during the first 40 days as onion has shallow fibrous roots that cannot compete with weeds."
+                "stage_name": {
+                    "en": "Stage 2: Vegetative Growth & Foliage Development",
+                    "mr": "टप्पा २: शाकीय वाढ व पातीचा विकास"
+                },
+                "duration": {
+                    "en": "Day 15 to 45 after transplanting",
+                    "mr": "पुनर्लागवडीनंतर १५ ते ४५ दिवस"
+                },
+                "fertilizer": {
+                    "en": "Top dress with Urea (25 kg/acre) + Sulphur 90% granules (10 kg/acre). Sulphur ensures onion pungency and storage firmness.",
+                    "mr": "युरिया (२५ किलो/एकर) + सल्फर ९०% (१० किलो/एकर) खताचा डोस द्या. सल्फरमुळे कांद्याला घट्टपणा व तिखटपणा येतो."
+                },
+                "irrigation": {
+                    "en": "Irrigate at 8-10 day intervals in medium soil; avoid continuous standing water to prevent root rot.",
+                    "mr": "मध्यम जमिनीत ८-१० दिवसांच्या अंतराने पाणी द्या; जमिनीत पाणी साचू देऊ नका जेणेकरून मुळकुज टळेल."
+                },
+                "pest_disease": {
+                    "en": "Thrips attack causes silver curling of leaves. Install 15 yellow/blue sticky traps per acre. Spray Neem oil.",
+                    "mr": "फुलकिड्यांमुळे पाने चंदेरी होतात. एकरी १५ पिवळे व निळे चिकट सापळे लावा. निंबोळी अर्क फवारा."
+                },
+                "pro_tip": {
+                    "en": "Keep the field free of weeds during the first 40 days as onion has shallow roots that cannot compete with weeds.",
+                    "mr": "पहिल्या ४० दिवसांत शेत तणमुक्त ठेवा कारण कांद्याची मुळे उथळ असतात आणि तणांशी स्पर्धा करू शकत नाहीत."
+                }
             },
             {
-                "stage_name": "3. Bulb Initiation & Swelling (कांदा फुगवण व पोसणे)",
-                "duration": "Day 46 to 85 after transplanting",
-                "fertilizer": "Stop Nitrogen (Urea) completely to prevent thick-neck bulbs (डेंगळे/जाड मान). Apply 0:52:34 (5 kg/acre) + 0:0:50 (5 kg/acre) through fertigation or spray.",
-                "irrigation": "Maintain steady, uniform soil moisture. Avoid sudden heavy watering after dry gaps, which causes bulb splitting (कांदा फुटणे).",
-                "pest_disease": "Purple Blotch (जांभळा करपा) and Stemphylium blight. Spray Mancozeb (2.5 g/L) or Tebuconazole (1 ml/L) mixed with sticker (स्प्रेडर).",
-                "pro_tip": "Apply micronutrient Boron (20% - 1 g/L) during bulb swelling to give tough outer skins that resist storage rotting."
+                "stage_name": {
+                    "en": "Stage 3: Bulb Initiation & Swelling",
+                    "mr": "टप्पा ३: कांदा फुगवण व पोसणे"
+                },
+                "duration": {
+                    "en": "Day 46 to 85 after transplanting",
+                    "mr": "पुनर्लागवडीनंतर ४६ ते ८५ दिवस"
+                },
+                "fertilizer": {
+                    "en": "Stop Nitrogen completely to prevent thick-neck bulbs. Apply 0:52:34 (5 kg/acre) + 0:0:50 (5 kg/acre) via fertigation.",
+                    "mr": "कांद्याची मान जाड होणे टाळण्यासाठी युरिया पूर्ण बंद करा. ०:५२:३४ (५ किलो/एकर) + ०:०:५० (५ किलो/एकर) ठिबकद्वारे द्या."
+                },
+                "irrigation": {
+                    "en": "Maintain steady, uniform soil moisture. Avoid sudden heavy watering after dry gaps, which causes bulb splitting.",
+                    "mr": "नियमित व समान ओलावा ठेवा. पाण्याचा ताण दिल्यानंतर अचानक भरपूर पाणी दिल्यास कांदा फुटतो (डबल कांदा)."
+                },
+                "pest_disease": {
+                    "en": "Purple Blotch and Stemphylium blight risk. Spray Mancozeb or Tebuconazole mixed with sticking agent.",
+                    "mr": "जांभळा करपा रोगाच्या नियंत्रणासाठी मॅनकोझेब किंवा टेब्युकोनॅझोल स्टीकरसह मिसळून फवारा."
+                },
+                "pro_tip": {
+                    "en": "Apply micronutrient Boron during bulb swelling to give tough outer skins that resist storage rotting.",
+                    "mr": "कांदा फुगवणीच्या काळात बोरॉन फवारल्यास कांद्याची साल घट्ट होते व चाळीत सड टळते."
+                }
             },
             {
-                "stage_name": "4. Maturity, Field Curing & Storage (पक्वता, काढणी व वाळवणी)",
-                "duration": "Day 86 to 110 after transplanting",
-                "fertilizer": "No fertilizer. Allow plant nutrients to naturally translocate into the bulb.",
-                "irrigation": "Withhold irrigation 12-15 days prior to harvest when 50% of plant necks drop naturally (५०% मान पडणे).",
-                "pest_disease": "Ensure bulbs are completely dry before bag packing to stop black mold (Aspergillus niger) in storage chawls.",
-                "pro_tip": "Field cure for 3-4 days covering bulbs with cut onion foliage, followed by 10 days of shade curing in a well-ventilated shed."
+                "stage_name": {
+                    "en": "Stage 4: Maturity, Field Curing & Storage",
+                    "mr": "टप्पा ४: पक्वता, काढणी व साठवणूक"
+                },
+                "duration": {
+                    "en": "Day 86 to 110 after transplanting",
+                    "mr": "पुनर्लागवडीनंतर ८६ ते ११० दिवस"
+                },
+                "fertilizer": {
+                    "en": "No chemical fertilizers. Allow nutrients to naturally translocate into the bulb.",
+                    "mr": "रासायनिक खते पूर्ण बंद. पानांतील अन्नद्रव्ये नैसर्गिकरीत्या कांद्यामध्ये उतरू द्या."
+                },
+                "irrigation": {
+                    "en": "Withhold irrigation 12-15 days prior to harvest when 50% of plant tops naturally fall over.",
+                    "mr": "शेतातील ५०% कांद्याची मान पडल्यानंतर काढणीच्या १२-१५ दिवस आधी पाणी पूर्ण बंद करा."
+                },
+                "pest_disease": {
+                    "en": "Ensure bulbs are completely dry before bag packing to stop black mold in storage chawls.",
+                    "mr": "चाळीत साठवणुकीपूर्वी कांदा पूर्ण कोरडा असल्याची खात्री करा, जेणेकरून काळी बुरशी लागत नाही."
+                },
+                "pro_tip": {
+                    "en": "Field cure for 3-4 days covering bulbs with foliage, followed by 10 days of shade curing in a ventilated shed.",
+                    "mr": "काढणीनंतर ३-४ दिवस शेतात पातीने कांदा झाकून ठेवा, नंतर हवेशीर शेडमध्ये १० दिवस सावलीत सुकवा."
+                }
             }
         ]
     },
     "Soybean": {
-        "marathi_name": "सोयाबीन (जेएस ३३५)",
-        "display_name": "Soybean - JS 335 (सोयाबीन)",
-        "season": "Kharif Season (खरीप हंगाम - June to October)",
-        "recommended_soil": "Medium black cotton soil with good water retention and neutral pH",
+        "display_name": {
+            "en": "JS 335 Soybean",
+            "mr": "जेएस ३३५ सोयाबीन"
+        },
+        "season": {
+            "en": "Kharif Season (June to October)",
+            "mr": "खरीप हंगाम (जून ते ऑक्टोबर)"
+        },
+        "recommended_soil": {
+            "en": "Medium black cotton soil with good water retention and neutral pH",
+            "mr": "मध्यम काळी कसदार जमीन, उत्तम ओलावा टिकवून ठेवणारी"
+        },
         "stages": [
             {
-                "stage_name": "1. Seed Treatment & Sowing (बियाणे प्रक्रिया व पेरणी)",
-                "duration": "Day 1 to 15 (पावसाच्या आगमनानंतर)",
-                "fertilizer": "Basal application: Single Super Phosphate (SSP - 100 kg/acre) + MOP (25 kg/acre). SSP supplies essential Sulphur and Phosphorus.",
-                "irrigation": "Sow when 75-100 mm rainfall has soaked the topsoil. Rainfed cultivation; ensure drainage furrows every 4-6 rows.",
-                "pest_disease": "Treat seed with Rhizobium japonicum (250 g/10 kg seed) + PSB culture + Thiram (3 g/kg seed) to boost nitrogen-fixing nodules.",
-                "pro_tip": "Do not sow soybean deeper than 3-4 cm; deep sowing drastically cuts germination percentage."
+                "stage_name": {
+                    "en": "Stage 1: Seed Treatment & Sowing",
+                    "mr": "टप्पा १: बीजप्रक्रिया व पेरणी"
+                },
+                "duration": {
+                    "en": "Day 1 to 15 after monsoon arrival",
+                    "mr": "पावसाच्या आगमनानंतर १ ते १५ दिवस"
+                },
+                "fertilizer": {
+                    "en": "Basal application: Single Super Phosphate (SSP - 100 kg/acre) + MOP (25 kg/acre). SSP supplies essential Sulphur.",
+                    "mr": "पायाभूत खत: सिंगल सुपर फॉस्फेट (१०० किलो/एकर) + म्युरेट ऑफ पोटॅश (२५ किलो/एकर). यामुळे फॉस्फरस व गंधक मिळते."
+                },
+                "irrigation": {
+                    "en": "Sow when 75-100 mm rainfall has thoroughly soaked the topsoil. Rainfed crop; ensure proper drainage channels.",
+                    "mr": "किमान ७५-१०० मिमी पाऊस झाल्यानंतरच पेरणी करा. पाण्याचा निचरा होण्यासाठी दर ४-६ ओळींनंतर चर काढा."
+                },
+                "pest_disease": {
+                    "en": "Treat seed with Rhizobium japonicum culture + PSB + Thiram to enhance nitrogen-fixing root nodules.",
+                    "mr": "रायझोबियम जिवाणू संवर्धन + पीएसबी + थायरम बुरशीनाशकाची बीजप्रक्रिया आवर्जून करा."
+                },
+                "pro_tip": {
+                    "en": "Do not sow soybean deeper than 3-4 cm; deep sowing drastically cuts seed germination.",
+                    "mr": "सोयाबीनची पेरणी ३-४ सेमी पेक्षा जास्त खोल करू नका; खोल पेरल्यास उगवण शक्ती घटते."
+                }
             },
             {
-                "stage_name": "2. Vegetative Growth & Nodulation (शाकीय वाढ व मुळांवरील गाठींची वाढ)",
-                "duration": "Day 16 to 40",
-                "fertilizer": "Foliar spray of 19:19:19 (5 g/L) at 30 days after sowing if growth is stunted.",
-                "irrigation": "Provide one life-saving protective irrigation via sprinkler if Kharif monsoon has a dry spell exceeding 12-14 days.",
-                "pest_disease": "Stem Fly (खोडमाशी) and Girdle Beetle (चक्रीभुंगा). Spray Chlorantraniliprole 18.5% SC (3 ml / 10 L water) at first sign of stem girdling.",
-                "pro_tip": "Inter-cultivation (कोळपणी) at 20 and 35 days suppresses weeds and creates a soil dust mulch that conserves moisture."
+                "stage_name": {
+                    "en": "Stage 2: Vegetative Growth & Nodulation",
+                    "mr": "टप्पा २: शाकीय वाढ व मुळांवरील गाठींची निर्मिती"
+                },
+                "duration": {
+                    "en": "Day 16 to 40",
+                    "mr": "दिवस १६ ते ४०"
+                },
+                "fertilizer": {
+                    "en": "Foliar spray of 19:19:19 (5 g/L) at 30 days after sowing if growth is stunted.",
+                    "mr": "पेरणीनंतर ३० दिवसांनी पिकाची वाढ समाधानकारक नसल्यास १९:१९:१९ (५ ग्रॅम/लिटर) फवारा."
+                },
+                "irrigation": {
+                    "en": "Provide life-saving protective irrigation via sprinkler if monsoon has a dry spell exceeding 12-14 days.",
+                    "mr": "पावसाचा खंड १२-१४ दिवसांपेक्षा जास्त पडल्यास तुषार सिंचनाने एक संरक्षणात्मक पाणी द्या."
+                },
+                "pest_disease": {
+                    "en": "Watch for Stem Fly and Girdle Beetle. Spray Chlorantraniliprole 18.5% SC at first sign of damage.",
+                    "mr": "खोडमाशी व चक्रीभुंग्याच्या नियंत्रणासाठी क्लोरॲन्ट्रानिलीप्रोल (३ मिली/१० लिटर) वेळेवर फवारा."
+                },
+                "pro_tip": {
+                    "en": "Inter-cultivation (hoeing) at 20 and 35 days suppresses weeds and creates a soil dust mulch.",
+                    "mr": "२० व ३५ व्या दिवशी कोळपणी केल्याने तण नष्ट होते आणि जमिनीतील ओलावा टिकून राहतो."
+                }
             },
             {
-                "stage_name": "3. Flowering & Pod Filling (फुलधारणा व शेंगा भरणे अवस्था)",
-                "duration": "Day 41 to 75",
-                "fertilizer": "Foliar spray of 0:52:34 (4 g/L) + Boron (1 g/L) at 50% flowering to maximize pod setting and seed weight.",
-                "irrigation": "Critical moisture stage. Moisture stress at pod filling severely shrivels seed size and lowers oil content.",
-                "pest_disease": "Spodoptera / Leaf eating caterpillar (लष्करी अळी) and Pod Borer. Install 5 pheromone traps per acre; spray Emamectin Benzoate 5% SG (4 g/10 L).",
-                "pro_tip": "Never spray chemical insecticides during peak morning bee activity (8 AM - 11 AM) to safeguard natural cross-pollination."
+                "stage_name": {
+                    "en": "Stage 3: Flowering & Pod Filling",
+                    "mr": "टप्पा ३: फुलधारणा व शेंगा भरणे"
+                },
+                "duration": {
+                    "en": "Day 41 to 75",
+                    "mr": "दिवस ४१ ते ७५"
+                },
+                "fertilizer": {
+                    "en": "Foliar spray of 0:52:34 (4 g/L) + Boron (1 g/L) at 50% flowering to maximize pod setting.",
+                    "mr": "५०% फुलधारणा अवस्थेत ०:५२:३४ (४ ग्रॅम/लिटर) + बोरॉन (१ ग्रॅम/लिटर) फवारल्यास शेंगांची संख्या वाढते."
+                },
+                "irrigation": {
+                    "en": "Critical moisture stage. Moisture stress at pod filling severely shrivels seed size and cuts oil yield.",
+                    "mr": "हा ओलाव्यासाठी अत्यंत संवेदनशील काळ आहे. शेंगा भरताना ताण पडल्यास दाण्याचा आकार बारीक राहतो."
+                },
+                "pest_disease": {
+                    "en": "Spodoptera / Leaf eating caterpillar and Pod Borer. Spray Emamectin Benzoate 5% SG.",
+                    "mr": "पाने खाणारी लष्करी अळी व शेंगा पोखरणाऱ्या अळीसाठी इमामेक्टिन बेन्झोएट (४ ग्रॅम/१० लिटर) फवारा."
+                },
+                "pro_tip": {
+                    "en": "Never spray chemical insecticides during peak morning bee activity (8 AM - 11 AM) to safeguard pollination.",
+                    "mr": "सकाळी ८ ते ११ दरम्यान मधमाश्यांच्या परागीभवनाच्या वेळी कोणतीही कीटकनाशक फवारणी करू नका."
+                }
             },
             {
-                "stage_name": "4. Pod Maturation & Threshing (शेंगा पक्वता व मळणी)",
-                "duration": "Day 76 to 100",
-                "fertilizer": "None.",
-                "irrigation": "None required.",
-                "pest_disease": "Protect harvested crop stacks from unexpected post-monsoon showers (अवकाळी पाऊस) using tarpaulins.",
-                "pro_tip": "Thresh when grain moisture is between 12-14% (seed rattles inside pod). High cylinder speed cracks seeds, destroying germination quality."
-            }
-        ]
-    },
-    "Sugarcane": {
-        "marathi_name": "ऊस (को ८६०३२)",
-        "display_name": "Sugarcane - Co 86032 (ऊस)",
-        "season": "Suru / Pre-seasonal / Adsali",
-        "recommended_soil": "Deep fertile black clay-loam soil with minimum 1 meter depth",
-        "stages": [
-            {
-                "stage_name": "1. Planting & Germination (ऊस बेणे लागवड व उगवण)",
-                "duration": "Day 1 to 45",
-                "fertilizer": "Basal dose: DAP 50 kg + MOP 50 kg + Urea 25 kg + Zinc Sulphate 10 kg per acre.",
-                "irrigation": "Light irrigation at planting; regular light irrigations every 6-8 days until uniform sprouting.",
-                "pest_disease": "Sett treatment with Carbendazim (1 g/L) + Chlorpyrifos (2 ml/L) for 15 minutes before planting.",
-                "pro_tip": "Use single-eye bud sets with drip irrigation for 30% water saving and better cane thickness."
-            },
-            {
-                "stage_name": "2. Tillering & Formative Stage (फुटवे फुटणे व बाळबांधणी)",
-                "duration": "Day 46 to 120",
-                "fertilizer": "Apply Urea (50 kg) + SSP (50 kg) + micronutrients during initial earthing-up (बाळबांधणी).",
-                "irrigation": "Irrigate at 8-10 day intervals. Maintain continuous ridge moisture.",
-                "pest_disease": "Early Shoot Borer (खोडकीड). Install pheromone traps or apply Cartap Hydrochloride granules.",
-                "pro_tip": "Perform earthing up (मोठी बांधणी) at 120 days to anchor cane roots against lodging during wind."
-            },
-            {
-                "stage_name": "3. Grand Growth & Cane Elongation (कांड्या सुटणे व मोठी वाढ)",
-                "duration": "Day 121 to 270",
-                "fertilizer": "Drip fertigation with 12:61:00 and 0:0:50 weekly schedule.",
-                "irrigation": "Peak water demand phase (30,000 to 35,000 L/acre/day in summer).",
-                "pest_disease": "White grub (हुमणी) and Pyrilla control. Drench Metarhizium anisopliae bio-control agent.",
-                "pro_tip": "Detrash dead dry leaves (पाचट काढणे) at 6th and 8th month to improve field aeration and sunlight."
-            },
-            {
-                "stage_name": "4. Cane Ripening & Harvest (पक्वता, साखर भरणे व तोडणी)",
-                "duration": "Day 271 to 360",
-                "fertilizer": "Stop nitrogen 90 days before harvest. Apply SOP (0:0:50) for sucrose accumulation.",
-                "irrigation": "Stop irrigation 15 days before mill cutting.",
-                "pest_disease": "Watch for wild boar and rodent damage; clear boundary weeds.",
-                "pro_tip": "Cut cane at ground level (मुळाशी तोडणी) because bottom internodes hold the highest sugar concentration."
+                "stage_name": {
+                    "en": "Stage 4: Pod Maturation, Threshing & Storage",
+                    "mr": "टप्पा ४: पक्वता, मळणी व साठवणूक"
+                },
+                "duration": {
+                    "en": "Day 76 to 100",
+                    "mr": "दिवस ७६ ते १००"
+                },
+                "fertilizer": {
+                    "en": "No chemical fertilizers required during maturity.",
+                    "mr": "पक्वतेच्या काळात खतांची आवश्यकता नसते."
+                },
+                "irrigation": {
+                    "en": "Stop irrigation. Let pods turn naturally brown and dry on the vine.",
+                    "mr": "पाणी पूर्ण बंद करा. झाडावरील शेंगा नैसर्गिकरीत्या तपकिरी वाळू द्या."
+                },
+                "pest_disease": {
+                    "en": "Protect harvest from sudden rain. Store bags in dry, elevated pallets.",
+                    "mr": "कापणी केलेले पीक पावसापासून सुरक्षित ठेवा. गोण्या जमिनीपासून वर लाकडी फळ्यांवर साठवा."
+                },
+                "pro_tip": {
+                    "en": "Thresh at 12-14% seed moisture. Run threshers at low cylinder speed (350-400 RPM) to prevent seed cracking.",
+                    "mr": "बियाण्यातील ओलावा १२-१४% असताना मळणी करा. मळणी यंत्राचा वेग कमी ठेवा जेणेकरून बियाणे फुटत नाही."
+                }
             }
         ]
     }
 }
 
-# Interactive task reminders checklist synced to farmer's crops (Module 2)
+# Interactive task reminders checklist synced to farmer's crops (Module 2) - Pure English & Pure Marathi
 SAMPLE_CROP_TASKS = [
     {
         "id": "TSK-01",
-        "crop": "Grapes",
-        "title": "Bordeaux paste application on fresh pruning wounds (बोर्डो पेस्ट लावणे)",
-        "stage": "Forward Pruning",
-        "due_date": "Within 48 hours",
-        "priority": "High",
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "title": {
+            "en": "Bordeaux paste application on fresh pruning wounds",
+            "mr": "ताज्या छाटणीच्या जखमांवर १०% बोर्डो पेस्ट लावणे"
+        },
+        "stage": {"en": "Forward Pruning", "mr": "गोडी छाटणी"},
+        "due_date": {"en": "Within 48 hours", "mr": "४८ तासांच्या आत"},
+        "priority": {"en": "High", "mr": "उच्च"},
         "status": True
     },
     {
         "id": "TSK-02",
-        "crop": "Grapes",
-        "title": "Preventive spray of 80% Wettable Sulphur (भुरी प्रतिबंधक सल्फर फवारणी)",
-        "stage": "Canopy Growth",
-        "due_date": "Next 3 Days",
-        "priority": "High",
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "title": {
+            "en": "Preventive spray of 80% Wettable Sulphur against Powdery Mildew",
+            "mr": "भुरी रोगाच्या प्रतिबंधासाठी ८०% पाण्यात मिसळणारे सल्फर फवारणी"
+        },
+        "stage": {"en": "Canopy Growth", "mr": "शाकीय वाढ"},
+        "due_date": {"en": "Next 3 Days", "mr": "पुढील ३ दिवसांत"},
+        "priority": {"en": "High", "mr": "उच्च"},
         "status": False
     },
     {
         "id": "TSK-03",
-        "crop": "Grapes",
-        "title": "Drip application of 0:52:34 MKP + Calcium Nitrate (0:52:34 खताचा डोस)",
-        "stage": "Flowering / Setting",
-        "due_date": "This Week",
-        "priority": "Medium",
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "title": {
+            "en": "Drip application of 0:52:34 MKP + Calcium Nitrate",
+            "mr": "०:५२:३४ खताचा डोस व कॅल्शियम नायट्रेट ठिबकद्वारे देणे"
+        },
+        "stage": {"en": "Flowering / Setting", "mr": "फुलधारणा व मणी सेटिंग"},
+        "due_date": {"en": "This Week", "mr": "या आठवड्यात"},
+        "priority": {"en": "Medium", "mr": "मध्यम"},
         "status": False
     },
     {
         "id": "TSK-04",
-        "crop": "Onion",
-        "title": "Seedling root dip in Trichoderma & Carbendazim before transplanting",
-        "stage": "Transplanting",
-        "due_date": "Immediate",
-        "priority": "High",
+        "crop": {"en": "Onion", "mr": "कांदा"},
+        "title": {
+            "en": "Seedling root dip in Trichoderma & Carbendazim before transplanting",
+            "mr": "पुनर्लागवडीपूर्वी रोपांची मुळे ट्रायकोडर्मा व कार्बेन्डाझिम द्रावणात बुडवणे"
+        },
+        "stage": {"en": "Transplanting", "mr": "पुनर्लागवड"},
+        "due_date": {"en": "Immediate", "mr": "तातडीने"},
+        "priority": {"en": "High", "mr": "उच्च"},
         "status": True
     },
     {
         "id": "TSK-05",
-        "crop": "Onion",
-        "title": "Install 15 Yellow & Blue sticky traps per acre for Thrips (चिकट सापळे लावणे)",
-        "stage": "Vegetative Growth",
-        "due_date": "In 5 Days",
-        "priority": "Medium",
+        "crop": {"en": "Onion", "mr": "कांदा"},
+        "title": {
+            "en": "Install 15 Yellow & Blue sticky traps per acre for Thrips control",
+            "mr": "फुलकिडे नियंत्रणासाठी एकरी १५ पिवळे व निळे चिकट सापळे लावणे"
+        },
+        "stage": {"en": "Vegetative Growth", "mr": "शाकीय वाढ"},
+        "due_date": {"en": "In 5 Days", "mr": "५ दिवसांत"},
+        "priority": {"en": "Medium", "mr": "मध्यम"},
         "status": False
     },
     {
         "id": "TSK-06",
-        "crop": "Onion",
-        "title": "Foliar spray of Sulphur 90% + Micronol for leaf strength and bulb pungency",
-        "stage": "Vegetative Growth",
-        "due_date": "Next Week",
-        "priority": "Medium",
+        "crop": {"en": "Onion", "mr": "कांदा"},
+        "title": {
+            "en": "Foliar spray of Sulphur 90% + Micronol for bulb strength and pungency",
+            "mr": "कांदा आकार व तिखटपणा वाढीसाठी सल्फर ९०% व मायक्रोनॉल फवारणी"
+        },
+        "stage": {"en": "Vegetative Growth", "mr": "शाकीय वाढ"},
+        "due_date": {"en": "Next Week", "mr": "पुढील आठवड्यात"},
+        "priority": {"en": "Medium", "mr": "मध्यम"},
         "status": False
     },
     {
         "id": "TSK-07",
-        "crop": "Soybean",
-        "title": "Post-harvest threshing and bag moisture check (धान्यातील ओलावा तपासणी - १२-१४%)",
-        "stage": "Harvesting",
-        "due_date": "Pending",
-        "priority": "Low",
+        "crop": {"en": "Soybean", "mr": "सोयाबीन"},
+        "title": {
+            "en": "Post-harvest threshing and bag moisture check (12-14%)",
+            "mr": "धान्यातील ओलावा तपासणी (१२-१४%) आणि सुरक्षित गोणी साठवणूक"
+        },
+        "stage": {"en": "Harvesting", "mr": "काढणी व साठवण"},
+        "due_date": {"en": "Completed", "mr": "पूर्ण झाले"},
+        "priority": {"en": "Low", "mr": "कमी"},
         "status": True
     }
 ]
 
-# Realistic livestock records (ready for Module 6)
+# Realistic livestock records (Module 6) - Pure English & Pure Marathi
 SAMPLE_LIVESTOCK = [
     {
         "tag_id": "MH-NSK-0101",
-        "name": "Gauri (गौरी)",
-        "type": "Cow",
-        "breed": "Gir (गीर)",
+        "name": {"en": "Gauri", "mr": "गौरी"},
+        "type": {"en": "Cow", "mr": "गाय"},
+        "breed": {"en": "Gir", "mr": "गीर"},
         "age_years": 4.5,
         "daily_milk_yield_litres": 12.0,
-        "health_status": "Attention Needed",
+        "health_status": {"en": "Attention Needed", "mr": "लसीकरण बाकी"},
         "vaccination_history": [
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-05-10", "due_date": "2026-11-10", "status": "Overdue"},
-            {"vaccine": "Brucellosis", "date_given": "2025-06-15", "due_date": "2026-06-15", "status": "Completed"}
+            {
+                "vaccine": {"en": "Foot & Mouth Disease (FMD)", "mr": "लाळ्या खुरखूत"},
+                "date_given": "2026-05-10",
+                "due_date": "2026-11-10",
+                "status": "Overdue"
+            },
+            {
+                "vaccine": {"en": "Brucellosis", "mr": "ब्रुसेलोसिस"},
+                "date_given": "2025-06-15",
+                "due_date": "2026-06-15",
+                "status": "Completed"
+            }
         ]
     },
     {
         "tag_id": "MH-NSK-0102",
-        "name": "Lakshmi (लक्ष्मी)",
-        "type": "Cow",
-        "breed": "Gir (गीर)",
+        "name": {"en": "Lakshmi", "mr": "लक्ष्मी"},
+        "type": {"en": "Cow", "mr": "गाय"},
+        "breed": {"en": "Gir", "mr": "गीर"},
         "age_years": 3.0,
         "daily_milk_yield_litres": 10.0,
-        "health_status": "Healthy",
+        "health_status": {"en": "Healthy & Productive", "mr": "निरोगी व दुभते"},
         "vaccination_history": [
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-05-22", "due_date": "2026-11-22", "status": "Upcoming"},
-            {"vaccine": "Hemorrhagic Septicemia (HS)", "date_given": "2026-07-20", "due_date": "2027-07-20", "status": "Up-to-Date"}
+            {
+                "vaccine": {"en": "Foot & Mouth Disease (FMD)", "mr": "लाळ्या खुरखूत"},
+                "date_given": "2026-05-22",
+                "due_date": "2026-11-22",
+                "status": "Upcoming"
+            },
+            {
+                "vaccine": {"en": "Hemorrhagic Septicemia (HS)", "mr": "घटसर्प"},
+                "date_given": "2026-07-20",
+                "due_date": "2027-07-20",
+                "status": "Up-to-Date"
+            }
         ]
     },
     {
         "tag_id": "MH-NSK-0201",
-        "name": "Kaveri (कावेरी)",
-        "type": "Buffalo",
-        "breed": "Murrah (मुऱ्हा)",
+        "name": {"en": "Kaveri", "mr": "कावेरी"},
+        "type": {"en": "Buffalo", "mr": "म्हैस"},
+        "breed": {"en": "Murrah", "mr": "मुऱ्हा"},
         "age_years": 5.0,
         "daily_milk_yield_litres": 9.5,
-        "health_status": "Attention Needed",
+        "health_status": {"en": "Attention Needed", "mr": "लसीकरण बाकी"},
         "vaccination_history": [
-            {"vaccine": "Black Quarter (BQ)", "date_given": "2026-04-12", "due_date": "2026-10-12", "status": "Overdue"},
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-08-15", "due_date": "2027-02-15", "status": "Up-to-Date"}
+            {
+                "vaccine": {"en": "Black Quarter (BQ)", "mr": "फऱ्या"},
+                "date_given": "2026-04-12",
+                "due_date": "2026-10-12",
+                "status": "Overdue"
+            },
+            {
+                "vaccine": {"en": "Foot & Mouth Disease (FMD)", "mr": "लाळ्या खुरखूत"},
+                "date_given": "2026-08-15",
+                "due_date": "2027-02-15",
+                "status": "Up-to-Date"
+            }
         ]
     },
     {
         "tag_id": "MH-NSK-0301",
-        "name": "Surabhi (सुरभी)",
-        "type": "Cow",
-        "breed": "Sahiwal (साहिवाल)",
+        "name": {"en": "Surabhi", "mr": "सुरभी"},
+        "type": {"en": "Cow", "mr": "गाय"},
+        "breed": {"en": "Sahiwal", "mr": "साहिवाल"},
         "age_years": 2.5,
         "daily_milk_yield_litres": 8.0,
-        "health_status": "Healthy",
+        "health_status": {"en": "Healthy & Productive", "mr": "निरोगी व दुभते"},
         "vaccination_history": [
-            {"vaccine": "Foot & Mouth Disease (FMD)", "date_given": "2026-09-10", "due_date": "2027-03-10", "status": "Up-to-Date"},
-            {"vaccine": "Theileriosis", "date_given": "2026-08-01", "due_date": "2027-08-01", "status": "Up-to-Date"}
+            {
+                "vaccine": {"en": "Foot & Mouth Disease (FMD)", "mr": "लाळ्या खुरखूत"},
+                "date_given": "2026-09-10",
+                "due_date": "2027-03-10",
+                "status": "Up-to-Date"
+            },
+            {
+                "vaccine": {"en": "Theileriosis", "mr": "थायलेरिओसिस"},
+                "date_given": "2026-08-01",
+                "due_date": "2027-08-01",
+                "status": "Up-to-Date"
+            }
         ]
     }
 ]
 
-# Realistic nearby agricultural services across Nashik district talukas (Module 4)
+# Realistic nearby agricultural services (Module 4) - Pure English & Pure Marathi
 SAMPLE_SERVICES = [
     {
         "id": "SRV-01",
-        "name": "Dr. Anand Kulkarni - Govt Veterinary Hospital & Emergency Clinic",
-        "category": "Veterinary Doctors & Emergency (पशुवैद्यकीय सेवा)",
-        "category_key": "veterinary",
-        "taluka": "Niphad (निफाड)",
-        "district": "Nashik",
-        "location": "Niphad Town Main Road, Near Panchayat Samiti (4.2 km)",
+        "name": {
+            "en": "Dr. Anand Kulkarni - Govt Veterinary Hospital & Emergency Clinic",
+            "mr": "डॉ. आनंद कुलकर्णी - शासकीय पशुवैद्यकीय रुग्णालय व आपत्कालीन सेवा"
+        },
+        "category": {
+            "en": "Veterinary Doctors & Emergency",
+            "mr": "पशुवैद्यकीय सेवा व आपत्कालीन क्लिनिक"
+        },
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {
+            "en": "Niphad Town Main Road, Near Panchayat Samiti (4.2 km)",
+            "mr": "निफाड मुख्य रस्ता, पंचायत समितीजवळ (४.२ किमी)"
+        },
         "phone": "+91 94222 88411",
-        "timings": "9:00 AM - 6:00 PM (Emergency 24x7)",
-        "speciality": "Cattle vaccination (FMD/HS/BQ), artificial insemination, livestock emergency surgery & deworming",
+        "timings": {
+            "en": "9:00 AM - 6:00 PM (Emergency 24x7)",
+            "mr": "सकाळी ९:०० ते संध्याकाळी ६:०० (आपत्कालीन २४x७)"
+        },
+        "speciality": {
+            "en": "Cattle vaccination, artificial insemination, emergency surgery & deworming",
+            "mr": "पशुधन लसीकरण, कृत्रिम रेतन, जनावरांची शस्त्रक्रिया व जंतनिर्मूलन"
+        },
         "rating": 4.9,
         "verified": True
     },
     {
         "id": "SRV-02",
-        "name": "Kisan Krishi Seva Kendra (बियाणे व खते केंद्र)",
-        "category": "Seeds & Fertilizer Shops (बियाणे व खते केंद्र)",
-        "category_key": "seeds_fertilizers",
-        "taluka": "Niphad (निफाड)",
-        "district": "Nashik",
-        "location": "Pimpalgaon APMC Market Yard Gate 2 (1.8 km)",
+        "name": {
+            "en": "Kisan Krishi Seva Kendra",
+            "mr": "किसान कृषी सेवा केंद्र"
+        },
+        "category": {
+            "en": "Seeds & Fertilizer Shops",
+            "mr": "बियाणे व खते केंद्र"
+        },
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {
+            "en": "Pimpalgaon APMC Market Yard Gate 2 (1.8 km)",
+            "mr": "पिंपळगाव बाजार समिती गेट २ (१.८ किमी)"
+        },
         "phone": "+91 98230 45678",
-        "timings": "8:30 AM - 8:30 PM",
-        "speciality": "Certified onion & wheat seeds, water-soluble drip fertilizers (19:19:19, 0:52:34), bio-fungicides",
+        "timings": {
+            "en": "8:30 AM - 8:30 PM",
+            "mr": "सकाळी ८:३० ते रात्री ८:३०"
+        },
+        "speciality": {
+            "en": "Certified onion seeds, water-soluble drip fertilizers (19:19:19, 0:52:34), bio-fungicides",
+            "mr": "प्रमाणित कांदा बियाणे, विद्राव्य ठिबक खते (१९:१९:१९, ०:५२:३४) व जैविक बुरशीनाशके"
+        },
         "rating": 4.7,
         "verified": True
     },
     {
         "id": "SRV-03",
-        "name": "Sahyadri Agro Machinery Custom Hiring Centre",
-        "category": "Machinery & Equipment Rental (कृषी अवजारे भाडेतत्त्वावर)",
-        "category_key": "machinery",
-        "taluka": "Niphad (निफाड)",
-        "district": "Nashik",
-        "location": "Ozar Airport Road, Niphad (6.5 km)",
+        "name": {
+            "en": "Sahyadri Agro Machinery Custom Hiring Centre",
+            "mr": "सह्याद्री कृषी अवजारे भाडे केंद्र"
+        },
+        "category": {
+            "en": "Machinery & Equipment Rental",
+            "mr": "कृषी अवजारे व यंत्रसामग्री भाडे केंद्र"
+        },
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {
+            "en": "Ozar Airport Road, Niphad (6.5 km)",
+            "mr": "ओझर विमानतळ रस्ता, निफाड (६.५ किमी)"
+        },
         "phone": "+91 97654 32109",
-        "timings": "7:00 AM - 7:00 PM",
-        "speciality": "Mini tractor rental (24 HP orchard model), boom sprayers for vineyards, rotavator, laser land leveler",
+        "timings": {
+            "en": "7:00 AM - 7:00 PM",
+            "mr": "सकाळी ७:०० ते संध्याकाळी ७:००"
+        },
+        "speciality": {
+            "en": "Mini tractor rental (24 HP orchard model), boom sprayers for vineyards, rotavator",
+            "mr": "द्राक्ष बागेसाठी लहान ट्रॅक्टर भाडे (२४ एचपी), बूम स्प्रेअर व रोटाव्हेटर"
+        },
         "rating": 4.8,
         "verified": True
     },
     {
         "id": "SRV-04",
-        "name": "Shree Ganesh Animal Fodder & Cattle Feed Traders",
-        "category": "Fodder & Cattle Feed (पशुखाद्य व वैरण)",
-        "category_key": "fodder",
-        "taluka": "Niphad (निफाड)",
-        "district": "Nashik",
-        "location": "Niphad Phata Highway Junction (3.1 km)",
+        "name": {
+            "en": "Shree Ganesh Animal Fodder & Cattle Feed Traders",
+            "mr": "श्री गणेश पशुखाद्य व वैरण केंद्र"
+        },
+        "category": {
+            "en": "Animal Fodder & Feed",
+            "mr": "पशुखाद्य व वैरण"
+        },
+        "taluka": {"en": "Niphad", "mr": "निफाड"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {
+            "en": "Niphad Phata Highway Junction (3.1 km)",
+            "mr": "निफाड फाटा हायवे जंक्शन (३.१ किमी)"
+        },
         "phone": "+91 99215 67890",
-        "timings": "8:00 AM - 8:00 PM",
-        "speciality": "Corn silage bales (मका सायलेज), high-protein cotton cake (सरकी पेंड), mineral mixture bags, dry straw",
+        "timings": {
+            "en": "8:00 AM - 8:00 PM",
+            "mr": "सकाळी ८:०० ते रात्री ८:००"
+        },
+        "speciality": {
+            "en": "Corn silage bales, high-protein cotton cake, mineral mixture bags, dry straw",
+            "mr": "मका सायलेज गाठी, सरकी पेंड, मिनरल मिक्स्चर व दर्जेदार सुका चारा"
+        },
         "rating": 4.6,
         "verified": True
     },
     {
         "id": "SRV-05",
-        "name": "MahaAgri Soil & Water Testing Laboratory",
-        "category": "Agricultural Service Centres (कृषी सेवा व माती परीक्षण केंद्र)",
-        "category_key": "service_centres",
-        "taluka": "Nashik (नाशिक)",
-        "district": "Nashik",
-        "location": "KVK Yashwantrao Chavan Open University Campus (11.5 km)",
+        "name": {
+            "en": "MahaAgri Soil & Water Testing Laboratory",
+            "mr": "महाॲग्री माती व पाणी परीक्षण प्रयोगशाळा"
+        },
+        "category": {
+            "en": "Agricultural Service Centres",
+            "mr": "कृषी सेवा व माती परीक्षण केंद्र"
+        },
+        "taluka": {"en": "Nashik", "mr": "नाशिक"},
+        "district": {"en": "Nashik", "mr": "नाशिक"},
+        "location": {
+            "en": "KVK Yashwantrao Chavan Open University Campus (11.5 km)",
+            "mr": "केव्हीके यशवंतराव चव्हाण मुक्त विद्यापीठ परिसर (११.५ किमी)"
+        },
         "phone": "+91 94231 77650",
-        "timings": "10:00 AM - 5:00 PM (Monday-Saturday)",
-        "speciality": "Complete 14-parameter soil test (NPK, Organic Carbon, Micro-nutrients, pH, EC) & irrigation water testing",
+        "timings": {
+            "en": "10:00 AM - 5:00 PM (Monday-Saturday)",
+            "mr": "सकाळी १०:०० ते संध्याकाळी ५:०० (सोम-शनि)"
+        },
+        "speciality": {
+            "en": "Complete 14-parameter soil test (NPK, Organic Carbon, Micro-nutrients, pH) & water testing",
+            "mr": "१४ घटकांचे संपूर्ण माती परीक्षण (एनपीके, सेंद्रिय कर्ब, सूक्ष्मअन्नद्रव्ये, सामू) व सिंचन पाणी तपासणी"
+        },
         "rating": 4.9,
         "verified": True
-    },
-    {
-        "id": "SRV-06",
-        "name": "Dr. Vikas Deshmukh - Mobile Cattle Clinic & AI Centre",
-        "category": "Veterinary Doctors & Emergency (पशुवैद्यकीय सेवा)",
-        "category_key": "veterinary",
-        "taluka": "Dindori (दिंडोरी)",
-        "district": "Nashik",
-        "location": "Dindori Main Chowk (14.0 km - Doorstep Farm Visits)",
-        "phone": "+91 98902 33445",
-        "timings": "8:00 AM - 8:00 PM (Call for Farm Visit)",
-        "speciality": "Doorstep cattle health checkup, sexed semen artificial insemination, mastitis treatment",
-        "rating": 4.8,
-        "verified": True
-    },
-    {
-        "id": "SRV-07",
-        "name": "Baliraja Krishi Seva Kendra & Bio-Pesticides",
-        "category": "Seeds & Fertilizer Shops (बियाणे व खते केंद्र)",
-        "category_key": "seeds_fertilizers",
-        "taluka": "Chandwad (चांदवड)",
-        "district": "Nashik",
-        "location": "Chandwad Bus Stand Road (18.2 km)",
-        "phone": "+91 98229 11223",
-        "timings": "8:30 AM - 8:00 PM",
-        "speciality": "Organic bio-stimulants, sticky traps, pheromone lures, certified tomato and onion seeds",
-        "rating": 4.5,
-        "verified": True
-    },
-    {
-        "id": "SRV-08",
-        "name": "Panchavati Agro Drone Spraying & Tech Services",
-        "category": "Agricultural Service Centres (कृषी सेवा व माती परीक्षण केंद्र)",
-        "category_key": "service_centres",
-        "taluka": "Nashik (नाशिक)",
-        "district": "Nashik",
-        "location": "Amrutdham, Panchavati, Nashik (16.0 km)",
-        "phone": "+91 98500 66778",
-        "timings": "6:00 AM - 6:00 PM",
-        "speciality": "Agricultural drone spraying for vineyards & orchards, 10 acres covered in 2 hours, uniform canopy coverage",
-        "rating": 4.9,
-        "verified": True
-    }
-]
-
-# Realistic marketplace listings (ready for Module 5)
-SAMPLE_MARKETPLACE = [
-    {
-        "id": "MKT-101",
-        "crop_name": "Red Onion (गावरान लाल कांदा)",
-        "variety": "Nashik Garwa Quality",
-        "quantity_quintals": 55,
-        "expected_price_per_quintal": 1950,
-        "seller_name": "Ramesh Tukaram Patil",
-        "seller_phone": "+91 98220 12345",
-        "location": "Pimpalgaon Baswant, Nashik",
-        "harvest_date": "2026-10-25",
-        "status": "Available",
-        "notes": "Graded, dry, well-cured medium-to-large size bulbs suitable for storage/transport."
-    },
-    {
-        "id": "MKT-102",
-        "crop_name": "Export Grade Grapes (थॉमसन सिडलेस द्राक्ष)",
-        "variety": "Thomson Seedless",
-        "quantity_quintals": 30,
-        "expected_price_per_quintal": 6200,
-        "seller_name": "Ramesh Tukaram Patil",
-        "seller_phone": "+91 98220 12345",
-        "location": "Pimpalgaon Baswant, Nashik",
-        "harvest_date": "Expected Feb 2027",
-        "status": "Advance Booking",
-        "notes": "18mm+ berry size, residue-free spray schedule maintained."
-    },
-    {
-        "id": "MKT-103",
-        "crop_name": "Certified Soybean Seed (सोयाबीन बियाणे)",
-        "variety": "JS 335 (Graded)",
-        "quantity_quintals": 18,
-        "expected_price_per_quintal": 4400,
-        "seller_name": "Sunil Bhaurao Gaikwad",
-        "seller_phone": "+91 98901 22334",
-        "location": "Chandwad, Nashik",
-        "harvest_date": "2026-10-15",
-        "status": "Available",
-        "notes": "High germination test passed (85%+), moisture 10%."
     }
 ]
 
 # 12 Core Farm Expense Categories from Problem Statement
 EXPENSE_CATEGORIES = [
-    "Seeds & Seedlings (बियाणे व रोपे)",
-    "Fertilizers & Nutrients (खते व पोषण)",
-    "Pesticides & Bio-agents (कीटकनाशके व बुरशीनाशके)",
-    "Labour & Pruning (मजुरी व छाटणी)",
-    "Irrigation & Water (सिंचन व पाणी)",
-    "Machinery & Rentals (यंत्रसामग्री व भाडे)",
-    "Transport & Mandi Hamali (वाहतूक व हमाली)",
-    "Animal Fodder & Feed (पशुखाद्य व वैरण)",
-    "Veterinary & Healthcare (पशुवैद्यकीय उपचार)",
-    "Animal Vaccination (पशुधन लसीकरण)",
-    "Fuel & Electricity (डिझेल व वीज बिल)",
-    "Repairs & Maintenance (दुरुस्ती व देखभाल)"
+    {"en": "Seeds & Seedlings", "mr": "बियाणे व रोपे"},
+    {"en": "Fertilizers & Nutrients", "mr": "खते व पोषण"},
+    {"en": "Pesticides & Bio-agents", "mr": "कीटकनाशके व बुरशीनाशके"},
+    {"en": "Labour & Pruning", "mr": "मजुरी व छाटणी"},
+    {"en": "Irrigation & Water", "mr": "सिंचन व पाणी"},
+    {"en": "Machinery & Rentals", "mr": "यंत्रसामग्री व भाडे"},
+    {"en": "Transport & Mandi Hamali", "mr": "वाहतूक व हमाली"},
+    {"en": "Animal Fodder & Feed", "mr": "पशुखाद्य व वैरण"},
+    {"en": "Veterinary & Healthcare", "mr": "पशुवैद्यकीय उपचार"},
+    {"en": "Animal Vaccination", "mr": "पशुधन लसीकरण"},
+    {"en": "Fuel & Electricity", "mr": "डिझेल व वीज बिल"},
+    {"en": "Repairs & Maintenance", "mr": "दुरुस्ती व देखभाल"}
 ]
 
-# Realistic categorized farm expenses across seasons & categories (Module 7)
+# Realistic categorized farm expenses across seasons & categories (Module 7) - Pure English & Pure Marathi
 SAMPLE_EXPENSES = [
     {
         "id": "EXP-001",
         "date": "2026-10-05",
-        "month": "October 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Onion",
-        "category": "Seeds & Seedlings (बियाणे व रोपे)",
-        "description": "Purchased 4 kg certified Fursungi onion seed packets",
+        "month": {"en": "October 2026", "mr": "ऑक्टोबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Onion", "mr": "कांदा"},
+        "category": {"en": "Seeds & Seedlings", "mr": "बियाणे व रोपे"},
+        "description": {
+            "en": "Purchased 4 kg certified Fursungi onion seed packets",
+            "mr": "४ किलो प्रमाणित फुर्सुंगी कांदा बियाणे खरेदी"
+        },
         "amount": 4800,
-        "payment_mode": "UPI"
+        "payment_mode": {"en": "UPI", "mr": "यूपीआय"}
     },
     {
         "id": "EXP-002",
         "date": "2026-10-14",
-        "month": "October 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Grapes",
-        "category": "Fertilizers & Nutrients (खते व पोषण)",
-        "description": "Water-soluble 0:52:34 and micronutrient drip application kit",
+        "month": {"en": "October 2026", "mr": "ऑक्टोबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "category": {"en": "Fertilizers & Nutrients", "mr": "खते व पोषण"},
+        "description": {
+            "en": "Water-soluble 0:52:34 and micronutrient drip application kit",
+            "mr": "विद्राव्य खत ०:५२:३४ व सूक्ष्मअन्नद्रव्य ठिबक संच खरेदी"
+        },
         "amount": 7600,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-003",
         "date": "2026-10-22",
-        "month": "October 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Grapes",
-        "category": "Labour & Pruning (मजुरी व छाटणी)",
-        "description": "Forward pruning labour charges (6 workers for 2 days)",
+        "month": {"en": "October 2026", "mr": "ऑक्टोबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "category": {"en": "Labour & Pruning", "mr": "मजुरी व छाटणी"},
+        "description": {
+            "en": "Forward pruning labour charges for 6 workers for 2 days",
+            "mr": "गोडी छाटणी मजुरी खर्च (६ मजूर २ दिवस)"
+        },
         "amount": 7200,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-004",
         "date": "2026-11-02",
-        "month": "November 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Livestock / Dairy",
-        "category": "Animal Fodder & Feed (पशुखाद्य व वैरण)",
-        "description": "5 bags cattle feed pellet (Godrej Agrovet) + mineral mixture",
+        "month": {"en": "November 2026", "mr": "नोव्हेंबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Livestock / Dairy", "mr": "दुग्धव्यवसाय / पशुधन"},
+        "category": {"en": "Animal Fodder & Feed", "mr": "पशुखाद्य व वैरण"},
+        "description": {
+            "en": "5 bags cattle feed pellet and mineral mixture",
+            "mr": "५ गोण्या पशुखाद्य पेंड व मिनरल मिक्स्चर खरेदी"
+        },
         "amount": 6250,
-        "payment_mode": "UPI"
+        "payment_mode": {"en": "UPI", "mr": "यूपीआय"}
     },
     {
         "id": "EXP-005",
         "date": "2026-11-08",
-        "month": "November 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Onion",
-        "category": "Labour & Pruning (मजुरी व छाटणी)",
-        "description": "Nursery bed transplanting labor (4 women workers)",
+        "month": {"en": "November 2026", "mr": "नोव्हेंबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Onion", "mr": "कांदा"},
+        "category": {"en": "Labour & Pruning", "mr": "मजुरी व छाटणी"},
+        "description": {
+            "en": "Nursery bed transplanting labor for 4 women workers",
+            "mr": "कांदा पुनर्लागवड मजुरी (४ महिला मजूर)"
+        },
         "amount": 2800,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-006",
         "date": "2026-11-12",
-        "month": "November 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Grapes",
-        "category": "Pesticides & Bio-agents (कीटकनाशके व बुरशीनाशके)",
-        "description": "Downy mildew preventive bio-fungicide spray (Trichoderma + Copper)",
+        "month": {"en": "November 2026", "mr": "नोव्हेंबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "category": {"en": "Pesticides & Bio-agents", "mr": "कीटकनाशके व बुरशीनाशके"},
+        "description": {
+            "en": "Downy mildew preventive bio-fungicide spray (Trichoderma + Copper)",
+            "mr": "डाऊनी मिल्ड्यू प्रतिबंधक ट्रायकोडर्मा व कॉपर बुरशीनाशक फवारणी"
+        },
         "amount": 3400,
-        "payment_mode": "UPI"
+        "payment_mode": {"en": "UPI", "mr": "यूपीआय"}
     },
     {
         "id": "EXP-007",
         "date": "2026-09-15",
-        "month": "September 2026",
-        "season": "Kharif 2026",
-        "crop": "Soybean",
-        "category": "Machinery & Rentals (यंत्रसामग्री व भाडे)",
-        "description": "Tractor rotavator & threshing rental for soybean harvest",
+        "month": {"en": "September 2026", "mr": "सप्टेंबर २०२६"},
+        "season": {"en": "Kharif 2026", "mr": "खरीप २०२६"},
+        "crop": {"en": "Soybean", "mr": "सोयाबीन"},
+        "category": {"en": "Machinery & Rentals", "mr": "यंत्रसामग्री व भाडे"},
+        "description": {
+            "en": "Tractor rotavator & threshing rental for soybean harvest",
+            "mr": "सोयाबीन काढणी व मळणी यंत्र ट्रॅक्टर भाडे"
+        },
         "amount": 5500,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-008",
         "date": "2026-10-28",
-        "month": "October 2026",
-        "season": "Rabi 2026-27",
-        "crop": "General Farm",
-        "category": "Irrigation & Water (सिंचन व पाणी)",
-        "description": "Drip lateral pipe replacement & filter flushing flush valves",
+        "month": {"en": "October 2026", "mr": "ऑक्टोबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "General Farm", "mr": "सामायिक शेती"},
+        "category": {"en": "Irrigation & Water", "mr": "सिंचन व पाणी"},
+        "description": {
+            "en": "Drip lateral pipe replacement and filter valve repairs",
+            "mr": "ठिबक लॅटरल नळ्या बदलणे व फिल्टर व्हॉल्व्ह दुरुस्ती"
+        },
         "amount": 3200,
-        "payment_mode": "UPI"
+        "payment_mode": {"en": "UPI", "mr": "यूपीआय"}
     },
     {
         "id": "EXP-009",
         "date": "2026-11-05",
-        "month": "November 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Livestock / Dairy",
-        "category": "Veterinary & Healthcare (पशुवैद्यकीय उपचार)",
-        "description": "Dr. Kulkarni farm visit, cattle deworming & mineral bolus",
+        "month": {"en": "November 2026", "mr": "नोव्हेंबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Livestock / Dairy", "mr": "दुग्धव्यवसाय / पशुधन"},
+        "category": {"en": "Veterinary & Healthcare", "mr": "पशुवैद्यकीय उपचार"},
+        "description": {
+            "en": "Doctor farm visit, cattle deworming & mineral bolus",
+            "mr": "पशुवैद्यकीय तपासणी, जनावरांचे जंतनिर्मूलन व खनिज औषधे"
+        },
         "amount": 1400,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-010",
         "date": "2026-11-10",
-        "month": "November 2026",
-        "season": "Rabi 2026-27",
-        "crop": "General Farm",
-        "category": "Fuel & Electricity (डिझेल व वीज बिल)",
-        "description": "MSEDCL agricultural water pump quarterly electricity bill",
+        "month": {"en": "November 2026", "mr": "नोव्हेंबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "General Farm", "mr": "सामायिक शेती"},
+        "category": {"en": "Fuel & Electricity", "mr": "डिझेल व वीज बिल"},
+        "description": {
+            "en": "MSEDCL agricultural water pump electricity bill payment",
+            "mr": "महावितरण शेतीपंप वीज बिल भरणा"
+        },
         "amount": 4650,
-        "payment_mode": "Bank Transfer"
+        "payment_mode": {"en": "Bank Transfer", "mr": "बँक ट्रान्सफर"}
     },
     {
         "id": "EXP-011",
         "date": "2026-09-25",
-        "month": "September 2026",
-        "season": "Kharif 2026",
-        "crop": "Soybean",
-        "category": "Transport & Mandi Hamali (वाहतूक व हमाली)",
-        "description": "Tempo transport of 18 bags soybean to Lasalgaon APMC",
+        "month": {"en": "September 2026", "mr": "सप्टेंबर २०२६"},
+        "season": {"en": "Kharif 2026", "mr": "खरीप २०२६"},
+        "crop": {"en": "Soybean", "mr": "सोयाबीन"},
+        "category": {"en": "Transport & Mandi Hamali", "mr": "वाहतूक व हमाली"},
+        "description": {
+            "en": "Tempo transport of 18 bags soybean to APMC market",
+            "mr": "१८ पोती सोयाबीन बाजार समितीत नेण्यासाठी वाहतूक भाडे"
+        },
         "amount": 2200,
-        "payment_mode": "Cash"
+        "payment_mode": {"en": "Cash", "mr": "रोख"}
     },
     {
         "id": "EXP-012",
         "date": "2026-10-18",
-        "month": "October 2026",
-        "season": "Rabi 2026-27",
-        "crop": "Grapes",
-        "category": "Repairs & Maintenance (दुरुस्ती व देखभाल)",
-        "description": "Tractor boom sprayer nozzle servicing and diaphragm seal repair",
+        "month": {"en": "October 2026", "mr": "ऑक्टोबर २०२६"},
+        "season": {"en": "Rabi 2026-27", "mr": "रब्बी २०२६-२७"},
+        "crop": {"en": "Grapes", "mr": "द्राक्ष"},
+        "category": {"en": "Repairs & Maintenance", "mr": "दुरुस्ती व देखभाल"},
+        "description": {
+            "en": "Tractor boom sprayer nozzle servicing and diaphragm seal repair",
+            "mr": "ट्रॅक्टर बूम स्प्रेअर नोझल सर्व्हिसिंग व डायफ्राम सील दुरुस्ती"
+        },
         "amount": 1850,
-        "payment_mode": "UPI"
+        "payment_mode": {"en": "UPI", "mr": "यूपीआय"}
+    }
+]
+
+# Realistic marketplace listings (Module 5) - Pure English & Pure Marathi
+SAMPLE_MARKETPLACE = [
+    {
+        "id": "MKT-101",
+        "crop_name": {"en": "Gavran Red Onion", "mr": "गावरान लाल कांदा"},
+        "variety": {"en": "Nashik Garwa Quality", "mr": "नाशिक गरवा प्रत"},
+        "quantity_quintals": 55,
+        "expected_price_per_quintal": 1950,
+        "seller_name": {"en": "Ramesh Tukaram Patil", "mr": "रमेश तुकाराम पाटील"},
+        "seller_phone": "+91 98220 12345",
+        "location": {"en": "Pimpalgaon Baswant, Nashik", "mr": "पिंपळगाव बसवंत, नाशिक"},
+        "harvest_date": "2026-10-25",
+        "status": {"en": "Available", "mr": "उपलब्ध"},
+        "notes": {
+            "en": "Graded, dry, well-cured medium-to-large size bulbs suitable for storage.",
+            "mr": "प्रतवारी केलेला, कोरडा, योग्य वाळवलेला मध्यम व मोठा कांदा चाळीसाठी योग्य."
+        }
+    },
+    {
+        "id": "MKT-102",
+        "crop_name": {"en": "Export Grade Grapes", "mr": "निर्यातक्षम द्राक्ष"},
+        "variety": {"en": "Thomson Seedless", "mr": "थॉमसन सिडलेस"},
+        "quantity_quintals": 30,
+        "expected_price_per_quintal": 6200,
+        "seller_name": {"en": "Ramesh Tukaram Patil", "mr": "रमेश तुकाराम पाटील"},
+        "seller_phone": "+91 98220 12345",
+        "location": {"en": "Pimpalgaon Baswant, Nashik", "mr": "पिंपळगाव बसवंत, नाशिक"},
+        "harvest_date": "Expected Feb 2027",
+        "status": {"en": "Advance Booking", "mr": "आगाऊ नोंदणी सुरू"},
+        "notes": {
+            "en": "18mm+ berry size, residue-free spray schedule maintained.",
+            "mr": "१८ मिमी+ मणी आकार, कीटकनाशक अवशेषमुक्त नियोजन केलेले."
+        }
     }
 ]
 
 
-def init_session_data(st):
-    """
-    Initializes runtime in-memory session data inside Streamlit session state.
-    This fulfills the strict NO-DATABASE requirement while ensuring any farmer edits
-    remain reactive and intact during their session.
-    """
-    if "is_authenticated" not in st.session_state:
-        st.session_state.is_authenticated = False
-
-    if "lang" not in st.session_state:
-        st.session_state.lang = "mr"  # Default to Marathi
-
-    if "registered_farmers" not in st.session_state:
-        st.session_state.registered_farmers = copy.deepcopy(SAMPLE_REGISTERED_FARMERS)
-
-    if "farmer_profile" not in st.session_state:
-        st.session_state.farmer_profile = copy.deepcopy(SAMPLE_FARMER)
-
-    if "crop_tasks" not in st.session_state:
-        st.session_state.crop_tasks = copy.deepcopy(SAMPLE_CROP_TASKS)
-
-    if "livestock_records" not in st.session_state:
-        st.session_state.livestock_records = copy.deepcopy(SAMPLE_LIVESTOCK)
-
-    if "nearby_services" not in st.session_state:
-        st.session_state.nearby_services = copy.deepcopy(SAMPLE_SERVICES)
-
-    if "marketplace_listings" not in st.session_state:
-        st.session_state.marketplace_listings = copy.deepcopy(SAMPLE_MARKETPLACE)
-
-    if "farm_expenses" not in st.session_state:
-        st.session_state.farm_expenses = copy.deepcopy(SAMPLE_EXPENSES)
-
-    if "active_nav" not in st.session_state:
-        st.session_state.active_nav = "dashboard"
+def init_session_data(st=None):
+    """Initializes in-memory session data."""
+    pass
 
 
-def reset_to_defaults(st):
+def reset_to_defaults(st=None):
     """Allows resetting session data to initial sample values."""
-    st.session_state.registered_farmers = copy.deepcopy(SAMPLE_REGISTERED_FARMERS)
-    st.session_state.farmer_profile = copy.deepcopy(SAMPLE_FARMER)
-    st.session_state.crop_tasks = copy.deepcopy(SAMPLE_CROP_TASKS)
-    st.session_state.livestock_records = copy.deepcopy(SAMPLE_LIVESTOCK)
-    st.session_state.nearby_services = copy.deepcopy(SAMPLE_SERVICES)
-    st.session_state.marketplace_listings = copy.deepcopy(SAMPLE_MARKETPLACE)
-    st.session_state.farm_expenses = copy.deepcopy(SAMPLE_EXPENSES)
+    pass

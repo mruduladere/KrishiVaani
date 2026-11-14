@@ -1,11 +1,12 @@
 """
-translations.py - Comprehensive Bilingual (English & Marathi) Translation Engine
+translations.py - Comprehensive Pure-Language Bilingual (English & Marathi) Translation Engine
 KrishiVaani (Voice of Agriculture)
 
 Provides:
-- Complete dictionaries for Marathi ('mr') and English ('en').
-- Helper t(key, lang=None) for instantaneous UI string resolution.
-- render_language_switcher(key) for synchronized dual-mode switching across views.
+- Strict 100% pure English ('en') and 100% pure Marathi ('mr') dictionaries.
+- Zero mixed parentheses (no 'Name (नाव)' or 'Seeds (बियाणे)').
+- t(key, lang=None) helper for UI string resolution.
+- pick(val, lang=None) universal bilingual extractor for strings, dictionaries, and dynamic data.
 """
 
 try:
@@ -18,6 +19,7 @@ try:
 except ImportError:
     st = None
 
+
 TRANSLATIONS = {
     "en": {
         # App Branding & Meta
@@ -25,47 +27,47 @@ TRANSLATIONS = {
         "app_subtitle": "Voice of Agriculture",
         "sih_badge": "Smart India Hackathon Prototype",
         "footer_text": "🌱 KrishiVaani • Pure Python • No Database • Designed for Maharashtra Farmers",
-        "lang_name_mr": "मराठी (Marathi)",
+        "lang_name_mr": "Marathi",
         "lang_name_en": "English",
 
         # Auth & Login Portal
         "auth_minimal_welcome": "Welcome back",
-        "auth_minimal_sub": "Sign in to manage your crops & cattle",
+        "auth_minimal_sub": "Sign in to manage your crops and cattle",
         "auth_minimal_tagline": "Voice of Agriculture",
         "auth_minimal_new_reg": "New farmer? Register here",
         "auth_minimal_existing": "Already registered? Sign in",
         "auth_welcome_title": "Welcome back, Farmer",
         "auth_welcome_subtitle": "Enter your mobile number and 4-digit PIN to access your farm portal.",
         "auth_landscape_headline": "Empowering Every Harvest",
-        "auth_landscape_sub": "Unified crop advisory, livestock care & mandi insights.",
+        "auth_landscape_sub": "Unified crop advisory, livestock care and market insights.",
         "auth_headline": "Smart Farming, Simplified",
         "auth_subheadline": "One unified digital platform for everyday Maharashtra farming.",
-        "auth_showcase_badge": "🌾 KrishiVaani • Voice of Agriculture",
+        "auth_showcase_badge": "KrishiVaani • Voice of Agriculture",
         "auth_showcase_title": "Smart Farming Platform",
         "auth_showcase_tagline": "One unified digital platform for everyday Maharashtra farming",
-        "auth_showcase_desc": "Empowering farmers across Nashik & Maharashtra with actionable crop advisories, livestock reminders, market discovery, and financial tracking.",
+        "auth_showcase_desc": "Empowering farmers across Nashik and Maharashtra with actionable crop advisories, livestock reminders, market discovery, and financial tracking.",
         "auth_register_header": "Create Farmer Account",
         "auth_register_subtitle": "Register your land and crops in memory to get instant digital advisory.",
         "auth_switch_to_register": "Don't have an account? Register here",
         "auth_switch_to_login": "Already registered? Sign in here",
         "auth_or_text": "or continue with demo account",
-        "auth_demo_title": "⚡ 1-Click Demo Login (Ramesh Patil)",
-        "auth_pill_crop": "🌱 Crop Advisory",
-        "auth_pill_livestock": "🐄 Livestock Care",
-        "auth_pill_expenses": "💰 Expense Tracking",
-        "auth_pill_services": "📍 Local Services",
+        "auth_demo_title": "1-Click Demo Login (Ramesh Patil)",
+        "auth_pill_crop": "Crop Advisory",
+        "auth_pill_livestock": "Livestock Care",
+        "auth_pill_expenses": "Expense Tracking",
+        "auth_pill_services": "Local Services",
         "login_portal_title": "KrishiVaani Farmer Portal",
         "login_portal_subtitle": "Unified Digital Agriculture Platform for Maharashtra Farmers",
-        "demo_login_button": "⚡ 1-Click Demo Login (Ramesh Patil)",
+        "demo_login_button": "1-Click Demo Login (Ramesh Patil)",
         "demo_login_caption": "Instant 1-click access with pre-loaded Nashik farm data for Hackathon evaluators.",
         "or_divider": "OR SIGN IN WITH CREDENTIALS",
-        "tab_login": "🔑 Farmer Login",
-        "tab_register": "📝 New Farmer Registration",
+        "tab_login": "Farmer Login",
+        "tab_register": "New Farmer Registration",
         "phone_label": "Registered Mobile Number",
-        "phone_placeholder": "e.g. 9822012345 or +91 98220 12345",
+        "phone_placeholder": "e.g. 9822012345",
         "pin_label": "4-Digit Security PIN",
         "pin_placeholder": "Enter 4-digit PIN (Demo: 1234)",
-        "login_button": "🚀 Log In to My Farm",
+        "login_button": "Log In to My Farm",
         "login_failed": "Invalid Mobile Number or PIN. For demo, use 9822012345 with PIN 1234, or use 1-Click Demo Login above.",
         "login_success": "Login successful! Welcome to KrishiVaani.",
 
@@ -86,24 +88,24 @@ TRANSLATIONS = {
         "reg_irrigation_label": "Irrigation Method",
         "reg_crops_label": "Crops Grown (comma-separated)",
         "reg_crops_placeholder": "e.g. Grapes, Onion, Soybean",
-        "register_button": "🌱 Complete Registration & Enter Farm",
+        "register_button": "Complete Registration & Enter Farm",
         "reg_validation_error": "Please provide Full Name, 10-digit Mobile Number, and a 4-digit PIN.",
         "reg_success": "Registration completed successfully! Welcome to KrishiVaani.",
 
         # Sidebar & Navigation
         "nav_header": "Main Navigation",
-        "nav_dashboard": "🏠 1. Profile & Dashboard",
-        "nav_crop_helper": "🌱 2. Crop & Farming Helper",
-        "nav_ai_assistant": "🤖 3. Multilingual AI Assistant",
-        "nav_nearby_services": "📍 4. Nearby Agri Services",
-        "nav_marketplace": "🛒 5. Farmer Marketplace",
-        "nav_livestock": "🐄 6. Livestock & Vaccines",
-        "nav_expense_tracker": "💰 7. Farm Expense Tracker",
-        "logout_button": "Log Out (लॉगआउट)",
+        "nav_dashboard": "1. Profile & Dashboard",
+        "nav_crop_helper": "2. Crop & Farming Helper",
+        "nav_ai_assistant": "3. Multilingual AI Assistant",
+        "nav_nearby_services": "4. Nearby Agri Services",
+        "nav_marketplace": "5. Farmer Marketplace",
+        "nav_livestock": "6. Livestock & Vaccines",
+        "nav_expense_tracker": "7. Farm Expense Tracker",
+        "logout_button": "Log Out",
         "farmer_badge": "Farmer",
         "location_badge": "Location",
         "land_badge": "Land Holding",
-        "back_to_dashboard": "⬅️ Back to Farmer Dashboard",
+        "back_to_dashboard": "Back to Farmer Dashboard",
 
         # Module 1: Dashboard
         "greeting_welcome": "Namaskar",
@@ -118,9 +120,9 @@ TRANSLATIONS = {
         "animals_count_suffix": "Animals",
         "logs_suffix": "logs",
         "profile_heading": "Farmer Profile & Farm Details",
-        "btn_view_profile": "👁️ View Profile",
-        "btn_edit_profile": "✏️ Edit Profile",
-        "btn_save_profile": "💾 Save Profile Changes",
+        "btn_view_profile": "View Profile",
+        "btn_edit_profile": "Edit Profile",
+        "btn_save_profile": "Save Profile Changes",
         "btn_cancel": "Cancel",
         "full_name": "Full Name",
         "contact_phone": "Phone Number",
@@ -136,7 +138,7 @@ TRANSLATIONS = {
         "profile_updated_success": "Profile updated successfully!",
         "reset_defaults_title": "Reset to Sample Data Defaults",
         "reset_defaults_desc": "If you edited data and want to restore baseline demonstration values, click below.",
-        "btn_reset_defaults": "🔄 Restore Sample Defaults",
+        "btn_reset_defaults": "Restore Sample Defaults",
         "reset_success": "Baseline sample data restored successfully!",
         "services_hub_title": "Platform Services & Modules",
         "services_hub_caption": "Click on any module below to navigate directly.",
@@ -153,10 +155,10 @@ TRANSLATIONS = {
         "marathi_name_label": "Regional Name",
         "season_label": "Season",
         "soil_label": "Recommended Soil",
-        "stage_1_tab": "🌱 Stage 1: Sowing / Pruning",
-        "stage_2_tab": "🌿 Stage 2: Vegetative Growth",
-        "stage_3_tab": "🌸 Stage 3: Flowering / Fruiting",
-        "stage_4_tab": "🌾 Stage 4: Harvest & Storage",
+        "stage_1_tab": "Stage 1: Sowing / Pruning",
+        "stage_2_tab": "Stage 2: Vegetative Growth",
+        "stage_3_tab": "Stage 3: Flowering / Fruiting",
+        "stage_4_tab": "Stage 4: Harvest & Storage",
         "duration_label": "Duration / Window",
         "fertilizer_heading": "Fertilizer & Nutrition Management",
         "irrigation_heading": "Irrigation Schedule",
@@ -172,7 +174,7 @@ TRANSLATIONS = {
         "priority_high": "High",
         "priority_med": "Medium",
         "priority_low": "Low",
-        "add_task_expander": "➕ Add New Farm Task / Reminder",
+        "add_task_expander": "Add New Farm Task / Reminder",
         "task_desc_label": "Task Description",
         "task_crop_label": "Related Crop",
         "task_stage_label": "Stage / Category",
@@ -184,7 +186,7 @@ TRANSLATIONS = {
 
         # Module 4: Nearby Services
         "nearby_banner_title": "Nearby Agricultural Services",
-        "nearby_banner_subtitle": "Find certified veterinary doctors, seed & fertilizer shops, equipment rental, and soil testing labs near your farm.",
+        "nearby_banner_subtitle": "Find certified veterinary doctors, seed and fertilizer shops, equipment rental, and soil testing labs near your farm.",
         "search_filter_title": "Find & Filter Services",
         "category_filter_label": "Select Category:",
         "taluka_filter_label": "Select Taluka:",
@@ -199,7 +201,7 @@ TRANSLATIONS = {
         "btn_call_now": "Call Now",
         "btn_whatsapp": "WhatsApp Inquiry",
         "no_providers_found": "No service providers found matching these filters. Try changing your filters or add a new provider below.",
-        "add_service_expander": "➕ Register a New Local Service / Doctor",
+        "add_service_expander": "Register a New Local Service / Doctor",
         "add_service_caption": "Contribute trusted local service provider details to assist fellow farmers in your taluka.",
         "provider_name_label": "Provider / Centre Name",
         "provider_cat_label": "Service Category",
@@ -282,6 +284,94 @@ TRANSLATIONS = {
         "expense_added_success": "Expense entry logged successfully in farm ledger!",
         "expense_deleted_success": "Expense entry removed from farm ledger!",
 
+        # Common Crops & Categories Mapping
+        "Grapes": "Grapes",
+        "Onion": "Onion",
+        "Soybean": "Soybean",
+        "Cotton": "Cotton",
+        "Sugarcane": "Sugarcane",
+        "Wheat": "Wheat",
+        "Livestock / Dairy": "Livestock / Dairy",
+        "General Farm": "General Farm",
+        "Seeds & Seedlings": "Seeds & Seedlings",
+        "Fertilizers & Nutrients": "Fertilizers & Nutrients",
+        "Pesticides & Bio-agents": "Pesticides & Bio-agents",
+        "Labour & Pruning": "Labour & Pruning",
+        "Irrigation & Water": "Irrigation & Water",
+        "Machinery & Rentals": "Machinery & Rentals",
+        "Transport & Mandi Hamali": "Transport & Mandi Hamali",
+        "Animal Fodder & Feed": "Animal Fodder & Feed",
+        "Veterinary & Healthcare": "Veterinary & Healthcare",
+        "Animal Vaccination": "Animal Vaccination",
+        "Fuel & Electricity": "Fuel & Electricity",
+        "Repairs & Maintenance": "Repairs & Maintenance",
+        "UPI": "UPI / Online",
+        "Cash": "Cash",
+        "Bank Transfer": "Bank Transfer",
+        "Credit / Udhar": "Credit / Udhar",
+        "Rabi 2026-27": "Rabi 2026-27",
+        "Kharif 2026": "Kharif 2026",
+        "Zaid / Summer 2026": "Zaid / Summer 2026",
+        "Cow": "Cow",
+        "Buffalo": "Buffalo",
+        "Goat": "Goat",
+        "Bull": "Bull",
+        "Sheep": "Sheep",
+        "Acres": "Acres",
+        "L / day": "L / day",
+        "Yrs": "Years",
+
+        # Extra Pure UI Labels (Modules 2, 4, 6, 7)
+        "module_6_badge": "Module 6 • Maharashtra Dairy & Cattle Care",
+        "module_7_badge": "Module 7 • Farm Financial Ledger & Analytics",
+        "kpi_total_entries_suffix": "logged transactions",
+        "kpi_across_label": "Across",
+        "kpi_current_month_sub": "November 2026 active window",
+        "kpi_top_crop": "Top Invested Crop",
+        "kpi_share_suffix": "share",
+        "kpi_budget_share": "of budget",
+        "chart_12_categories": "12 Core Agro Categories",
+        "chart_season_timeline": "Season Timeline",
+        "chart_cat_caption": "Fertilizers, Labour & Feeds account for major operating investments",
+        "chart_month_caption": "Peak expenditure observed during forward pruning & basal fertilizer application",
+        "livestock_registry_title": "Individual Animal Health & Vaccine Registry",
+        "livestock_registry_subtitle": "Vaccination overdue calculation evaluated automatically with Python datetime",
+        "today_label": "Today",
+        "registered_in_registry": "Registered in farm registry",
+        "average_yield_prefix": "Average:",
+        "per_animal_suffix": "L / animal",
+        "requires_immediate_vet": "Requires immediate vet scheduling",
+        "next_14_days_window": "Next 14 days calendar window",
+        "vaccines_count_suffix": "Vaccines",
+        "vaccines_tracked": "Vaccines Tracked",
+        "last_dose_label": "Last:",
+        "due_date_label": "Due:",
+        "days_late": "days late",
+        "in_days": "in",
+        "days_suffix": "days",
+        "status_scheduled": "Scheduled",
+        "initial_vaccine_label": "Initial Vaccine Schedule",
+        "add_record_btn": "Add Record",
+        "delete_confirm": "Delete this expense?",
+        "clear_filters": "Clear search filters",
+        "no_providers_title": "No Service Providers Found",
+        "verified_directory": "Verified regional directory",
+        "stages_count_suffix": "Stages",
+        "lifecycle_advisory": "Lifecycle Advisory",
+        "growth_lifecycle_title": "Stage-by-Stage Agricultural Lifecycle",
+        "growth_lifecycle_sub": "Step-by-step nutrition, water management, and disease prophylaxis",
+        "add_inmemory_task": "Add In-Memory Farm Task",
+        "next_3_days": "Next 3 Days",
+        "high_priority": "High",
+        "medium_priority": "Medium",
+        "low_priority": "Low",
+        "apply_filters_btn": "Apply Filters",
+        "module_2_badge": "Module 2 • Maharashtra Dynamic Agronomy Advisory",
+        "active_crop_label": "Active Crop",
+        "farm_crop_badge": "Farm Crop",
+        "agronomy_knowledge_base": "Agronomic Knowledge Base",
+        "task_placeholder": "e.g. Apply 13:0:45 potassium nitrate via drip irrigation",
+
         # Under Construction Placeholders
         "under_dev_badge": "Under Development",
         "planned_features_heading": "Planned Features in this Module:",
@@ -293,7 +383,7 @@ TRANSLATIONS = {
         "sih_badge": "स्मार्ट इंडिया हॅकाथॉन प्रोटोटाईप",
         "footer_text": "🌱 कृषीवाणी • प्युअर पायथन • डेटाबेस विरहित • महाराष्ट्रातील बळीराजासाठी",
         "lang_name_mr": "मराठी",
-        "lang_name_en": "English (इंग्रजी)",
+        "lang_name_en": "इंग्रजी",
 
         # Auth & Login Portal
         "auth_minimal_welcome": "पुन्हा स्वागत आहे",
@@ -307,7 +397,7 @@ TRANSLATIONS = {
         "auth_landscape_sub": "एकात्मिक पीक सल्ला, पशुधन काळजी आणि बाजारपेठ माहिती.",
         "auth_headline": "स्मार्ट शेती, सोपे व्यवस्थापन",
         "auth_subheadline": "महाराष्ट्रातील शेतकऱ्यांसाठी एकात्मिक डिजिटल कृषी व्यासपीठ.",
-        "auth_showcase_badge": "🌾 कृषीवाणी • शेतकऱ्यांचा डिजिटल आवाज",
+        "auth_showcase_badge": "कृषीवाणी • शेतकऱ्यांचा डिजिटल आवाज",
         "auth_showcase_title": "स्मार्ट डिजिटल शेती",
         "auth_showcase_tagline": "महाराष्ट्रातील दैनंदिन शेतीसाठी एकसंध डिजिटल व्यासपीठ",
         "auth_showcase_desc": "नाशिक व महाराष्ट्रातील शेतकऱ्यांसाठी पीक सल्ला, पशुधन लसीकरण, स्थानिक सेवा आणि शेतखर्च नोंदी एकाच ठिकाणी.",
@@ -316,23 +406,23 @@ TRANSLATIONS = {
         "auth_switch_to_register": "नवीन शेतकरी आहात? येथे नोंदणी करा",
         "auth_switch_to_login": "आधीच नोंदणी झाली आहे? येथे लॉगिन करा",
         "auth_or_text": "किंवा डेमो खात्याने थेट प्रवेश करा",
-        "auth_demo_title": "⚡ १-क्लिक डेमो लॉगिन (रमेश पाटील)",
-        "auth_pill_crop": "🌱 पीक सल्लागार",
-        "auth_pill_livestock": "🐄 पशुधन व्यवस्थापन",
-        "auth_pill_expenses": "💰 शेतखर्च नोंदवही",
-        "auth_pill_services": "📍 स्थानिक सेवा केंद्र",
+        "auth_demo_title": "१-क्लिक डेमो लॉगिन (रमेश पाटील)",
+        "auth_pill_crop": "पीक सल्लागार",
+        "auth_pill_livestock": "पशुधन व्यवस्थापन",
+        "auth_pill_expenses": "शेतखर्च नोंदवही",
+        "auth_pill_services": "स्थानिक सेवा केंद्र",
         "login_portal_title": "कृषीवाणी शेतकरी पोर्टल",
         "login_portal_subtitle": "महाराष्ट्रातील शेतकऱ्यांसाठी एकात्मिक डिजिटल कृषी व्यासपीठ",
-        "demo_login_button": "⚡ १-क्लिक डेमो लॉगिन (रमेश पाटील)",
+        "demo_login_button": "१-क्लिक डेमो लॉगिन (रमेश पाटील)",
         "demo_login_caption": "परीक्षक व परीक्षणासाठी नाशिक शेती डेटासह त्वरित १-क्लिक प्रवेश.",
         "or_divider": "किंवा मोबाईल व पिन प्रविष्ट करून लॉगिन करा",
-        "tab_login": "🔑 शेतकरी लॉगिन",
-        "tab_register": "📝 नवीन शेतकरी नोंदणी",
+        "tab_login": "शेतकरी लॉगिन",
+        "tab_register": "नवीन शेतकरी नोंदणी",
         "phone_label": "नोंदणीकृत मोबाईल क्रमांक",
-        "phone_placeholder": "उदा. 9822012345 किंवा +91 98220 12345",
-        "pin_label": "४-अंकी सुरक्षा पिन (PIN)",
+        "phone_placeholder": "उदा. 9822012345",
+        "pin_label": "४-अंकी सुरक्षा पिन",
         "pin_placeholder": "४-अंकी पिन प्रविष्ट करा (डेमो: 1234)",
-        "login_button": "🚀 शेतात प्रवेश करा (लॉगिन)",
+        "login_button": "शेतात प्रवेश करा",
         "login_failed": "अवैध मोबाईल क्रमांक किंवा पिन. डेमोसाठी 9822012345 आणि पिन 1234 वापरा किंवा वरील १-क्लिक डेमो लॉगिन वापरा.",
         "login_success": "लॉगिन यशस्वी! कृषीवाणीमध्ये आपले स्वागत आहे.",
 
@@ -353,24 +443,24 @@ TRANSLATIONS = {
         "reg_irrigation_label": "सिंचन पद्धत",
         "reg_crops_label": "पिके (स्वल्पविरामाने वेगळे करा)",
         "reg_crops_placeholder": "उदा. द्राक्ष, कांदा, सोयाबीन",
-        "register_button": "🌱 नोंदणी पूर्ण करा व शेतात प्रवेश करा",
+        "register_button": "नोंदणी पूर्ण करा व शेतात प्रवेश करा",
         "reg_validation_error": "कृपया पूर्ण नाव, १०-अंकी मोबाईल नंबर आणि ४-अंकी पिन प्रविष्ट करा.",
         "reg_success": "नोंदणी यशस्वीरीत्या पूर्ण झाली! कृषीवाणीमध्ये आपले स्वागत आहे.",
 
         # Sidebar & Navigation
         "nav_header": "मुख्य विभाग",
-        "nav_dashboard": "🏠 १. शेतकरी प्रोफाइल व डॅशबोर्ड",
-        "nav_crop_helper": "🌱 २. पीक सल्लागार व मार्गदर्शन",
-        "nav_ai_assistant": "🤖 ३. AI शेती सहाय्यक",
-        "nav_nearby_services": "📍 ४. जवळपासची कृषी सेवा केंद्र",
-        "nav_marketplace": "🛒 ५. शेतकरी थेट बाजारपेठ",
-        "nav_livestock": "🐄 ६. पशुधन नोंदी व लसीकरण",
-        "nav_expense_tracker": "💰 ७. शेतखर्च ट्रॅकर व नफा",
-        "logout_button": "लॉगआउट करा (Log Out)",
+        "nav_dashboard": "१. शेतकरी प्रोफाइल व डॅशबोर्ड",
+        "nav_crop_helper": "२. पीक सल्लागार व मार्गदर्शन",
+        "nav_ai_assistant": "३. AI शेती सहाय्यक",
+        "nav_nearby_services": "४. जवळपासची कृषी सेवा केंद्र",
+        "nav_marketplace": "५. शेतकरी थेट बाजारपेठ",
+        "nav_livestock": "६. पशुधन नोंदी व लसीकरण",
+        "nav_expense_tracker": "७. शेतखर्च ट्रॅकर व नफा",
+        "logout_button": "लॉगआउट करा",
         "farmer_badge": "शेतकरी",
         "location_badge": "पत्ता",
         "land_badge": "शेतजमीन",
-        "back_to_dashboard": "⬅️ शेतकरी डॅशबोर्डवर परत जा",
+        "back_to_dashboard": "शेतकरी डॅशबोर्डवर परत जा",
 
         # Module 1: Dashboard
         "greeting_welcome": "नमस्कार",
@@ -385,9 +475,9 @@ TRANSLATIONS = {
         "animals_count_suffix": "जनावरे",
         "logs_suffix": "नोंदी",
         "profile_heading": "शेतकरी प्रोफाइल व शेतजमीन माहिती",
-        "btn_view_profile": "👁️ प्रोफाइल पहा",
-        "btn_edit_profile": "✏️ प्रोफाइल संपादन",
-        "btn_save_profile": "💾 बदल जतन करा",
+        "btn_view_profile": "प्रोफाइल पहा",
+        "btn_edit_profile": "प्रोफाइल संपादन",
+        "btn_save_profile": "बदल जतन करा",
         "btn_cancel": "रद्द करा",
         "full_name": "पूर्ण नाव",
         "contact_phone": "मोबाईल क्रमांक",
@@ -403,7 +493,7 @@ TRANSLATIONS = {
         "profile_updated_success": "प्रोफाइल यशस्वीरीत्या जतन केले!",
         "reset_defaults_title": "नमुना डेटा रिसेट करा",
         "reset_defaults_desc": "जर तुम्ही डेटा बदलला असेल आणि पुन्हा मूळ नमुना डेटा आणायचा असेल, तर खालील बटण दाबा.",
-        "btn_reset_defaults": "🔄 मूळ नमुना डेटा पुनर्स्थापित करा",
+        "btn_reset_defaults": "मूळ नमुना डेटा पुनर्स्थापित करा",
         "reset_success": "मूळ नमुना डेटा पूर्ववत करण्यात आला!",
         "services_hub_title": "कृषीवाणी सेवा केंद्र व विभाग",
         "services_hub_caption": "खालील सेवांवर क्लिक करून थेट त्या विभागात जा.",
@@ -420,10 +510,10 @@ TRANSLATIONS = {
         "marathi_name_label": "स्थानिक नाव",
         "season_label": "हंगाम",
         "soil_label": "योग्य जमीन",
-        "stage_1_tab": "🌱 टप्पा १: लागवड / छाटणी",
-        "stage_2_tab": "🌿 टप्पा २: शाकीय वाढ",
-        "stage_3_tab": "🌸 टप्पा ३: फुलधारणा / फळधारणा",
-        "stage_4_tab": "🌾 टप्पा ४: काढणी व साठवणूक",
+        "stage_1_tab": "टप्पा १: लागवड / छाटणी",
+        "stage_2_tab": "टप्पा २: शाकीय वाढ",
+        "stage_3_tab": "टप्पा ३: फुलधारणा / फळधारणा",
+        "stage_4_tab": "टप्पा ४: काढणी व साठवणूक",
         "duration_label": "कालावधी / टप्पा वेळ",
         "fertilizer_heading": "खत व्यवस्थापन",
         "irrigation_heading": "पाणी व्यवस्थापन",
@@ -438,8 +528,8 @@ TRANSLATIONS = {
         "completed_label": "कामे पूर्ण",
         "priority_high": "उच्च",
         "priority_med": "मध्यम",
-        "priority_low": "सामान्य",
-        "add_task_expander": "➕ नवीन शेतकाम / स्मरणपत्र जोडा",
+        "priority_low": "कमी",
+        "add_task_expander": "नवीन शेतकाम / स्मरणपत्र जोडा",
         "task_desc_label": "कामाचे नाव व तपशील",
         "task_crop_label": "संबंधित पीक",
         "task_stage_label": "टप्पा / विभाग",
@@ -456,7 +546,7 @@ TRANSLATIONS = {
         "category_filter_label": "सेवेचा प्रकार निवडा:",
         "taluka_filter_label": "तालुका निवडा:",
         "keyword_search_label": "कीवर्ड शोधा:",
-        "keyword_placeholder": "उदा. Kulkarni, ट्रॅक्टर, कांदा बियाणे, क्लिनिक",
+        "keyword_placeholder": "उदा. कुलकर्णी, ट्रॅक्टर, कांदा बियाणे, क्लिनिक",
         "all_categories": "सर्व सेवा",
         "all_talukas": "सर्व तालुके",
         "showing_label": "दाखवत आहे",
@@ -466,7 +556,7 @@ TRANSLATIONS = {
         "btn_call_now": "कॉल करा",
         "btn_whatsapp": "व्हॉट्सॲप चौकशी",
         "no_providers_found": "या निकषांनुसार कोणताही सेवा प्रदाता सापडला नाही. कृपया फिल्टर बदला किंवा खालील फॉर्ममधून नवीन प्रदाता जोडा.",
-        "add_service_expander": "➕ नवीन कृषी सेवा प्रदाता नोंदवा",
+        "add_service_expander": "नवीन कृषी सेवा प्रदाता नोंदवा",
         "add_service_caption": "तुमच्या भागातील इतर शेतकरी मित्रांच्या सोयीसाठी खात्रीशीर सेवा प्रदात्यांची माहिती जोडा.",
         "provider_name_label": "प्रदाता किंवा केंद्राचे नाव",
         "provider_cat_label": "सेवेचा प्रकार",
@@ -489,8 +579,8 @@ TRANSLATIONS = {
         "btn_add_animal": "नवीन जनावर नोंदवा",
         "animal_tag_label": "टॅग / आयडी",
         "animal_name_label": "नाव",
-        "animal_type_label": "प्रकार / जात",
-        "animal_breed_label": "नस्ल / जात",
+        "animal_type_label": "प्रकार",
+        "animal_breed_label": "जात / नस्ल",
         "animal_age_label": "वय (वर्षे)",
         "animal_milk_label": "दैनंदिन दूध (लिटर)",
         "animal_health_label": "आरोग्य स्थिती",
@@ -501,9 +591,9 @@ TRANSLATIONS = {
         "vaccine_col_status": "स्थिती",
         "vaccine_col_action": "कृती",
         "btn_mark_vaccinated": "लसीकरण पूर्ण नोंदवा",
-        "status_overdue_badge": "मुदत संपली (Overdue)",
+        "status_overdue_badge": "मुदत संपली",
         "status_upcoming_badge": "येत्या १४ दिवसांत देय",
-        "status_uptodate_badge": "अद्ययावत (Up-to-Date)",
+        "status_uptodate_badge": "अद्ययावत",
         "health_healthy": "निरोगी व दुभते",
         "health_attention": "लसीकरण बाकी (तातडीचे)",
         "add_animal_modal_title": "नवीन जनावराची नोंदणी",
@@ -549,6 +639,94 @@ TRANSLATIONS = {
         "expense_added_success": "शेतखर्चाची नोंद यशस्वीरीत्या जमा झाली!",
         "expense_deleted_success": "खर्चाची नोंद शेत नोंदवहीतून हटवण्यात आली!",
 
+        # Common Crops & Categories Mapping
+        "Grapes": "द्राक्ष",
+        "Onion": "कांदा",
+        "Soybean": "सोयाबीन",
+        "Cotton": "कापूस",
+        "Sugarcane": "ऊस",
+        "Wheat": "गहू",
+        "Livestock / Dairy": "दुग्धव्यवसाय / पशुधन",
+        "General Farm": "सामायिक शेती",
+        "Seeds & Seedlings": "बियाणे व रोपे",
+        "Fertilizers & Nutrients": "खते व पोषण",
+        "Pesticides & Bio-agents": "कीटकनाशके व बुरशीनाशके",
+        "Labour & Pruning": "मजुरी व छाटणी",
+        "Irrigation & Water": "सिंचन व पाणी",
+        "Machinery & Rentals": "यंत्रसामग्री व भाडे",
+        "Transport & Mandi Hamali": "वाहतूक व हमाली",
+        "Animal Fodder & Feed": "पशुखाद्य व वैरण",
+        "Veterinary & Healthcare": "पशुवैद्यकीय उपचार",
+        "Animal Vaccination": "पशुधन लसीकरण",
+        "Fuel & Electricity": "डिझेल व वीज बिल",
+        "Repairs & Maintenance": "दुरुस्ती व देखभाल",
+        "UPI": "यूपीआय / ऑनलाइन",
+        "Cash": "रोख",
+        "Bank Transfer": "बँक ट्रान्सफर",
+        "Credit / Udhar": "उधार / देणे",
+        "Rabi 2026-27": "रब्बी २०२६-२७",
+        "Kharif 2026": "खरीप २०२६",
+        "Zaid / Summer 2026": "उन्हाळी २०२६",
+        "Cow": "गाय",
+        "Buffalo": "म्हैस",
+        "Goat": "शेळी",
+        "Bull": "बैल",
+        "Sheep": "मेंढी",
+        "Acres": "एकर",
+        "L / day": "लिटर/दिवस",
+        "Yrs": "वर्षे",
+
+        # Extra Pure UI Labels (Modules 2, 4, 6, 7)
+        "module_6_badge": "विभाग ६ • महाराष्ट्र दुग्ध व पशुधन व्यवस्थापन",
+        "module_7_badge": "विभाग ७ • शेतखर्च नोंदवही व आर्थिक विश्लेषण",
+        "kpi_total_entries_suffix": "नोंदवलेले व्यवहार",
+        "kpi_across_label": "एकूण",
+        "kpi_current_month_sub": "नोव्हेंबर २०२६ चालू कालावधी",
+        "kpi_top_crop": "सर्वाधिक खर्च झालेले पीक",
+        "kpi_share_suffix": "वाटा",
+        "kpi_budget_share": "खर्चाचा वाटा",
+        "chart_12_categories": "१२ मुख्य कृषी खर्च प्रकार",
+        "chart_season_timeline": "हंगाम कालमर्यादा",
+        "chart_cat_caption": "खते, मजुरी आणि पशुखाद्य यांवर सर्वाधिक खर्च नोंदवला गेला आहे",
+        "chart_month_caption": "गोडी छाटणी आणि पायाभूत खत व्यवस्थापनादरम्यान खर्चात वाढ दिसून आली",
+        "livestock_registry_title": "प्रत्येक जनावराचे आरोग्य व लसीकरण नोंदवही",
+        "livestock_registry_subtitle": "पायथन डेटटाइम प्रणालीद्वारे स्वयंचलित मुदत गणना",
+        "today_label": "आज",
+        "registered_in_registry": "शेत नोंदवहीत नोंदणीकृत",
+        "average_yield_prefix": "सरासरी:",
+        "per_animal_suffix": "लिटर / जनावर",
+        "requires_immediate_vet": "तातडीने पशुवैद्यकीय भेटीची गरज",
+        "next_14_days_window": "पुढील १४ दिवसांचे वेळापत्रक",
+        "vaccines_count_suffix": "लसी",
+        "vaccines_tracked": "नोंदवलेल्या लसी",
+        "last_dose_label": "मागील:",
+        "due_date_label": "देय:",
+        "days_late": "दिवस उशीर",
+        "in_days": "येत्या",
+        "days_suffix": "दिवसांत",
+        "status_scheduled": "नियोजित",
+        "initial_vaccine_label": "पहिली लस वेळापत्रक",
+        "add_record_btn": "नोंद जोडा",
+        "delete_confirm": "ही खर्चाची नोंद हटवायची का?",
+        "clear_filters": "फिल्टर काढा",
+        "no_providers_title": "एकही सेवा केंद्र आढळले नाही",
+        "verified_directory": "प्रमाणित प्रादेशिक डिरेक्टरी",
+        "stages_count_suffix": "टप्पे",
+        "lifecycle_advisory": "हंगामनिहाय मार्गदर्शन",
+        "growth_lifecycle_title": "टप्प्याटप्प्याने शेती व्यवस्थापन",
+        "growth_lifecycle_sub": "खत व्यवस्थापन, सिंचन आणि कीड नियंत्रण वेळापत्रक",
+        "add_inmemory_task": "नवीन शेतकाम जोडा",
+        "next_3_days": "पुढील ३ दिवसांत",
+        "high_priority": "उच्च",
+        "medium_priority": "मध्यम",
+        "low_priority": "कमी",
+        "apply_filters_btn": "फिल्टर लावा",
+        "module_2_badge": "विभाग २ • महाराष्ट्र कृषी पीक सल्ला व व्यवस्थापन",
+        "active_crop_label": "सक्रिय पीक",
+        "farm_crop_badge": "शेत पीक",
+        "agronomy_knowledge_base": "कृषी ज्ञान केंद्र",
+        "task_placeholder": "उदा. ठिबक सिंचनातून १३:००:४५ पोटॅशियम नायट्रेट द्या",
+
         # Under Construction Placeholders
         "under_dev_badge": "विकासाधीन",
         "planned_features_heading": "या विभागात समाविष्ट होणारी मुख्य वैशिष्ट्ये:",
@@ -582,6 +760,70 @@ def t(key, lang=None):
     return lang_dict.get(key, TRANSLATIONS.get("en", {}).get(key, key))
 
 
+def pick(val, lang=None):
+    """
+    Strict Pure-Language Selector:
+    - If dict with 'en'/'mr', picks active language strictly.
+    - If string is a key in TRANSLATIONS, resolves it.
+    - If string has mixed parentheses like 'Seeds (बियाणे)', strips to pure language.
+    Guarantees 100% pure English when lang=='en' and 100% pure Marathi when lang=='mr'.
+    """
+    if lang is None:
+        lang = get_lang()
+    
+    if val is None:
+        return ""
+        
+    if isinstance(val, dict):
+        if lang in val:
+            return val[lang]
+        if "en" in val and lang == "en":
+            return val["en"]
+        if "mr" in val and lang == "mr":
+            return val["mr"]
+        return val.get(lang, val.get("en", val.get("mr", "")))
+        
+    if isinstance(val, str):
+        val_str = val.strip()
+        
+        # Check direct dictionary key
+        if val_str in TRANSLATIONS.get(lang, {}):
+            return TRANSLATIONS[lang][val_str]
+        if lang == "mr" and val_str in TRANSLATIONS.get("en", {}):
+            return TRANSLATIONS["mr"].get(val_str, val_str)
+        if lang == "en":
+            for k, mr_v in TRANSLATIONS.get("mr", {}).items():
+                if mr_v == val_str:
+                    return TRANSLATIONS.get("en", {}).get(k, k)
+
+        # Check if string contains mixed parentheses like 'Onion (कांदा)'
+        if "(" in val_str and ")" in val_str:
+            parts = val_str.split("(", 1)
+            left = parts[0].strip()
+            right = parts[1].replace(")", "").strip()
+            
+            # Detect Devanagari characters
+            left_is_mr = any('\u0900' <= char <= '\u097F' for char in left)
+            right_is_mr = any('\u0900' <= char <= '\u097F' for char in right)
+            
+            if lang == "mr":
+                if right_is_mr:
+                    return right
+                elif left_is_mr:
+                    return left
+                return right
+            else:
+                if left_is_mr and not right_is_mr:
+                    return right
+                elif right_is_mr and not left_is_mr:
+                    return left
+                return left
+                
+        return val_str
+        
+    return str(val)
+
+
 def render_language_switcher(key="global"):
     """
     Renders an interactive language mode selector (Streamlit compatibility).
@@ -592,7 +834,7 @@ def render_language_switcher(key="global"):
     current_idx = 0 if current_lang == "mr" else 1
 
     selected = st.radio(
-        label="🌐 Language / भाषा",
+        label="Language / भाषा",
         options=["मराठी", "English"],
         index=current_idx,
         horizontal=True,

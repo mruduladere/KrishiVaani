@@ -45,43 +45,43 @@
                 <!-- 1. Dashboard -->
                 <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'dashboard' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 {% if active_nav == 'dashboard' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_dashboard').split(' ')[1:] | join(' ') if ' ' in t('nav_dashboard') else t('nav_dashboard') }}</span>
+                    <span>{{ t('nav_dashboard') }}</span>
                 </a>
 
                 <!-- 2. Crop Helper -->
                 <a href="/crop-helper" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'crop_helper' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="sprout" class="w-4 h-4 {% if active_nav == 'crop_helper' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_crop_helper').split(' ')[1:] | join(' ') if ' ' in t('nav_crop_helper') else t('nav_crop_helper') }}</span>
+                    <span>{{ t('nav_crop_helper') }}</span>
                 </a>
 
                 <!-- 3. Multilingual AI Assistant -->
                 <a href="/ai-assistant" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'ai_assistant' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="bot" class="w-4 h-4 {% if active_nav == 'ai_assistant' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_ai_assistant').split(' ')[1:] | join(' ') if ' ' in t('nav_ai_assistant') else t('nav_ai_assistant') }}</span>
+                    <span>{{ t('nav_ai_assistant') }}</span>
                 </a>
 
                 <!-- 4. Nearby Services -->
                 <a href="/nearby-services" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'nearby_services' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="map-pin" class="w-4 h-4 {% if active_nav == 'nearby_services' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_nearby_services').split(' ')[1:] | join(' ') if ' ' in t('nav_nearby_services') else t('nav_nearby_services') }}</span>
+                    <span>{{ t('nav_nearby_services') }}</span>
                 </a>
 
                 <!-- 5. Marketplace -->
                 <a href="/marketplace" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'marketplace' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="store" class="w-4 h-4 {% if active_nav == 'marketplace' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_marketplace').split(' ')[1:] | join(' ') if ' ' in t('nav_marketplace') else t('nav_marketplace') }}</span>
+                    <span>{{ t('nav_marketplace') }}</span>
                 </a>
 
                 <!-- 6. Livestock -->
                 <a href="/livestock" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'livestock' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="heart-pulse" class="w-4 h-4 {% if active_nav == 'livestock' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_livestock').split(' ')[1:] | join(' ') if ' ' in t('nav_livestock') else t('nav_livestock') }}</span>
+                    <span>{{ t('nav_livestock') }}</span>
                 </a>
 
                 <!-- 7. Expenses -->
                 <a href="/expenses" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'expense_tracker' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="receipt" class="w-4 h-4 {% if active_nav == 'expense_tracker' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
-                    <span>{{ t('nav_expense_tracker').split(' ')[1:] | join(' ') if ' ' in t('nav_expense_tracker') else t('nav_expense_tracker') }}</span>
+                    <span>{{ t('nav_expense_tracker') }}</span>
                 </a>
             </nav>
         </div>
@@ -91,13 +91,13 @@
             <!-- Farmer Profile Card -->
             <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-sm">
-                    {{ farmer.name[0] if farmer.name else 'F' }}
+                    {{ (farmer.name | pick)[0] }}
                 </div>
                 <div class="min-w-0 flex-1">
-                    <p class="text-xs font-semibold text-slate-900 truncate">{{ farmer.name.split('(')[0] }}</p>
-                    <p class="text-[11px] text-slate-500 truncate">{{ farmer.village.split('(')[0] }}, {{ farmer.taluka.split('(')[0] }}</p>
+                    <p class="text-xs font-semibold text-slate-900 truncate">{{ farmer.name | pick }}</p>
+                    <p class="text-[11px] text-slate-500 truncate">{{ farmer.village | pick }}, {{ farmer.taluka | pick }}</p>
                     <span class="inline-block mt-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded-md">
-                        {{ farmer.land_size_acres }} Acres
+                        {{ farmer.land_size_acres }} {{ t('Acres') }}
                     </span>
                 </div>
             </div>
@@ -121,7 +121,7 @@
         <header class="h-16 bg-white/90 backdrop-blur sticky top-0 z-20 border-b border-slate-200/80 px-8 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <h2 class="text-base font-bold text-slate-800">
-                    {{ t('greeting_welcome') }}, <span class="text-emerald-700">{{ farmer.name.split('(')[0] }}</span>
+                    {{ t('greeting_welcome') }}, <span class="text-emerald-700">{{ farmer.name | pick }}</span>
                 </h2>
                 <span class="text-slate-300">|</span>
                 <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">

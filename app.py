@@ -20,7 +20,7 @@ from sample_data import (
     CROP_GUIDES,
     EXPENSE_CATEGORIES
 )
-from translations import t, TRANSLATIONS
+from translations import t, pick, TRANSLATIONS
 
 app = Flask(__name__)
 app.secret_key = "krishivaani-secret-key-sih2026-pure-python"
@@ -39,12 +39,12 @@ EXPENSES_DB = copy.deepcopy(SAMPLE_EXPENSES)
 
 
 # ---------------------------------------------------------
-# JINJA TEMPLATE CONTEXT INJECTION (BILINGUAL SUPPORT)
+# JINJA TEMPLATE CONTEXT INJECTION & FILTERS (BILINGUAL SUPPORT)
 # ---------------------------------------------------------
 @app.context_processor
 def inject_template_globals():
     """
-    Injects active language ('mr' or 'en') and the translation function t(key)
+    Injects active language ('mr' or 'en'), t(key), and pick(val)
     into all Jinja2 templates automatically.
     """
     active_lang = session.get("lang", "mr")
@@ -52,10 +52,21 @@ def inject_template_globals():
     def translate(key):
         return t(key, lang=active_lang)
 
+    def pick_lang(val):
+        return pick(val, lang=active_lang)
+
     return {
         "t": translate,
+        "pick": pick_lang,
         "lang": active_lang
     }
+
+
+@app.template_filter("pick")
+def pick_filter(val):
+    """Jinja filter: {{ value | pick }} returns pure active language string."""
+    active_lang = session.get("lang", "mr")
+    return pick(val, lang=active_lang)
 
 
 def get_current_farmer():
@@ -77,8 +88,12 @@ def normalize_phone(phone_str):
 
 
 def detect_crop_key(crop_name):
-    """Maps farmer crop profile strings to standardized CROP_GUIDES keys."""
-    crop_lower = crop_name.lower()
+    """Maps farmer crop profile strings or dicts to standardized CROP_GUIDES keys."""
+    if isinstance(crop_name, dict):
+        if "key" in crop_name:
+            return crop_name["key"]
+        crop_name = crop_name.get("en", "") or crop_name.get("mr", "")
+    crop_lower = str(crop_name).lower()
     if "grape" in crop_lower or "द्राक्ष" in crop_lower:
         return "Grapes"
     elif "onion" in crop_lower or "कांदा" in crop_lower:
@@ -303,6 +318,7 @@ def crop_helper():
 
     farmer = get_current_farmer()
     farmer_crop_keys = [detect_crop_key(c) for c in farmer.get("crops_grown", [])]
+    active_lang = session.get("lang", "mr")
 
     # Selected crop from query parameter or default to first farmer crop
     requested_crop = request.args.get("crop")
@@ -313,15 +329,54 @@ def crop_helper():
     else:
         active_crop = "Grapes"
 
-    current_guide = CROP_GUIDES.get(active_crop, CROP_GUIDES["Grapes"])
-    crop_tasks = [tsk for tsk in TASKS_DB if tsk.get("crop") == active_crop]
+    raw_guide = CROP_GUIDES.get(active_crop, CROP_GUIDES["Grapes"])
+
+    # Resolve bilingual display_name for the selector tabs (all crops)
+    resolved_all_crops = {}
+    for key, guide in CROP_GUIDES.items():
+        g = copy.deepcopy(guide)
+        g["display_name"] = pick(guide.get("display_name", key), lang=active_lang)
+        resolved_all_crops[key] = g
+
+    # Resolve bilingual fields in the current guide
+    current_guide = copy.deepcopy(raw_guide)
+    current_guide["display_name"] = pick(raw_guide.get("display_name", active_crop), lang=active_lang)
+    current_guide["season"] = pick(raw_guide.get("season", ""), lang=active_lang)
+    current_guide["recommended_soil"] = pick(raw_guide.get("recommended_soil", ""), lang=active_lang)
+    resolved_stages = []
+    for stage in raw_guide.get("stages", []):
+        rs = copy.deepcopy(stage)
+        rs["stage_name"] = pick(stage.get("stage_name", ""), lang=active_lang)
+        rs["duration"] = pick(stage.get("duration", ""), lang=active_lang)
+        rs["fertilizer"] = pick(stage.get("fertilizer", ""), lang=active_lang)
+        rs["irrigation"] = pick(stage.get("irrigation", ""), lang=active_lang)
+        rs["pest_disease"] = pick(stage.get("pest_disease", ""), lang=active_lang)
+        rs["pro_tip"] = pick(stage.get("pro_tip", ""), lang=active_lang)
+        resolved_stages.append(rs)
+    current_guide["stages"] = resolved_stages
+
+    # Resolve crop tasks
+    crop_tasks_raw = [tsk for tsk in TASKS_DB if tsk.get("crop") == active_crop]
+    crop_tasks = []
+    for tsk in crop_tasks_raw:
+        rt = copy.deepcopy(tsk)
+        rt["title"] = pick(tsk.get("title", ""), lang=active_lang)
+        rt["crop"] = pick(tsk.get("crop", ""), lang=active_lang)
+        rt["stage"] = pick(tsk.get("stage", ""), lang=active_lang)
+        rt["due_date"] = pick(tsk.get("due_date", ""), lang=active_lang)
+        rt["priority"] = pick(tsk.get("priority", ""), lang=active_lang)
+        crop_tasks.append(rt)
+
+    # Active crop display label
+    active_crop_label = pick(raw_guide.get("display_name", active_crop), lang=active_lang)
 
     return render_template(
         "crop_helper.html",
         farmer=farmer,
         active_crop=active_crop,
+        active_crop_label=active_crop_label,
         current_guide=current_guide,
-        all_crops=CROP_GUIDES,
+        all_crops=resolved_all_crops,
         farmer_crops_keys=farmer_crop_keys,
         crop_tasks=crop_tasks,
         active_nav="crop_helper"
@@ -380,23 +435,37 @@ def nearby_services():
     selected_category = request.args.get("cat", "").strip()
     selected_taluka = request.args.get("taluka", "").strip()
     search_query = request.args.get("q", "").strip().lower()
+    active_lang = session.get("lang", "mr")
 
-    # Unique categories and talukas for filter controls
-    all_categories = sorted(list(set(srv.get("category") for srv in SERVICES_DB)))
-    all_talukas = sorted(list(set(srv.get("taluka") for srv in SERVICES_DB)))
-
-    # Filter logic
-    filtered = []
+    # Build resolved (string) versions for filtering and display
+    resolved_services = []
     for srv in SERVICES_DB:
-        if selected_category and srv.get("category") != selected_category:
+        resolved = copy.deepcopy(srv)
+        resolved["name"] = pick(srv.get("name", ""), lang=active_lang)
+        resolved["category"] = pick(srv.get("category", ""), lang=active_lang)
+        resolved["taluka"] = pick(srv.get("taluka", ""), lang=active_lang)
+        resolved["district"] = pick(srv.get("district", ""), lang=active_lang)
+        resolved["location"] = pick(srv.get("location", ""), lang=active_lang)
+        resolved["timings"] = pick(srv.get("timings", ""), lang=active_lang)
+        resolved["speciality"] = pick(srv.get("speciality", ""), lang=active_lang)
+        resolved_services.append(resolved)
+
+    # Unique categories and talukas for filter controls (resolved strings)
+    all_categories = sorted(list(set(r["category"] for r in resolved_services)))
+    all_talukas = sorted(list(set(r["taluka"] for r in resolved_services)))
+
+    # Filter logic (on resolved strings)
+    filtered = []
+    for resolved in resolved_services:
+        if selected_category and resolved["category"] != selected_category:
             continue
-        if selected_taluka and srv.get("taluka") != selected_taluka:
+        if selected_taluka and resolved["taluka"] != selected_taluka:
             continue
         if search_query:
-            searchable_text = f"{srv.get('name', '')} {srv.get('speciality', '')} {srv.get('location', '')}".lower()
+            searchable_text = f"{resolved['name']} {resolved['speciality']} {resolved['location']}".lower()
             if search_query not in searchable_text:
                 continue
-        filtered.append(srv)
+        filtered.append(resolved)
 
     return render_template(
         "nearby_services.html",
@@ -498,7 +567,8 @@ def livestock():
 
     farmer = get_current_farmer()
     today = datetime.date.today()
-    
+    active_lang = session.get("lang", "mr")
+
     total_animals = len(LIVESTOCK_DB)
     total_milk = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
     
@@ -508,12 +578,23 @@ def livestock():
     processed_animals = []
     for animal in LIVESTOCK_DB:
         animal_copy = copy.deepcopy(animal)
+        # Resolve bilingual string fields
+        animal_copy["name"] = pick(animal.get("name", ""), lang=active_lang)
+        animal_copy["type"] = pick(animal.get("type", ""), lang=active_lang)
+        animal_copy["breed"] = pick(animal.get("breed", ""), lang=active_lang)
+        animal_copy["health_status"] = pick(animal.get("health_status", ""), lang=active_lang)
+
         processed_vaccines = []
         has_overdue = False
         has_upcoming = False
         
         for v in animal.get("vaccination_history", []):
             v_copy = copy.deepcopy(v)
+            # Resolve vaccine name bilingually
+            v_copy["vaccine"] = pick(v.get("vaccine", ""), lang=active_lang)
+            # For form submission we still need the en key for route matching
+            v_copy["vaccine_key"] = pick(v.get("vaccine", ""), lang="en")
+
             due_str = v.get("due_date", "")
             days_diff = None
             status_code = "uptodate"
@@ -542,7 +623,7 @@ def livestock():
                     badge_icon = "check-circle"
             except Exception:
                 badge_class = "bg-slate-100 text-slate-600 border-slate-200"
-                badge_label = v.get("status", "Logged")
+                badge_label = t("status_uptodate_badge")
                 badge_icon = "check"
 
             v_copy["days_diff"] = days_diff
@@ -585,13 +666,15 @@ def livestock():
 def vaccinate_animal():
     """Marks a vaccine completed and updates the next due date using datetime math."""
     animal_id = request.form.get("animal_id", "").strip()
-    vaccine_name = request.form.get("vaccine_name", "").strip()
+    vaccine_name = request.form.get("vaccine_name", "").strip()  # always en key
     today = datetime.date.today()
 
     for animal in LIVESTOCK_DB:
         if animal.get("tag_id") == animal_id:
             for v in animal.get("vaccination_history", []):
-                if v.get("vaccine") == vaccine_name:
+                # vaccine field may be a dict or a plain string — resolve to en for comparison
+                v_en = pick(v.get("vaccine", ""), lang="en")
+                if v_en == vaccine_name or v.get("vaccine") == vaccine_name:
                     v["date_given"] = today.strftime("%Y-%m-%d")
                     # Biannual (180 days) for FMD/BQ/HS, 365 days for Brucellosis/others
                     name_lower = vaccine_name.lower()
@@ -673,26 +756,40 @@ def expenses():
 
     farmer = get_current_farmer()
     today = datetime.date.today()
-    
+    active_lang = session.get("lang", "mr")
+
+    # Resolve all bilingual fields in expenses to pure active-language strings
+    resolved_expenses = []
+    for e in EXPENSES_DB:
+        re = copy.deepcopy(e)
+        re["category"] = pick(e.get("category", ""), lang=active_lang)
+        re["crop"] = pick(e.get("crop", ""), lang=active_lang)
+        re["month"] = pick(e.get("month", ""), lang=active_lang)
+        re["season"] = pick(e.get("season", ""), lang=active_lang)
+        re["description"] = pick(e.get("description", ""), lang=active_lang)
+        re["payment_mode"] = pick(e.get("payment_mode", ""), lang=active_lang)
+        resolved_expenses.append(re)
+
     total_spend = sum(float(e.get("amount", 0)) for e in EXPENSES_DB)
     total_entries = len(EXPENSES_DB)
-    
+
+    # Current month detection (November = month 11)
     current_month_spend = sum(
         float(e.get("amount", 0))
         for e in EXPENSES_DB
-        if "Nov" in e.get("month", "") or "11" in e.get("date", "")
+        if "11" in str(e.get("date", ""))[:7]
     )
 
-    # 1. Category aggregation
+    # 1. Category aggregation (use resolved strings as keys)
     cat_map = {}
-    for e in EXPENSES_DB:
-        cat = e.get("category", "Other")
+    for idx, e in enumerate(EXPENSES_DB):
+        cat = resolved_expenses[idx]["category"]
         amt = float(e.get("amount", 0))
         if cat not in cat_map:
             cat_map[cat] = {"amount": 0, "count": 0}
         cat_map[cat]["amount"] += amt
         cat_map[cat]["count"] += 1
-        
+
     category_stats = []
     for cat_name, data in sorted(cat_map.items(), key=lambda x: x[1]["amount"], reverse=True):
         share = round((data["amount"] / total_spend * 100), 1) if total_spend > 0 else 0
@@ -703,18 +800,18 @@ def expenses():
             "share": share
         })
 
-    top_cat = category_stats[0] if category_stats else {"name": "None", "amount": 0, "share": 0}
+    top_cat = category_stats[0] if category_stats else {"name": t("none_label") if t("none_label") != "none_label" else "None", "amount": 0, "share": 0}
 
-    # 2. Crop aggregation
+    # 2. Crop aggregation (use resolved strings)
     crop_map = {}
-    for e in EXPENSES_DB:
-        c = e.get("crop", "General Farm")
+    for idx, e in enumerate(EXPENSES_DB):
+        c = resolved_expenses[idx]["crop"]
         amt = float(e.get("amount", 0))
         if c not in crop_map:
             crop_map[c] = {"amount": 0, "count": 0}
         crop_map[c]["amount"] += amt
         crop_map[c]["count"] += 1
-        
+
     crop_stats = []
     for crop_name, data in sorted(crop_map.items(), key=lambda x: x[1]["amount"], reverse=True):
         share = round((data["amount"] / total_spend * 100), 1) if total_spend > 0 else 0
@@ -727,20 +824,23 @@ def expenses():
 
     top_crop = crop_stats[0] if crop_stats else {"name": "None", "amount": 0, "share": 0}
 
-    # 3. Monthly aggregation
+    # 3. Monthly aggregation (resolved month labels)
     month_map = {}
-    for e in EXPENSES_DB:
-        m = e.get("month", "Recent")
+    month_order_en = ["September 2026", "October 2026", "November 2026"]
+    month_order_mr = ["सप्टेंबर २०२६", "ऑक्टोबर २०२६", "नोव्हेंबर २०२६"]
+    month_order = month_order_mr if active_lang == "mr" else month_order_en
+
+    for idx, e in enumerate(EXPENSES_DB):
+        m = resolved_expenses[idx]["month"]
         amt = float(e.get("amount", 0))
         month_map[m] = month_map.get(m, 0) + amt
 
-    month_order = ["September 2026", "October 2026", "November 2026"]
     sorted_months = sorted(month_map.keys(), key=lambda x: month_order.index(x) if x in month_order else 99)
 
-    # 4. Seasonal aggregation
+    # 4. Seasonal aggregation (resolved season labels)
     season_map = {}
-    for e in EXPENSES_DB:
-        s = e.get("season", "Rabi 2026-27")
+    for idx, e in enumerate(EXPENSES_DB):
+        s = resolved_expenses[idx]["season"]
         amt = float(e.get("amount", 0))
         if s not in season_map:
             season_map[s] = {"amount": 0, "count": 0}
@@ -757,18 +857,25 @@ def expenses():
             "share": share
         })
 
-    # Prepare Chart.js datasets
-    chart_cat_labels = [c["name"].split("(")[0].strip() for c in category_stats]
+    # Prepare Chart.js datasets (pure active-language labels)
+    chart_cat_labels = [c["name"] for c in category_stats]
     chart_cat_data = [c["amount"] for c in category_stats]
 
+    # Chart month labels: use short month name only (e.g. "September" → "Sep" or "सप्टेंबर")
     chart_month_labels = [m.split(" ")[0] for m in sorted_months]
     chart_month_data = [int(month_map[m]) for m in sorted_months]
+
+    # Resolve EXPENSE_CATEGORIES for the Add modal dropdown
+    resolved_categories = [pick(cat, lang=active_lang) for cat in EXPENSE_CATEGORIES]
+
+    # Sort expenses by date desc, with resolved bilingual fields
+    sorted_expenses = sorted(resolved_expenses, key=lambda x: x.get("date", ""), reverse=True)
 
     return render_template(
         "expenses.html",
         farmer=farmer,
-        expenses=sorted(EXPENSES_DB, key=lambda x: x.get("date", ""), reverse=True),
-        all_categories=EXPENSE_CATEGORIES,
+        expenses=sorted_expenses,
+        all_categories=resolved_categories,
         total_spend=int(total_spend),
         total_entries=total_entries,
         current_month_spend=int(current_month_spend),

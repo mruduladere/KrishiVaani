@@ -10,13 +10,13 @@
         <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-2">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>{{ t('quick_overview') }} • {{ farmer.taluka.split('(')[0] }}, {{ farmer.district.split('(')[0] }}</span>
+                <span>{{ t('quick_overview') }} • {{ farmer.taluka | pick }}, {{ farmer.district | pick }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
                 {{ t('profile_heading') }}
             </h1>
             <p class="text-xs text-slate-500 mt-1">
-                {{ farmer.soil_type }} • {{ farmer.irrigation_type }}
+                {{ farmer.soil_type | pick }} • {{ farmer.irrigation_type | pick }}
             </p>
         </div>
         
@@ -44,11 +44,11 @@
                 </div>
             </div>
             <div class="text-2xl font-black text-slate-900 tracking-tight">
-                {{ farmer.land_size_acres }} <span class="text-sm font-semibold text-slate-500">Acres</span>
+                {{ farmer.land_size_acres }} <span class="text-sm font-semibold text-slate-500">{{ t('Acres') }}</span>
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>
-                <span>Drip irrigated & farm pond</span>
+                <span>{{ farmer.irrigation_type | pick }}</span>
             </div>
         </div>
 
@@ -64,7 +64,7 @@
                 {{ stats.active_crops_count }} <span class="text-sm font-semibold text-slate-500">{{ t('crops_count_suffix') }}</span>
             </div>
             <div class="mt-2 text-[11px] text-slate-500 truncate">
-                {{ farmer.crops_grown | join(', ') }}
+                {% for c in farmer.crops_grown %}{{ c | pick }}{% if not loop.last %}, {% endif %}{% endfor %}
             </div>
         </div>
 
@@ -98,7 +98,7 @@
             </div>
             <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                 <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
-                <span>Rabi Season input ledger &rarr;</span>
+                <span>{% if lang == 'mr' %}रब्बी हंगाम खर्च नोंदवही &rarr;{% else %}Rabi Season input ledger &rarr;{% endif %}</span>
             </div>
         </a>
 
@@ -111,10 +111,10 @@
                 <h2 class="text-lg font-bold text-slate-900 tracking-tight">
                     {{ t('crop_helper_banner_title') }} • {{ t('crops_cultivated_label') }}
                 </h2>
-                <p class="text-xs text-slate-500">Active development stages on your farm with agronomic guidance</p>
+                <p class="text-xs text-slate-500">{% if lang == 'mr' %}आपल्या शेतातील पिकांचे चालू वाढीचे टप्पे व कृषी मार्गदर्शन{% else %}Active development stages on your farm with agronomic guidance{% endif %}</p>
             </div>
             <a href="/crop-helper" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1">
-                <span>View Full Agronomy Guides</span>
+                <span>{% if lang == 'mr' %}संपूर्ण पीक सल्ला पहा{% else %}View Full Agronomy Guides{% endif %}</span>
                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </a>
         </div>
@@ -124,22 +124,22 @@
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <span class="font-bold text-slate-900 text-sm">Grapes (द्राक्ष - थॉमसन सिडलेस)</span>
+                        <span class="font-bold text-slate-900 text-sm">{% if lang == 'mr' %}थॉमसन सिडलेस द्राक्ष{% else %}Thomson Seedless Grapes{% endif %}</span>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Stage 3
+                            {% if lang == 'mr' %}टप्पा ३{% else %}Stage 3{% endif %}
                         </span>
                     </div>
                     <p class="text-xs font-medium text-emerald-800 bg-emerald-50/60 p-2 rounded-xl mb-3">
-                        🌸 Flowering & Berry Setting (Day 51 to 85)
+                        🌸 {% if lang == 'mr' %}फुलधारणा व मणी सेटिंग (५१ ते ८५ दिवस){% else %}Flowering & Berry Setting (Day 51 to 85){% endif %}
                     </p>
                     <p class="text-xs text-slate-600 line-clamp-2 mb-3">
-                        Drip dose: 0:52:34 MKP (5 kg/acre) + Calcium Nitrate. Strict water regulation during bloom.
+                        {% if lang == 'mr' %}ठिबकद्वारे ०:५२:३४ (५ किलो/एकर) + कॅल्शियम नायट्रेट डोस. फुलोरा अवस्थेत पाणी नियोजन.{% else %}Drip application of 0:52:34 MKP + Calcium Nitrate. Strict water regulation during bloom.{% endif %}
                     </p>
                 </div>
                 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span class="text-[11px] text-slate-400">Export quality schedule</span>
+                    <span class="text-[11px] text-slate-400">{% if lang == 'mr' %}निर्यात गुणवत्ता नियोजन{% else %}Export quality schedule{% endif %}</span>
                     <a href="/crop-helper?crop=Grapes" class="text-xs font-semibold text-emerald-700 hover:underline">
-                        Details &rarr;
+                        {% if lang == 'mr' %}सविस्तर माहिती &rarr;{% else %}Details &rarr;{% endif %}
                     </a>
                 </div>
             </div>
@@ -148,22 +148,22 @@
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <span class="font-bold text-slate-900 text-sm">Onion (कांदा - गावरान/फुर्सुंगी)</span>
+                        <span class="font-bold text-slate-900 text-sm">{% if lang == 'mr' %}गावरान लाल कांदा{% else %}Gavran Red Onion{% endif %}</span>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Stage 2
+                            {% if lang == 'mr' %}टप्पा २{% else %}Stage 2{% endif %}
                         </span>
                     </div>
                     <p class="text-xs font-medium text-emerald-800 bg-emerald-50/60 p-2 rounded-xl mb-3">
-                        🌿 Vegetative Canopy & Bulb Initiation (Day 46 to 75)
+                        🌿 {% if lang == 'mr' %}शाकीय वाढ व पातीचा विकास (१५ ते ४५ दिवस){% else %}Vegetative Growth & Foliage (Day 15 to 45){% endif %}
                     </p>
                     <p class="text-xs text-slate-600 line-clamp-2 mb-3">
-                        Install sticky traps for Thrips control. Micronutrient foliar spray of Sulphur 90% for bulb strength.
+                        {% if lang == 'mr' %}फुलकिडे नियंत्रणासाठी चिकट सापळे लावा. सल्फर ९०% सूक्ष्मअन्नद्रव्य फवारणी करा.{% else %}Install sticky traps for Thrips control. Micronutrient foliar spray of Sulphur 90% for bulb firmness.{% endif %}
                     </p>
                 </div>
                 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span class="text-[11px] text-slate-400">Rabi storage crop</span>
+                    <span class="text-[11px] text-slate-400">{% if lang == 'mr' %}रब्बी साठवणूक कांदा{% else %}Rabi storage crop{% endif %}</span>
                     <a href="/crop-helper?crop=Onion" class="text-xs font-semibold text-emerald-700 hover:underline">
-                        Details &rarr;
+                        {% if lang == 'mr' %}सविस्तर माहिती &rarr;{% else %}Details &rarr;{% endif %}
                     </a>
                 </div>
             </div>
@@ -172,22 +172,22 @@
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <span class="font-bold text-slate-900 text-sm">Soybean (सोयाबीन - JS 335)</span>
+                        <span class="font-bold text-slate-900 text-sm">{% if lang == 'mr' %}जेएस ३३५ सोयाबीन{% else %}JS 335 Soybean{% endif %}</span>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                            Stage 4
+                            {% if lang == 'mr' %}टप्पा ४{% else %}Stage 4{% endif %}
                         </span>
                     </div>
                     <p class="text-xs font-medium text-slate-800 bg-slate-100/60 p-2 rounded-xl mb-3">
-                        🌾 Maturity, Threshing & Seed Storage (Day 85 to 105)
+                        🌾 {% if lang == 'mr' %}पक्वता, मळणी व सुरक्षित साठवणूक (७६ ते १०० दिवस){% else %}Pod Maturation, Threshing & Storage (Day 76 to 100){% endif %}
                     </p>
                     <p class="text-xs text-slate-600 line-clamp-2 mb-3">
-                        Thresh at 12-14% moisture content to prevent split seed coats. Clean and bag for mandi dispatch.
+                        {% if lang == 'mr' %}बियाण्यातील ओलावा १२-१४% असताना मळणी करा. बाजार समितीसाठी सुरक्षित साठवा.{% else %}Thresh at 12-14% moisture content to prevent split seed coats. Clean and bag for storage.{% endif %}
                     </p>
                 </div>
                 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span class="text-[11px] text-slate-400">Harvest complete</span>
+                    <span class="text-[11px] text-slate-400">{% if lang == 'mr' %}काढणी पूर्ण{% else %}Harvest complete{% endif %}</span>
                     <a href="/crop-helper?crop=Soybean" class="text-xs font-semibold text-emerald-700 hover:underline">
-                        Details &rarr;
+                        {% if lang == 'mr' %}सविस्तर माहिती &rarr;{% else %}Details &rarr;{% endif %}
                     </a>
                 </div>
             </div>
@@ -223,23 +223,23 @@
                     </form>
                     <div>
                         <p class="text-xs font-medium {% if task.status %}line-through text-slate-400{% else %}text-slate-800{% endif %}">
-                            {{ task.title }}
+                            {{ task.title | pick }}
                         </p>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                                {{ task.crop }}
+                                {{ task.crop | pick }}
                             </span>
-                            <span class="text-[10px] text-slate-400">• {{ task.stage }}</span>
+                            <span class="text-[10px] text-slate-400">• {{ task.stage | pick }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3 shrink-0">
                     <span class="text-[11px] font-medium text-slate-500">
-                        {{ task.due_date }}
+                        {{ task.due_date | pick }}
                     </span>
-                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {% if task.priority == 'High' %}bg-rose-50 text-rose-700 border border-rose-200{% elif task.priority == 'Medium' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-600{% endif %}">
-                        {{ task.priority }}
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {% if task.priority == 'High' or task.priority == 'उच्च' %}bg-rose-50 text-rose-700 border border-rose-200{% elif task.priority == 'Medium' or task.priority == 'मध्यम' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+                        {{ task.priority | pick }}
                     </span>
                 </div>
             </div>
@@ -264,10 +264,10 @@
                     <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <i data-lucide="map-pin" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">{% if lang == 'mr' %}सक्रिय{% else %}Active{% endif %}</span>
                 </div>
                 <h3 class="font-bold text-sm text-slate-900 mb-1">{{ t('nav_nearby_services') }}</h3>
-                <p class="text-xs text-slate-500 line-clamp-2">Certified vets, seed stores, and farm machinery rental near Niphad.</p>
+                <p class="text-xs text-slate-500 line-clamp-2">{% if lang == 'mr' %}निफाड परिसरातील प्रमाणित पशुवैद्यक, खत दुकाने व कृषी अवजारे सेवा.{% else %}Certified vets, seed stores, and farm machinery rental near Niphad.{% endif %}</p>
             </a>
 
             <!-- Module 3: AI Assistant -->
@@ -276,10 +276,10 @@
                     <div class="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <i data-lucide="bot" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Step 3</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{% if lang == 'mr' %}टप्पा ३{% else %}Step 3{% endif %}</span>
                 </div>
                 <h3 class="font-bold text-sm text-slate-900 mb-1">{{ t('nav_ai_assistant') }}</h3>
-                <p class="text-xs text-slate-500 line-clamp-2">Bilingual agronomic queries, government schemes & crop disease diagnosis.</p>
+                <p class="text-xs text-slate-500 line-clamp-2">{% if lang == 'mr' %}द्विभाषिक शेती सल्ला, शासकीय योजना व पीक रोग निदान.{% else %}Bilingual agronomic queries, government schemes & crop disease diagnosis.{% endif %}</p>
             </a>
 
             <!-- Module 5: Marketplace -->
@@ -288,10 +288,10 @@
                     <div class="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <i data-lucide="store" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Step 5</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{% if lang == 'mr' %}टप्पा ५{% else %}Step 5{% endif %}</span>
                 </div>
                 <h3 class="font-bold text-sm text-slate-900 mb-1">{{ t('nav_marketplace') }}</h3>
-                <p class="text-xs text-slate-500 line-clamp-2">Direct harvest listings to connect with wholesale buyers without broker fees.</p>
+                <p class="text-xs text-slate-500 line-clamp-2">{% if lang == 'mr' %}दलालांशिवाय थेट घाऊक खरेदीदारांशी संपर्क साधण्यासाठी शेतीमाल विक्री.{% else %}Direct harvest listings to connect with wholesale buyers without broker fees.{% endif %}</p>
             </a>
 
             <!-- Module 6: Livestock -->
@@ -300,10 +300,10 @@
                     <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <i data-lucide="heart-pulse" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">{% if lang == 'mr' %}सक्रिय{% else %}Active{% endif %}</span>
                 </div>
                 <h3 class="font-bold text-sm text-slate-900 mb-1">{{ t('nav_livestock') }}</h3>
-                <p class="text-xs text-slate-500 line-clamp-2">Cattle health cards, milk yield monitoring & automated FMD/HS vaccine alerts.</p>
+                <p class="text-xs text-slate-500 line-clamp-2">{% if lang == 'mr' %}जनावरांचे आरोग्य कार्ड, दूध उत्पादन नोंद आणि स्वयंचलित लसीकरण सूचना.{% else %}Cattle health cards, milk yield monitoring & automated FMD/HS vaccine alerts.{% endif %}</p>
             </a>
 
             <!-- Module 7: Expenses -->
@@ -312,21 +312,21 @@
                     <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <i data-lucide="receipt" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">{% if lang == 'mr' %}सक्रिय{% else %}Active{% endif %}</span>
                 </div>
                 <h3 class="font-bold text-sm text-slate-900 mb-1">{{ t('nav_expense_tracker') }}</h3>
-                <p class="text-xs text-slate-500 line-clamp-2">Track fertilizer, seeds, and labor costs with seasonal comparison reports.</p>
+                <p class="text-xs text-slate-500 line-clamp-2">{% if lang == 'mr' %}हंगामनिहाय अहवालांसह खत, बियाणे व मजुरी खर्चाची अचूक नोंदणी.{% else %}Track fertilizer, seeds, and labor costs with seasonal comparison reports.{% endif %}</p>
             </a>
 
             <!-- Quick Profile Overview -->
             <div class="p-5 bg-slate-900 text-white rounded-2xl shadow-sm flex flex-col justify-between">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">In-Memory Engine</span>
-                    <h3 class="font-bold text-sm text-white mt-2 mb-1">Strictly Zero Database</h3>
-                    <p class="text-xs text-slate-300">Pure Python state keeps all data reactive and editable during runtime.</p>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">{% if lang == 'mr' %}इन-मेमरी इंजिन{% else %}In-Memory Engine{% endif %}</span>
+                    <h3 class="font-bold text-sm text-white mt-2 mb-1">{% if lang == 'mr' %}डेटाबेस विरहित प्रणाली{% else %}Strictly Zero Database{% endif %}</h3>
+                    <p class="text-xs text-slate-300">{% if lang == 'mr' %}प्युअर पायथन मेमरीद्वारे सर्व डेटा रनटाइममध्ये सुरक्षित व बदलक्षम राहतो.{% else %}Pure Python state keeps all data reactive and editable during runtime.{% endif %}</p>
                 </div>
                 <div class="pt-3 text-[11px] text-slate-400">
-                    SIH Hackathon Ready
+                    {% if lang == 'mr' %}स्मार्ट इंडिया हॅकाथॉन प्रोटोटाईप{% else %}SIH Hackathon Ready{% endif %}
                 </div>
             </div>
 
@@ -351,19 +351,19 @@
         <form action="/update-profile" method="POST" class="space-y-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('full_name') }}</label>
-                <input type="text" name="name" value="{{ farmer.name }}" required
+                <input type="text" name="name" value="{{ farmer.name | pick }}" required
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('land_size_label') }} (Acres)</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('land_size_label') }} ({{ t('Acres') }})</label>
                     <input type="number" step="0.5" name="land_size" value="{{ farmer.land_size_acres }}" required
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('soil_type_label') }}</label>
-                    <input type="text" name="soil_type" value="{{ farmer.soil_type }}" required
+                    <input type="text" name="soil_type" value="{{ farmer.soil_type | pick }}" required
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
             </div>
@@ -371,30 +371,30 @@
             <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('reg_village_label') }}</label>
-                    <input type="text" name="village" value="{{ farmer.village }}" required
+                    <input type="text" name="village" value="{{ farmer.village | pick }}" required
                         class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('reg_taluka_label') }}</label>
-                    <input type="text" name="taluka" value="{{ farmer.taluka }}" required
+                    <input type="text" name="taluka" value="{{ farmer.taluka | pick }}" required
                         class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('reg_district_label') }}</label>
-                    <input type="text" name="district" value="{{ farmer.district }}" required
+                    <input type="text" name="district" value="{{ farmer.district | pick }}" required
                         class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('irrigation_label') }}</label>
-                <input type="text" name="irrigation_type" value="{{ farmer.irrigation_type }}" required
+                <input type="text" name="irrigation_type" value="{{ farmer.irrigation_type | pick }}" required
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('crops_cultivated_label') }} (comma-separated)</label>
-                <input type="text" name="crops" value="{{ farmer.crops_grown | join(', ') }}" required
+                <label class="block text-xs font-semibold text-slate-700 mb-1">{{ t('crops_cultivated_label') }}</label>
+                <input type="text" name="crops" value="{% for c in farmer.crops_grown %}{{ c | pick }}{% if not loop.last %}, {% endif %}{% endfor %}" required
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
             </div>
 
