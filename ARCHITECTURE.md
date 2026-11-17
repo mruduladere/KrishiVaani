@@ -27,12 +27,14 @@ This document serves as the project's living architectural manual, written in pl
 KrishiVaani/
 │
 ├── app.py                      # Flask application controller & route handlers
+├── plant_doctor.py             # Flagship AI Crop & Nutrient Doctor engine (Vision + Agronomy)
 ├── form_digitizer.py           # Flagship Smart Form Digitizer & auto-filler engine
 ├── smart_dispatcher.py         # Multi-module natural language & voice intent dispatcher
 ├── sarvam_client.py            # Official Sarvam AI SDK integration (105b, saaras:v3 STT, bulbul:v3 TTS)
 ├── ai_router.py                # Module 3: Multilingual intent router & live farm state copilot
 ├── sample_data.py              # Pre-loaded Maharashtra farming datasets & knowledge base
 ├── translations.py             # Complete bilingual dictionaries (English & Marathi) + t() helper
+├── maharashtra_agronomy_kb.md  # Verified Maharashtra agronomy knowledge base (CROPSAP/MPKV/HORTSAP)
 ├── ARCHITECTURE.md             # Technical documentation & SIH defense guide
 ├── INSTRUCTIONS.md             # Hackathon project rules & constraints
 ├── .gitignore                  # Ignores __pycache__ and bytecode
@@ -42,6 +44,7 @@ KrishiVaani/
 │   ├── login.html              # Minimalist split-screen login card with botanical sprout animation
 │   ├── dashboard.html          # Module 1: 4 KPI metric cards, crop stage cards & task reminders
 │   ├── crop_helper.html        # Module 2: Crop tabs, 4-stage agronomy cards & task checklist
+│   ├── disease_scanner.html    # Flagship AI Crop & Nutrient Doctor (live camera, triage, TTS audio)
 │   ├── ai_assistant.html       # Module 3: Multilingual AI assistant chat & 1-click prompt router
 │   ├── nearby_services.html    # Module 4: Filterable directory with click-to-call & WhatsApp
 │   ├── marketplace.html        # Module 5: Direct farmer-to-buyer produce marketplace & lots
@@ -224,7 +227,9 @@ The **Smart Form Digitizer & Auto-Filler** eliminates the primary friction point
    - **Custom Uploads (`is_sample=False`):** Farmers or CSC operators upload a phone photo or scan of ANY paper application sheet or digital registration portal form (PNG, JPG).
    - **1-Click Sample Form (`is_sample=True`):** Provides instant evaluation capability using an authentic Maharashtra PM-KISAN & Crop Insurance form (with embedded vector SVG fallback if offline).
 2. **Dynamic Vision OCR & Field Extraction Pipeline (`form_digitizer.py`):**
-   - **Dynamic Uploads:** When a custom image is uploaded, `extract_fields_from_image()` submits the document to Sarvam AI's Document Intelligence API (`doc_ai.parse`) and prompts **`sarvam-105b`** with a strict schema prompt to extract every blank form field (`field_id`, `label_en`, `label_mr`, `field_type`, `x_pct`, `y_pct`). If the network is disconnected, an intelligent offline heuristic engine analyzes the document structure and extracts dynamic fields (such as Full Name, DOB, Gender, Mobile, Email, Farm Size, Crops Grown, Livestock Holding, Annual Yield).
+   - **Two-Stage Real Image Reader:**
+     - **Stage A (Visual OCR & Bounding Box Extraction):** Integrates Sarvam Document Intelligence (`doc_ai.parse`) with an offline pure-Python local OCR fallback powered by `rapidocr-onnxruntime` (`onnxruntime` + `pyclipper` + `shapely`). RapidOCR extracts exact text lines, line order, and normalized bounding box coordinates (`[x_min, y_min, x_max, y_max]`) directly from the image with zero external binary dependencies.
+     - **Stage B (Structured Field Synthesis via `sarvam-105b`):** Feeds the exact OCR text lines and spatial coordinates to **`sarvam-105b`** (with a fallback to a spatial deterministic line parser) using a strict prompt to extract ONLY fillable elements (`field_id`, bilingual `label_en`/`label_mr`, `field_type`, `x_pct`, `y_pct`, `yes_coords`, `no_coords`) genuinely present in the document. Real uploads never fall back to hardcoded dummy questions.
    - **Sample Form:** Strictly adheres to the official PM-KISAN & Pik Vima schema with verified baseline coordinates.
 3. **Smart Profile Auto-Fill Matching (`_match_and_autofill_profile`):**
    - Performs flexible keyword matching across `field_id`, English labels, and Marathi labels against `session['farmer_profile']` (Farmer Name, Phone, Email, Village, Taluka, District, State, Farm Size, Crops Cultivated, Livestock Holding, Irrigation Type).
@@ -232,19 +237,48 @@ The **Smart Form Digitizer & Auto-Filler** eliminates the primary friction point
 4. **Lightweight In-Memory State Architecture (No Cookie Overflow):**
    - To strictly obey Flask's 4KB cookie threshold without a persistent database, all parsed forms, extracted fields, and coordinate maps are stored in a server-side Python dictionary: `FORM_SESSIONS = { user_phone: parsed_form_dict }`.
    - The user's cookie session stores only lightweight boolean flags (`has_form`, `form_is_generated`), preventing silent browser cookie drops.
-5. **Interactive Digital Form Editor & Coordinate Overlay:**
-   - **Side-by-Side Review:** Renders the scanned document alongside clean, responsive web form inputs in pure English or pure Marathi.
-   - **Precision Overlay (`x_pct`, `y_pct`):** Places digitized values directly onto the scanned form image at detected relative percentage coordinates, with date stamp and applicant signature.
-6. **Dynamic Print & Standalone Download (`/form-filler/download`):**
+5. **Interactive Digital Form Editor & Pixel-Accurate Coordinate Overlay:**
+   - **Interactive Elements:** Renders clean radio buttons for `yes_no` fields (`Yes`/`No` or `होय`/`नाही`) and toggles for `checkbox` fields in pure English or pure Marathi.
+   - **Pixel-Accurate Text Alignment:** Anchors digitized text with `transform: translateY(-85%)` so that values sit **directly on top of printed underlines (`____`)** and inside table cells rather than floating above them.
+   - **Precise Checkmark Rendering:** Places bold checkmarks (`✓`) centered at normalized `yes_coords`, `no_coords`, or checkbox square coordinates (`translate(-50%, -50%)`) when selected.
+6. **Robust Workflow State Machine & Navigation (`/form-filler/reset` & `/form-filler/edit`):**
+   - **Upload Another Form / Reset:** Dedicated `/form-filler/reset` route clears `FORM_SESSIONS[user_id]` and resets session state back to Step 1 (Upload screen).
+   - **Edit Values Navigation:** Dedicated `/form-filler/edit` route toggles completed state back to Step 2 while preserving all user-modified text, radio choices, and checkbox states in server memory.
+7. **Dynamic Print & Standalone Download (`/form-filler/download`):**
    - Generates a standalone, print-optimized (`@media print`) HTML document dynamically constructed from all extracted fields in the active language, complete with an official bordered application table, applicant signature block, and auto-print triggers.
 
 ---
 
-## 10. How to Run KrishiVaani
+## 10. Flagship AI Crop & Nutrient Doctor ("पीक रोग व पोषण तपासणी")
+
+The **AI Crop & Nutrient Doctor** provides instant, vision-guided disease and nutrient deficiency diagnosis for Maharashtra farmers. Grounded strictly in `maharashtra_agronomy_kb.md`, it prevents catastrophic agricultural misdiagnoses (such as spraying toxic systemic insecticides when a leaf is simply starving for Potassium or Zinc).
+
+### Architecture & Two-Stage Vision Pipeline
+1. **Multimodal Leaf Capture & Triage Intake (`templates/disease_scanner.html`):**
+   - **Live HTML5 Camera Viewfinder:** Uses `navigator.mediaDevices.getUserMedia` with rear-camera preference (`facingMode: "environment"`), reticle overlay, and instant frame grab to canvas.
+   - **Field Photo Upload:** Supports high-resolution JPG/PNG leaf uploads with drag-and-drop.
+   - **1-Click Demo Evaluation Samples:** Pre-loaded with 4 verified Maharashtra field cases (*Vidarbha Bt Cotton Potassium Scorch, Western Maharashtra Grapes Downy Mildew, Marathwada Soybean Zinc Chlorosis, Nashik Onion Purple Blotch*) with embedded SVG vector leaf illustrations.
+   - **Field Context & Triage Chips:** Accepts Crop selection, Affected Leaf Position (*Older/Lower* vs. *Younger/Top* vs. *Whole Canopy*), Symptom Pattern (*Burnt Margins*, *Interveinal Chlorosis*, *Spots/Powder*, *Curling*), and optional Soil Health Card / pH notes.
+2. **Two-Stage Sarvam AI Vision & Agronomy Pipeline (`plant_doctor.py`):**
+   - **Stage A (Vision Model Analysis):** Submits the base64 leaf image to Sarvam AI's multimodal vision API (`model="gemma4"` or chat completion via `sarvam-105b`) guided by the system prompt loaded with `maharashtra_agronomy_kb.md`.
+   - **Stage B (Grounded Maharashtra Agronomy Synthesis):** Synthesizes visual observations against state research authority rules:
+     - **Strict Differential Diagnostics:** Dynamically contrasts the primary condition against the #2 lookalike (*e.g., Potassium Deficiency vs. Jassid Hopper Burn; Zinc Chlorosis vs. Iron Chlorosis; Sucking Pests vs. Viral Leaf Curl; Downy Mildew vs. Powdery Mildew*).
+     - **Verified State Dosages:** Integrates verified packages of practices from MPKV Rahuri, Dr. PDKV Akola, VNMKV Parbhani, Dr. BSKKV Dapoli, and ICAR-NRCG Pune.
+     - **ETL & Predator Safety:** Checks Economic Threshold Levels and warns against spraying when beneficial insects (ladybird beetles, chrysoperla) are present.
+     - **Soil Health Card Priority:** Overrides generic baseline fertilizer charts whenever the farmer supplies specific soil test parameters (pH, available N/P/K, Zinc, Organic Carbon).
+     - **Universal Anti-Hallucination Disclaimer:** Strictly outputs *"Confirm exact dosage locally with Taluka Krishi Adhikari / KVK"* instead of guessing unverified chemical doses.
+3. **Voice Accessibility via Sarvam Bulbul TTS (`/api/tts`):**
+   - Renders a 1-click **🔊 ऐका / Listen Advisory** button powered by Sarvam AI `bulbul:v3` (`ritu` speaker), synthesizing the complete diagnosis and dosage directly into Marathi or Indian English audio with automatic browser audio fallback.
+4. **Agro Services Handoff:**
+   - Directly links to Module 4 (`/nearby-services`) allowing farmers to locate nearby Krishi Seva Kendras, testing labs, and fertilizer centers to purchase the prescribed remedies.
+
+---
+
+## 11. How to Run KrishiVaani
 
 ```bash
 # 1. Install Flask and requirements
-pip install flask pillow sarvamai python-dotenv
+pip install flask pillow sarvamai python-dotenv rapidocr-onnxruntime requests
 
 # 2. Run the application
 python app.py

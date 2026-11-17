@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('doc_title') }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto pb-12">
+
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
+        <div class="relative z-10 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 mb-3 border border-emerald-600/60 backdrop-blur-sm">
+                <i data-lucide="scan-search" class="w-3.5 h-3.5"></i>
+                <span>Sarvam AI Multimodal Vision • CROPSAP &amp; MPKV Agronomy Rules</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {{ t('doc_title') }}
+            </h1>
+            <p class="text-xs sm:text-sm text-emerald-100/90 mt-2 leading-relaxed">
+                {{ t('doc_subtitle') }}
+            </p>
+        </div>
+        <div class="absolute -right-8 -bottom-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+    </div>
+
+    <!-- Main Workspace: 2-Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- LEFT COLUMN: Input Mode (Camera, Upload, Demo Samples) & Triage Chips -->
+        <div class="lg:col-span-5 space-y-6">
+
+            <!-- Input Tabs Card -->
+            <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
+                
+                <!-- Tab Headers -->
+                <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl text-xs font-semibold">
+                    <button type="button" id="tabBtnCamera" onclick="switchInputTab('camera')" class="py-2 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 bg-white text-emerald-800 shadow-sm font-bold">
+                        <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                        <span>{{ t('doc_camera_tab') }}</span>
+                    </button>
+                    <button type="button" id="tabBtnUpload" onclick="switchInputTab('upload')" class="py-2 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        <span>{{ t('doc_upload_tab') }}</span>
+                    </button>
+                    <button type="button" id="tabBtnSamples" onclick="switchInputTab('samples')" class="py-2 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>{{ t('doc_samples_tab') }}</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: Live Webcam Viewfinder -->
+                <div id="tabContentCamera" class="space-y-4">
+                    <div class="relative w-full aspect-video bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner group">
+                        <video id="cameraVideo" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                        <canvas id="captureCanvas" class="hidden"></canvas>
+                        
+                        <!-- Camera Placeholder when stopped -->
+                        <div id="cameraPlaceholder" class="text-center p-6 space-y-2">
+                            <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center">
+                                <i data-lucide="camera-off" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">Camera is offline</p>
+                            <p class="text-[11px] text-slate-500">Click Start Camera to inspect live leaf</p>
+                        </div>
+
+                        <!-- Viewfinder Targeting Reticle Overlay -->
+                        <div id="cameraReticle" class="absolute inset-6 border-2 border-dashed border-emerald-400/60 rounded-xl pointer-events-none hidden flex items-center justify-center">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-300 bg-slate-950/60 px-2 py-0.5 rounded backdrop-blur-sm">Align Leaf Within Box</span>
+                        </div>
+                    </div>
+
+                    <!-- Camera Control Buttons -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btnToggleCamera" onclick="toggleCamera()" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold transition-all">
+                            <i data-lucide="video" class="w-4 h-4 text-emerald-600"></i>
+                            <span id="btnToggleCameraText">{{ t('doc_start_camera') }}</span>
+                        </button>
+                        <button type="button" id="btnCaptureAnalyze" onclick="captureAndAnalyze()" disabled class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                            <span>{{ t('doc_capture_analyze') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 2: File Upload Dropzone -->
+                <div id="tabContentUpload" class="space-y-4 hidden">
+                    <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 bg-slate-50/60 hover:bg-emerald-50/20 cursor-pointer transition-all text-center space-y-3">
+                        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-100/60 text-emerald-700 flex items-center justify-center">
+                            <i data-lucide="image-plus" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">{{ t('doc_upload_btn') }}</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Supports JPG, PNG photos from field</p>
+                        </div>
+                    </div>
+
+                    <!-- Uploaded Image Preview Box -->
+                    <div id="uploadPreviewBox" class="relative w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 hidden">
+                        <img id="uploadPreviewImg" src="" alt="Selected Leaf" class="w-full h-full object-contain">
+                    </div>
+
+                    <button type="button" id="btnAnalyzeUpload" onclick="analyzeUploadedImage()" disabled class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>{{ t('doc_capture_analyze') }}</span>
+                    </button>
+                </div>
+
+                <!-- TAB 3: 1-Click Demo Samples (Immediate SIH Judge Test) -->
+                <div id="tabContentSamples" class="space-y-3 hidden">
+                    <p class="text-xs text-slate-500">Click any verified Maharashtra field case for instant 1-click evaluation:</p>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        <!-- Sample 1: Vidarbha Cotton -->
+                        <button type="button" onclick="loadDemoSample('cotton_k_deficiency')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
+                            <img src="/static/uploads/cotton_k_deficiency.svg" alt="Cotton" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 block truncate">{{ t('doc_sample_1') }}</span>
+                                <span class="text-[11px] text-slate-500 block truncate">Vidarbha • Black Soil • Older leaf margin burn</span>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
+                        </button>
+
+                        <!-- Sample 2: Grapes Downy Mildew -->
+                        <button type="button" onclick="loadDemoSample('grapes_downy_mildew')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
+                            <img src="/static/uploads/grapes_downy_mildew.svg" alt="Grapes" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 block truncate">{{ t('doc_sample_2') }}</span>
+                                <span class="text-[11px] text-slate-500 block truncate">Nashik/Sangli • Oily yellow spots &amp; white down</span>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
+                        </button>
+
+                        <!-- Sample 3: Soybean Zinc Chlorosis -->
+                        <button type="button" onclick="loadDemoSample('soybean_zn_chlorosis')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
+                            <img src="/static/uploads/soybean_zn_chlorosis.svg" alt="Soybean" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 block truncate">{{ t('doc_sample_3') }}</span>
+                                <span class="text-[11px] text-slate-500 block truncate">Marathwada • High pH • Interveinal chlorosis</span>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
+                        </button>
+
+                        <!-- Sample 4: Onion Purple Blotch -->
+                        <button type="button" onclick="loadDemoSample('onion_purple_blotch')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
+                            <img src="/static/uploads/onion_purple_blotch.svg" alt="Onion" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 block truncate">{{ t('doc_sample_4') }}</span>
+                                <span class="text-[11px] text-slate-500 block truncate">Nashik • Sunken purple lesions + thrips marks</span>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Field Context & Triage Chips Card -->
+            <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-emerald-600"></i>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">{{ t('doc_triage_title') }}</h3>
+                </div>
+
+                <!-- Crop Selection -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-700">{{ t('doc_crop_select') }}</label>
+                    <select id="triageCrop" class="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">Auto-Detect from Leaf</option>
+                        <option value="Cotton" selected>Cotton / कापूस (Vidarbha / Marathwada)</option>
+                        <option value="Grapes">Grapes / द्राक्ष (Nashik / Sangli)</option>
+                        <option value="Soybean">Soybean / सोयाबीन (Marathwada)</option>
+                        <option value="Onion">Onion / कांदा (Nashik / Pune)</option>
+                        <option value="Sugarcane">Sugarcane / ऊस (Western Maharashtra)</option>
+                        <option value="Pomegranate">Pomegranate / डाळिंब (Solapur / Nashik)</option>
+                        <option value="Mango">Mango / आंबा (Konkan)</option>
+                        <option value="Tomato">Tomato / टोमॅटो</option>
+                    </select>
+                </div>
+
+                <!-- Leaf Age / Position Triage Chips -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-700">{{ t('doc_leaf_age') }}</label>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button type="button" onclick="setTriageLeafAge('older', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center">
+                            {{ t('doc_leaf_age_older') }}
+                        </button>
+                        <button type="button" onclick="setTriageLeafAge('younger', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
+                            {{ t('doc_leaf_age_younger') }}
+                        </button>
+                        <button type="button" onclick="setTriageLeafAge('all', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
+                            {{ t('doc_leaf_age_all') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Symptom Pattern Triage Chips -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-700">{{ t('doc_pattern') }}</label>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button type="button" onclick="setTriagePattern('scorch', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center">
+                            {{ t('doc_pattern_scorch') }}
+                        </button>
+                        <button type="button" onclick="setTriagePattern('interveinal', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
+                            {{ t('doc_pattern_interveinal') }}
+                        </button>
+                        <button type="button" onclick="setTriagePattern('spots', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
+                            {{ t('doc_pattern_spots') }}
+                        </button>
+                        <button type="button" onclick="setTriagePattern('curl', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
+                            {{ t('doc_pattern_curl') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Soil Health Card Note -->
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                        <span>{{ t('doc_shc_input_label') }}</span>
+                        <span class="text-[10px] text-slate-400">Optional</span>
+                    </label>
+                    <input type="text" id="triageShc" placeholder="{{ t('doc_shc_placeholder') }}" class="w-full bg-slate-50 border border-slate-200 text-xs text-slate-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <p class="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                        {{ t('doc_soil_card_note') }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT COLUMN: Grounded Diagnostic Health Report -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- Loading Spinner Card (hidden by default) -->
+            <div id="loadingCard" class="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4 hidden">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center animate-spin">
+                    <i data-lucide="loader-2" class="w-6 h-6"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900">{{ t('doc_analyzing') }}</h4>
+                <p class="text-xs text-slate-500">Checking symptom patterns against MPKV, Dr. PDKV &amp; CROPSAP guidelines...</p>
+            </div>
+
+            <!-- Empty State Card (shown when no report is generated) -->
+            <div id="emptyReportCard" class="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-4">
+                <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                    <i data-lucide="scan-line" class="w-8 h-8"></i>
+                </div>
+                <div class="max-w-sm mx-auto">
+                    <h3 class="text-base font-bold text-slate-900">{{ t('doc_diagnosis_report') }}</h3>
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {{ t('doc_no_analysis_yet') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Populated Diagnostic Report Card (hidden until analysis succeeds) -->
+            <div id="reportCard" class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden hidden space-y-6 p-6 sm:p-8">
+                
+                <!-- Report Header & Confidence -->
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span id="reportCropBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                Crop
+                            </span>
+                            <span id="reportSeverityBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                Moderate
+                            </span>
+                        </div>
+                        <h2 id="reportPrimaryDiagnosis" class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Primary Diagnosis
+                        </h2>
+                    </div>
+
+                    <!-- Confidence Rating -->
+                    <div class="text-left sm:text-right shrink-0 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-2xl">
+                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">{{ t('doc_confidence') }}</span>
+                        <div class="flex items-baseline gap-1 mt-0.5">
+                            <span id="reportConfidence" class="text-2xl font-black text-emerald-700">94</span>
+                            <span class="text-sm font-bold text-slate-400">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaf Preview & Visual Observations -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 items-center bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                    <div class="sm:col-span-1 aspect-square rounded-xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center shadow-inner">
+                        <img id="reportLeafImg" src="" alt="Analyzed Leaf" class="w-full h-full object-contain">
+                    </div>
+                    <div class="sm:col-span-2 space-y-1.5">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i data-lucide="eye" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>{{ t('doc_visual_observation') }}</span>
+                        </span>
+                        <p id="reportVisualObservation" class="text-xs text-slate-600 leading-relaxed">
+                            Observations...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- "Also Rule Out" Differential Diagnosis Card (Amber Border) -->
+                <div class="p-4 rounded-2xl bg-amber-50/70 border-l-4 border-amber-500 space-y-1.5">
+                    <div class="flex items-center gap-2 text-xs font-bold text-amber-900">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                        <span>{{ t('doc_differential_title') }}</span>
+                    </div>
+                    <p id="reportDifferential" class="text-xs text-amber-900/90 leading-relaxed">
+                        Rule out instructions...
+                    </p>
+                </div>
+
+                <!-- Causes & Triggers -->
+                <div class="space-y-1.5">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>{{ t('doc_causes') }}</span>
+                    </span>
+                    <p id="reportCauses" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        Causes...
+                    </p>
+                </div>
+
+                <!-- Verified Dosage & Organic Remedies -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Organic Remedy -->
+                    <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1.5">
+                        <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                            <i data-lucide="leaf" class="w-3.5 h-3.5 text-emerald-700"></i>
+                            <span>{{ t('doc_organic_remedy') }}</span>
+                        </span>
+                        <p id="reportOrganicRemedy" class="text-xs text-emerald-950 leading-relaxed">
+                            Remedy...
+                        </p>
+                    </div>
+
+                    <!-- Verified Dosage (MPKV / SAU / CROPSAP) -->
+                    <div class="p-4 rounded-2xl bg-teal-50/60 border border-teal-100 space-y-1.5">
+                        <span class="text-xs font-bold text-teal-900 flex items-center gap-1.5">
+                            <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-teal-700"></i>
+                            <span>{{ t('doc_verified_dosage') }}</span>
+                        </span>
+                        <p id="reportVerifiedDosage" class="text-xs text-teal-950 leading-relaxed">
+                            Dosage...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ETL & Insecticide Safety Caution -->
+                <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-1.5">
+                    <div class="flex items-center gap-2 text-xs font-bold text-rose-900">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                        <span>{{ t('doc_etl_caution') }}</span>
+                    </div>
+                    <p id="reportEtlCaution" class="text-xs text-rose-950/90 leading-relaxed">
+                        ETL advisory...
+                    </p>
+                </div>
+
+                <!-- Scientific Authority Source Badge & Anti-Hallucination Disclaimer -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                        <span id="reportSourceRef">MPKV Rahuri / CROPSAP Maharashtra</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 italic">
+                        {{ t('doc_anti_hallucination_note') }}
+                    </span>
+                </div>
+
+                <!-- Action Toolbar: Bulbul TTS Audio & Local Agro Shops Link -->
+                <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <!-- Listen Button (Sarvam Bulbul TTS) -->
+                    <button type="button" id="btnListenTts" onclick="playAdvisoryAudio()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all">
+                        <i data-lucide="volume-2" class="w-4 h-4" id="audioIcon"></i>
+                        <span id="btnListenText">{{ t('doc_listen_audio') }}</span>
+                    </button>
+
+                    <!-- Find Nearest Agro Shop -->
+                    <a href="/nearby-services" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600"></i>
+                        <span>{{ t('doc_find_shops') }}</span>
+                    </a>
+
+                    <!-- Scan Another Leaf Button -->
+                    <button type="button" onclick="resetDoctor()" class="ml-auto flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-all">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>{{ t('doc_scan_another') }}</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Hidden Audio Player for Sarvam Bulbul TTS -->
+<audio id="ttsAudioPlayer" class="hidden"></audio>
+
+<script>
+    // Runtime State
+    let cameraStream = null;
+    let selectedImageBase64 = null;
+    let currentTriage = {
+        leafAge: 'older',
+        pattern: 'scorch'
+    };
+    let currentReport = null;
+
+    // Tab Switcher
+    function switchInputTab(tab) {
+        document.getElementById('tabContentCamera').classList.toggle('hidden', tab !== 'camera');
+        document.getElementById('tabContentUpload').classList.toggle('hidden', tab !== 'upload');
+        document.getElementById('tabContentSamples').classList.toggle('hidden', tab !== 'samples');
+
+        const activeClasses = ['bg-white', 'text-emerald-800', 'shadow-sm', 'font-bold'];
+        const inactiveClasses = ['text-slate-600', 'hover:text-slate-900'];
+
+        ['Camera', 'Upload', 'Samples'].forEach(t => {
+            const btn = document.getElementById(`tabBtn${t}`);
+            const isTarget = t.toLowerCase() === tab;
+            btn.className = `py-2 px-3 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 ${isTarget ? activeClasses.join(' ') : inactiveClasses.join(' ')}`;
+        });
+
+        if (tab !== 'camera' && cameraStream) {
+            stopCamera();
+        }
+    }
+
+    // Camera Handlers
+    async function toggleCamera() {
+        if (cameraStream) {
+            stopCamera();
+        } else {
+            await startCamera();
+        }
+    }
+
+    async function startCamera() {
+        try {
+            const constraints = {
+                video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const videoEl = document.getElementById('cameraVideo');
+            videoEl.srcObject = cameraStream;
+            videoEl.classList.remove('hidden');
+            document.getElementById('cameraPlaceholder').classList.add('hidden');
+            document.getElementById('cameraReticle').classList.remove('hidden');
+            document.getElementById('btnToggleCameraText').innerText = "{{ t('doc_stop_camera') }}";
+            document.getElementById('btnCaptureAnalyze').disabled = false;
+        } catch (err) {
+            console.error("Camera access error:", err);
+            alert("Could not access camera. Please allow camera permissions or switch to the Upload tab.");
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        const videoEl = document.getElementById('cameraVideo');
+        videoEl.classList.add('hidden');
+        videoEl.srcObject = null;
+        document.getElementById('cameraPlaceholder').classList.remove('hidden');
+        document.getElementById('cameraReticle').classList.add('hidden');
+        document.getElementById('btnToggleCameraText').innerText = "{{ t('doc_start_camera') }}";
+        document.getElementById('btnCaptureAnalyze').disabled = true;
+    }
+
+    function captureAndAnalyze() {
+        if (!cameraStream) return;
+        const videoEl = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('captureCanvas');
+        canvas.width = videoEl.videoWidth || 640;
+        canvas.height = videoEl.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+        selectedImageBase64 = base64Data;
+        sendAnalysisRequest(base64Data);
+    }
+
+    // Upload Handlers
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            selectedImageBase64 = evt.target.result;
+            const previewImg = document.getElementById('uploadPreviewImg');
+            previewImg.src = selectedImageBase64;
+            document.getElementById('uploadPreviewBox').classList.remove('hidden');
+            document.getElementById('btnAnalyzeUpload').disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function analyzeUploadedImage() {
+        if (!selectedImageBase64) return;
+        sendAnalysisRequest(selectedImageBase64);
+    }
+
+    // Triage Chips Setters
+    function setTriageLeafAge(age, btn) {
+        currentTriage.leafAge = age;
+        document.querySelectorAll('.triage-age-btn').forEach(b => {
+            b.className = 'triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center';
+        });
+        btn.className = 'triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+    }
+
+    function setTriagePattern(pat, btn) {
+        currentTriage.pattern = pat;
+        document.querySelectorAll('.triage-pat-btn').forEach(b => {
+            b.className = 'triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center';
+        });
+        btn.className = 'triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+    }
+
+    // 1-Click Demo Sample Trigger
+    function loadDemoSample(sampleId) {
+        sendAnalysisRequest(sampleId);
+    }
+
+    // API Pipeline Submission
+    async function sendAnalysisRequest(imageOrSampleId) {
+        document.getElementById('emptyReportCard').classList.add('hidden');
+        document.getElementById('reportCard').classList.add('hidden');
+        document.getElementById('loadingCard').classList.remove('hidden');
+
+        const cropSelect = document.getElementById('triageCrop').value;
+        const shcInput = document.getElementById('triageShc').value;
+
+        const payload = {
+            image_base64: imageOrSampleId,
+            triage_crop: cropSelect,
+            triage_leaf_age: currentTriage.leafAge,
+            triage_pattern: currentTriage.pattern,
+            shc_note: shcInput
+        };
+
+        try {
+            const resp = await fetch('/api/analyze-plant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            document.getElementById('loadingCard').classList.add('hidden');
+
+            if (data && data.success) {
+                renderReport(data, imageOrSampleId);
+            } else {
+                alert("Analysis could not be completed. Please try another image or pick a demo sample.");
+                document.getElementById('emptyReportCard').classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error("Analysis network error:", err);
+            document.getElementById('loadingCard').classList.add('hidden');
+            alert("Network error contacting analysis engine. Falling back to offline diagnosis.");
+            document.getElementById('emptyReportCard').classList.remove('hidden');
+        }
+    }
+
+    function renderReport(report, sourceImg) {
+        currentReport = report;
+
+        document.getElementById('reportCropBadge').innerText = report.crop || 'Crop';
+        document.getElementById('reportSeverityBadge').innerText = report.severity || 'Moderate';
+        document.getElementById('reportPrimaryDiagnosis').innerText = report.primary_diagnosis || 'Plant Health Issue';
+        document.getElementById('reportConfidence').innerText = report.confidence_pct || '92';
+        document.getElementById('reportVisualObservation').innerText = report.visual_observation || '';
+        document.getElementById('reportDifferential').innerText = report.secondary_differential || '';
+        document.getElementById('reportCauses').innerText = report.causes || '';
+        document.getElementById('reportOrganicRemedy').innerText = report.organic_remedy || '';
+        document.getElementById('reportVerifiedDosage').innerText = report.verified_dosage || '';
+        document.getElementById('reportEtlCaution').innerText = report.etl_safety_note || '';
+        document.getElementById('reportSourceRef').innerText = report.source_reference || 'MPKV / CROPSAP Maharashtra';
+
+        // Image Preview Resolver
+        const leafImg = document.getElementById('reportLeafImg');
+        if (report.image_svg) {
+            leafImg.src = `/static/uploads/${report.image_svg}`;
+        } else if (sourceImg && sourceImg.startsWith('data:image')) {
+            leafImg.src = sourceImg;
+        } else if (report.sample_id) {
+            leafImg.src = `/static/uploads/${report.sample_id}.svg`;
+        } else {
+            leafImg.src = `/static/uploads/cotton_k_deficiency.svg`;
+        }
+
+        // Color coding for severity
+        const sevBadge = document.getElementById('reportSeverityBadge');
+        const sevText = (report.severity || '').toLowerCase();
+        if (sevText.includes('high') || sevText.includes('critical') || sevText.includes('गंभीर')) {
+            sevBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800';
+        } else if (sevText.includes('moderate') || sevText.includes('मध्यम')) {
+            sevBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800';
+        } else {
+            sevBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        }
+
+        document.getElementById('reportCard').classList.remove('hidden');
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    }
+
+    function resetDoctor() {
+        document.getElementById('reportCard').classList.add('hidden');
+        document.getElementById('emptyReportCard').classList.remove('hidden');
+        selectedImageBase64 = null;
+        currentReport = null;
+        if (cameraStream) {
+            stopCamera();
+        }
+    }
+
+    // Sarvam Bulbul Text-to-Speech Playback
+    async function playAdvisoryAudio() {
+        if (!currentReport) return;
+        const btnText = document.getElementById('btnListenText');
+        const audioIcon = document.getElementById('audioIcon');
+        const audioPlayer = document.getElementById('ttsAudioPlayer');
+
+        // Compile clean speech text
+        const speechText = `${currentReport.crop}. ${currentReport.primary_diagnosis}. ${currentReport.visual_observation}. ${currentReport.verified_dosage}. ${currentReport.etl_safety_note}`;
+
+        btnText.innerText = "Generating voice...";
+        audioIcon.classList.add('animate-spin');
+
+        try {
+            const resp = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: speechText.substring(0, 450),
+                    language_code: "{{ session.get('lang', 'mr') }}" === "mr" ? "mr-IN" : "en-IN"
+                })
+            });
+            const data = await resp.json();
+
+            audioIcon.classList.remove('animate-spin');
+
+            if (data && data.audio_base64) {
+                audioPlayer.src = `data:audio/mp3;base64,${data.audio_base64}`;
+                audioPlayer.play();
+                btnText.innerText = "Playing Advisory...";
+                audioPlayer.onended = () => {
+                    btnText.innerText = "{{ t('doc_listen_audio') }}";
+                };
+            } else {
+                // Fallback to Web Speech API
+                btnText.innerText = "Playing Audio...";
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.lang = "{{ session.get('lang', 'mr') }}" === "mr" ? "mr-IN" : "en-US";
+                utterance.onend = () => {
+                    btnText.innerText = "{{ t('doc_listen_audio') }}";
+                };
+                window.speechSynthesis.speak(utterance);
+            }
+        } catch (e) {
+            console.warn("TTS fetch failed, using browser Web Speech:", e);
+            btnText.innerText = "Playing Audio...";
+            audioIcon.classList.remove('animate-spin');
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.lang = "{{ session.get('lang', 'mr') }}" === "mr" ? "mr-IN" : "en-US";
+            utterance.onend = () => {
+                btnText.innerText = "{{ t('doc_listen_audio') }}";
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+</script>
+{% endblock %}

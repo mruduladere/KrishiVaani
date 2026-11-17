@@ -70,6 +70,13 @@
                     <span>{{ t('nav_crop_helper') }}</span>
                 </a>
 
+                <!-- Flagship AI Crop & Nutrient Doctor -->
+                <a href="/disease-scanner" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'disease_scanner' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="scan-search" class="w-4 h-4 {% if active_nav == 'disease_scanner' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_disease_scanner') }}</span>
+                    <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md {% if active_nav == 'disease_scanner' %}bg-emerald-200/80 text-emerald-900{% else %}bg-emerald-100/60 text-emerald-800{% endif %}">AI</span>
+                </a>
+
                 <!-- 3. Multilingual AI Assistant -->
                 <a href="/ai-assistant" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'ai_assistant' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="bot" class="w-4 h-4 {% if active_nav == 'ai_assistant' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>

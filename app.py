@@ -1612,8 +1612,22 @@ def form_filler():
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
 
-    farmer = get_current_farmer()
     user_id = session.get("phone", "demo_user")
+
+    # Explicit reset query param handler
+    if request.args.get("reset") == "1":
+        FORM_SESSIONS.pop(user_id, None)
+        session.pop("has_form", None)
+        session.pop("form_is_generated", None)
+        session.modified = True
+        return redirect(url_for("form_filler"))
+
+    # Explicit edit query param handler
+    if request.args.get("edit") == "1":
+        session["form_is_generated"] = False
+        session.modified = True
+
+    farmer = get_current_farmer()
     
     # Retrieve form data primarily from lightweight in-memory dictionary
     form_data = FORM_SESSIONS.get(user_id)
@@ -1638,6 +1652,32 @@ def form_filler():
     )
 
 
+@app.route("/form-filler/reset", methods=["GET", "POST"])
+def form_filler_reset():
+    """Resets active form session in server memory and session, returning to Step 1 upload screen."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    user_id = session.get("phone", "demo_user")
+    FORM_SESSIONS.pop(user_id, None)
+    session.pop("has_form", None)
+    session.pop("form_is_generated", None)
+    session.modified = True
+    flash(t("form_filler_reset_success"), "info")
+    return redirect(url_for("form_filler"))
+
+
+@app.route("/form-filler/edit", methods=["GET", "POST"])
+def form_filler_edit():
+    """Switches view back to Step 2 digital form editor while preserving all entered values."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    session["form_is_generated"] = False
+    session.modified = True
+    return redirect(url_for("form_filler"))
+
+
 @app.route("/form-filler/sample", methods=["GET", "POST"])
 def form_filler_sample():
     """Direct route for 1-click PM-KISAN / Pik Vima Sample Form testing."""
@@ -1653,6 +1693,7 @@ def form_filler_sample():
     FORM_SESSIONS[user_id] = parsed_form
     session["has_form"] = True
     session["form_is_generated"] = False
+    session.modified = True
     flash(t("form_filler_success"), "success")
 
     return redirect(url_for("form_filler"))
@@ -1692,6 +1733,7 @@ def form_filler_scan():
     FORM_SESSIONS[user_id] = parsed_form
     session["has_form"] = True
     session["form_is_generated"] = False
+    session.modified = True
     flash(t("form_filler_success"), "success")
 
     return redirect(url_for("form_filler"))
@@ -1711,12 +1753,18 @@ def form_filler_generate():
     # Update field values with farmer's edits in server memory
     for field in form_data.get("fields", []):
         field_id = field.get("field_id")
-        posted_val = request.form.get(f"field_{field_id}", "").strip()
-        if posted_val:
-            field["value"] = posted_val
+        ftype = field.get("field_type")
+        if ftype == "checkbox":
+            posted_val = request.form.get(f"field_{field_id}")
+            field["value"] = "checked" if posted_val else ""
+        else:
+            posted_val = request.form.get(f"field_{field_id}", "").strip()
+            if posted_val:
+                field["value"] = posted_val
 
     FORM_SESSIONS[user_id] = form_data
     session["form_is_generated"] = True
+    session.modified = True
     flash("Application Form finalized and ready for Print / Download!", "success")
 
     return redirect(url_for("form_filler"))
@@ -1839,6 +1887,55 @@ def api_text_to_speech():
     if audio_base64:
         return {"status": "ok", "audio_base64": audio_base64, "fallback": False}
     return {"status": "fallback", "fallback": True}
+
+
+# ---------------------------------------------------------
+# FLAGSHIP MODULE: AI CROP & NUTRIENT DOCTOR
+# ---------------------------------------------------------
+@app.route("/disease-scanner", methods=["GET"])
+def disease_scanner():
+    """Renders the AI Crop & Nutrient Doctor interface."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    return render_template(
+        "disease_scanner.html",
+        farmer=farmer,
+        active_nav="disease_scanner"
+    )
+
+
+@app.route("/api/analyze-plant", methods=["POST"])
+def api_analyze_plant():
+    """
+    Analyzes leaf photo via Two-Stage Sarvam AI Vision + Maharashtra Agronomy Engine.
+    """
+    if not session.get("is_authenticated"):
+        return {"success": False, "message": "Unauthorized"}, 401
+
+    data = request.get_json(silent=True) or {}
+    image_base64 = data.get("image_base64", "").strip()
+    triage_crop = data.get("triage_crop", "").strip()
+    triage_leaf_age = data.get("triage_leaf_age", "").strip()
+    triage_pattern = data.get("triage_pattern", "").strip()
+    shc_note = data.get("shc_note", "").strip()
+    active_lang = session.get("lang", "mr")
+
+    from plant_doctor import analyze_plant_leaf
+    farmer = get_current_farmer()
+
+    result = analyze_plant_leaf(
+        image_base64=image_base64,
+        farmer_profile=farmer,
+        triage_crop=triage_crop,
+        triage_leaf_age=triage_leaf_age,
+        triage_pattern=triage_pattern,
+        shc_note=shc_note,
+        active_lang=active_lang
+    )
+
+    return result
 
 
 if __name__ == "__main__":
