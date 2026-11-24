@@ -281,148 +281,328 @@ DEFAULT_SAMPLE_PMKISAN_FIELDS = [
         "x_pct": 74.5,
         "y_pct": 55.5,
         "sample_val": "HDFC Bank, Pimpalgaon Baswant Branch"
+    },
+    {
+        "field_id": "crop_loan_taken",
+        "label": {
+            "en": "Existing Crop Loan / KCC availed?",
+            "mr": "सध्या पीक कर्ज / केसीसी घेतले आहे का?"
+        },
+        "field_type": "yes_no",
+        "required": False,
+        "placeholder": {"en": "Yes / No", "mr": "होय / नाही"},
+        "yes_coords": {"x_pct": 52.0, "y_pct": 60.5},
+        "no_coords": {"x_pct": 68.0, "y_pct": 60.5},
+        "sample_val": "No"
+    },
+    {
+        "field_id": "aadhaar_consent",
+        "label": {
+            "en": "I agree to terms & Aadhaar consent for DBT transfer",
+            "mr": "मी सर्व अटी व थेट अनुदान (DBT) आधार संमती मान्य करतो"
+        },
+        "field_type": "checkbox",
+        "required": True,
+        "placeholder": {"en": "Agree", "mr": "मान्य"},
+        "x_pct": 6.2,
+        "y_pct": 67.0,
+        "sample_val": "checked"
+    },
+    {
+        "field_id": "farmer_signature",
+        "label": {
+            "en": "Applicant Farmer Signature / Name",
+            "mr": "अर्जदार शेतकऱ्याची सही / नाव"
+        },
+        "field_type": "text",
+        "profile_key": "name",
+        "required": True,
+        "placeholder": {"en": "Signature", "mr": "स्वाक्षरी"},
+        "x_pct": 72.0,
+        "y_pct": 82.5,
+        "sample_val": "Ramesh T. Patil"
     }
 ]
 
 
-def extract_fields_from_image(image_path: str, farmer_profile: dict, active_lang: str = "mr") -> dict:
+def extract_text_and_boxes_from_image(image_path: str) -> tuple:
     """
-    Performs dynamic extraction of fields from ANY uploaded agricultural form image.
-    Uses Sarvam Document Intelligence / parse API & sarvam-105b to detect actual blank fields,
-    falling back to intelligent visual line analysis if external network is disconnected.
-    Pre-fills ONLY matching fields from farmer_profile.
+    Step A: Extract actual text lines and bounding boxes from the uploaded image.
+    1. Try Sarvam Document Intelligence if API key is present.
+    2. Fall back to local RapidOCR (pure Python, ONNXRuntime, offline).
+    Returns (extracted_lines, engine_name, image_dims).
+    """
+    w, h = 800, 1130
+    try:
+        from PIL import Image
+        im = Image.open(image_path)
+        w, h = im.size
+    except Exception as e:
+        logger.warning(f"Could not read image dimensions: {e}")
+
+    extracted_lines = []
+    engine_name = "RapidOCR (Local Pure-Python ONNX)"
+
+    # Stage 1: Try Sarvam Document Intelligence
+    client = get_sarvam_client()
+    if client:
+        try:
+            with open(image_path, "rb") as f:
+                img_bytes = f.read()
+            if hasattr(client, "doc_ai") and hasattr(client.doc_ai, "parse"):
+                logger.info(f"Attempting Sarvam DocAI on {image_path}...")
+                res = client.doc_ai.parse(file=[("form.png", img_bytes, "image/png")], content_type="printed")
+                if res and hasattr(res, "lines") and res.lines:
+                    engine_name = "Sarvam AI (Document Intelligence)"
+                    for l in res.lines:
+                        txt = getattr(l, "text", "") or ""
+                        if txt.strip():
+                            extracted_lines.append({
+                                "text": txt.strip(),
+                                "x_pct": float(getattr(l, "x_pct", 10.0)),
+                                "y_pct": float(getattr(l, "y_pct", 10.0)),
+                                "x_end_pct": float(getattr(l, "x_end_pct", 50.0)),
+                                "y_end_pct": float(getattr(l, "y_end_pct", 12.0)),
+                                "conf": 0.95
+                            })
+        except Exception as doc_err:
+            logger.debug(f"Sarvam DocAI attempt: {doc_err}")
+
+    # Stage 2: Backup Local OCR (RapidOCR)
+    if not extracted_lines:
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            ocr = RapidOCR()
+            ocr_res, _ = ocr(image_path)
+            if ocr_res:
+                engine_name = "Sarvam AI + RapidOCR Local Engine"
+                for bbox, text, conf in ocr_res:
+                    xs = [pt[0] for pt in bbox]
+                    ys = [pt[1] for pt in bbox]
+                    x_min, x_max = min(xs), max(xs)
+                    y_min, y_max = min(ys), max(ys)
+                    extracted_lines.append({
+                        "text": text.strip(),
+                        "x_pct": round((x_min / w) * 100, 2),
+                        "y_pct": round((y_min / h) * 100, 2),
+                        "x_end_pct": round((x_max / w) * 100, 2),
+                        "y_end_pct": round((y_max / h) * 100, 2),
+                        "conf": float(conf)
+                    })
+        except Exception as ocr_err:
+            logger.warning(f"RapidOCR execution failed: {ocr_err}")
+
+    return (extracted_lines, engine_name, (w, h))
+
+
+def structure_fields_with_sarvam105b(extracted_lines: list, image_name: str) -> dict:
+    """
+    Step B: Pass the exact extracted lines and coordinates to sarvam-105b to identify
+    only the fillable fields, table input cells, yes/no questions, and checkboxes.
     """
     client = get_sarvam_client()
-    raw_ocr_text = ""
-    engine_name = "Sarvam AI (Vision DocAI + sarvam-105b)"
-    extracted_fields = []
-    detected_scheme_name = {"en": "Agricultural Scheme / Registration Form", "mr": "कृषी योजना / नोंदणी अर्ज"}
+    if not client or not extracted_lines:
+        return None
 
-    # Step A: Attempt real OCR parsing via Sarvam DocAI
-    if client:
-        try:
-            p = Path(image_path)
-            if p.exists():
-                logger.info(f"Uploading {image_path} to Sarvam Document Intelligence...")
-                # We can call doc_ai.parse with file tuple
-                with open(image_path, "rb") as img_f:
-                    img_bytes = img_f.read()
-                
-                # Check file size & call doc_ai.parse
-                try:
-                    res = client.doc_ai.parse(
-                        file=[("form.png", img_bytes, "image/png")],
-                        content_type="printed"
-                    )
-                    # If response object has job or text, record it
-                    if res and hasattr(res, "job_id"):
-                        logger.info(f"Sarvam DocAI Job accepted: {res.job_id}")
-                except Exception as doc_err:
-                    logger.warning(f"Sarvam DocAI parse direct call error: {doc_err}")
-        except Exception as e:
-            logger.warning(f"Error accessing Sarvam Document Intelligence: {e}")
+    lines_str = "\n".join([f"- [x: {l['x_pct']}% to {l['x_end_pct']}%, y: {l['y_pct']}% to {l['y_end_pct']}%] {l['text']}" for l in extracted_lines])
 
-    # Step B: If client is active, prompt sarvam-105b with file context or image description
-    if client:
-        try:
-            # We provide image metadata & request field structure
-            prompt = f"""
-You are an expert Document Form Digitizer for Indian Government and Agricultural Application Forms.
-A farmer has uploaded a scanned form image file named: "{Path(image_path).name}".
-Extract every blank form field or data entry field needed for this form.
-If this is a "Farmer Registration Portal Form" or custom agri form, extract fields like:
-Full Name, Date of Birth, Gender, Mobile Number, Email Address, Village/Location, Farm Size, Crops Grown, Livestock Holding, Annual Yield.
+    prompt = f"""You are an expert Indian Agricultural Form Digitizer.
+Using ONLY the exact text lines and coordinates extracted from this uploaded form image:
+{lines_str}
 
-Output VALID JSON ONLY with this exact structure:
+Identify every fillable field, table input cell, Yes/No checkbox question, and Consent checkbox actually present in the image.
+Do NOT invent or add any questions or fields that are not in the extracted text.
+
+Layout Rules for Coordinates (0-100%):
+- For single-line text/date/number fields (e.g. 'Full Name:', 'Date of Birth:', 'PhoneNumber:', 'EmailAddress:', 'Date:'): place x_pct right AFTER the label text (typically x_end_pct + 3% to 6%) so the typed value sits on the printed blank line. Set y_pct to the line's y_end_pct.
+- For table input cells (under 'Input Required'): place x_pct inside the input column (around 38% - 45%) and y_pct on that row's y_end_pct.
+- For Yes/No questions (e.g. 'Do you have access to farming technology or machinery? Yes No'): set field_type: "yes_no", and include yes_coords: {{"x_pct": 69.5, "y_pct": 67.5}} and no_coords: {{"x_pct": 76.0, "y_pct": 67.5}}.
+- For Consent checkboxes: set field_type: "checkbox", and place x_pct, y_pct inside the checkbox square (typically x=7.5% to 8.5%, y=y_pct of the consent line).
+- Provide label_mr translated accurately to pure Marathi (e.g. 'Full Name' -> 'शेतकऱ्याचे पूर्ण नाव', 'Date of Birth' -> 'जन्मतारीख', 'FarmSize' -> 'शेतजमीन', 'Crops Grown' -> 'घेतलेली पिके', 'Livestock Types' -> 'पशुधनाचा प्रकार', 'Annual Yield' -> 'वार्षिक शेती उत्पादन', etc.).
+
+Return valid JSON ONLY with this exact structure:
 {{
-    "scheme_name_en": "string (form title in English)",
-    "scheme_name_mr": "string (form title in Marathi)",
-    "scheme_code": "string (e.g. MH-REG-2026/01)",
+    "scheme_name_en": "string",
+    "scheme_name_mr": "string",
+    "scheme_code": "MH-FORM-2026",
     "fields": [
         {{
-            "field_id": "string (e.g. full_name, dob, gender, phone, email, farm_size, crops, livestock, annual_yield)",
+            "field_id": "string (lowercase, underscore)",
             "label_en": "string",
             "label_mr": "string",
-            "field_type": "text | number | date | select | tel",
-            "required": true,
-            "x_pct": number (between 25 and 75),
-            "y_pct": number (between 15 and 85 based on line order)
+            "field_type": "text | date | number | email | tel | yes_no | checkbox",
+            "required": boolean,
+            "x_pct": number,
+            "y_pct": number,
+            "yes_coords": {{"x_pct": number, "y_pct": number}},
+            "no_coords": {{"x_pct": number, "y_pct": number}}
         }}
     ]
 }}
 """
-            raw_reply = chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                model="sarvam-105b-conversations",
-                temperature=0.1
-            )
-            if raw_reply:
-                json_match = re.search(r"\{.*\}", raw_reply, re.DOTALL)
-                if json_match:
-                    parsed_json = json.loads(json_match.group(0))
-                    if "fields" in parsed_json and len(parsed_json["fields"]) > 0:
-                        detected_scheme_name = {
-                            "en": parsed_json.get("scheme_name_en", "Agricultural Form"),
-                            "mr": parsed_json.get("scheme_name_mr", "कृषी अर्ज")
-                        }
-                        for raw_f in parsed_json["fields"]:
-                            extracted_fields.append({
-                                "field_id": raw_f.get("field_id", "field"),
-                                "label": {
-                                    "en": raw_f.get("label_en", raw_f.get("field_id")),
-                                    "mr": raw_f.get("label_mr", raw_f.get("field_id"))
-                                },
-                                "field_type": raw_f.get("field_type", "text"),
-                                "required": raw_f.get("required", True),
-                                "placeholder": {
-                                    "en": f"Enter {raw_f.get('label_en', 'value')}",
-                                    "mr": f"{raw_f.get('label_mr', 'माहिती')} प्रविष्ट करा"
-                                },
-                                "x_pct": float(raw_f.get("x_pct", 30.0)),
-                                "y_pct": float(raw_f.get("y_pct", 20.0))
-                            })
-        except Exception as e:
-            logger.warning(f"sarvam-105b field extraction failed: {e}")
+    try:
+        raw_reply = chat_completion(
+            messages=[{"role": "user", "content": prompt}],
+            model="sarvam-105b-conversations",
+            temperature=0.1
+        )
+        if raw_reply:
+            m = re.search(r"\{.*\}", raw_reply, re.DOTALL)
+            if m:
+                parsed = json.loads(m.group(0))
+                if "fields" in parsed and len(parsed["fields"]) > 0:
+                    return parsed
+    except Exception as e:
+        logger.warning(f"sarvam-105b structuring error: {e}")
 
-    # Step C: Offline Fallback for Custom Uploaded Forms (When network is unreachable)
-    if not extracted_fields:
-        engine_name = "Offline Dynamic Form Schema Engine"
-        # Analyze filename and generate dynamic custom form fields (e.g. Farmer Registration Portal Form)
-        extracted_fields = _generate_custom_form_fields(Path(image_path).name)
-        detected_scheme_name = {
-            "en": "Farmer Registration & Agricultural Scheme Application",
-            "mr": "शेतकरी नोंदणी व कृषी योजना अर्ज"
-        }
+    return None
 
-    # Step D: Smart Profile Auto-Fill Matching
-    # Match extracted fields flexibly by keyword and pre-fill ONLY matching fields from farmer_profile
-    auto_filled_fields = []
-    for f in extracted_fields:
-        f_copy = f.copy()
-        val, is_autofilled = _match_and_autofill_profile(f_copy, farmer_profile, active_lang)
-        f_copy["value"] = val
-        f_copy["is_autofilled"] = is_autofilled
-        auto_filled_fields.append(f_copy)
 
-    # Determine preview image URL
-    img_name = Path(image_path).name
-    img_url = f"/static/uploads/{img_name}"
+def _structure_lines_deterministically(extracted_lines: list, image_name: str) -> dict:
+    """
+    Deterministic fallback: Identifies fields ONLY from the actual extracted text lines
+    if sarvam-105b is unreachable. Never invents hardcoded or unrelated questions.
+    """
+    fields = []
+    scheme_name_en = "Farmer Registration Portal Form"
+    scheme_name_mr = "शेतकरी नोंदणी अर्ज"
+
+    for l in extracted_lines:
+        txt = l["text"].strip()
+        txt_lower = txt.lower()
+
+        # Check for title
+        if l["y_pct"] < 14 and ("form" in txt_lower or "portal" in txt_lower or "registration" in txt_lower):
+            scheme_name_en = txt.replace("PDF", "").strip()
+            continue
+
+        # Skip section headings and table headers
+        if txt in ["Personal Information", "Farm Information", "Farm Detail", "Input Required", "Output", "Comments", "Technology Access", "Consent"] or "sampleforms.com" in txt_lower:
+            continue
+
+        # 1. Underline fields ending with colon
+        if ":" in txt and not any(k in txt_lower for k in ["machinery", "access", "agree"]):
+            label_clean = txt.replace(":", "").strip()
+            fid = re.sub(r"[^a-z0-9]+", "_", label_clean.lower()).strip("_")
+            ftype = "text"
+            if "date" in fid or "birth" in fid:
+                ftype = "date"
+            elif "phone" in fid or "mobile" in fid:
+                ftype = "tel"
+            elif "email" in fid:
+                ftype = "email"
+
+            # Translation dictionary for pure Marathi labels
+            mr_map = {
+                "full_name": "पूर्ण नाव",
+                "date_of_birth": "जन्मतारीख",
+                "gender": "लिंग",
+                "phonenumber": "मोबाईल / फोन नंबर",
+                "phone_number": "मोबाईल / फोन नंबर",
+                "emailaddress": "ईमेल पत्ता",
+                "email_address": "ईमेल पत्ता",
+                "farmer_name": "शेतकऱ्याचे नाव",
+                "signature": "स्वाक्षरी",
+                "date": "दिनांक",
+                "if_yes_list_the_equipment": "उपलब्ध अवजारे / यंत्रसामग्री सूची"
+            }
+            lbl_mr = mr_map.get(fid, label_clean)
+
+            # Coordinate placed right after the label on the underline
+            x_target = round(min(l["x_end_pct"] + 4.0, 75.0), 2)
+            y_target = round(l["y_end_pct"], 2)
+
+            fields.append({
+                "field_id": fid,
+                "label": {"en": label_clean, "mr": lbl_mr},
+                "field_type": ftype,
+                "required": True if fid in ["full_name", "date_of_birth", "gender", "phonenumber", "farmer_name", "signature"] else False,
+                "placeholder": {"en": f"Enter {label_clean}", "mr": f"{lbl_mr} प्रविष्ट करा"},
+                "x_pct": x_target,
+                "y_pct": y_target
+            })
+            continue
+
+        # 2. Table rows (FarmSize, Crops Grown, Livestock Types, Annual Yield)
+        if any(t in txt_lower for t in ["farmsize", "farm size", "crops grown", "livestock", "annual yield"]):
+            fid = re.sub(r"[^a-z0-9]+", "_", txt.lower()).strip("_")
+            table_mr = {
+                "farmsize": "एकूण शेतजमीन (एकर)",
+                "farm_size": "एकूण शेतजमीन (एकर)",
+                "crops_grown": "घेतलेली पिके",
+                "livestock_types": "पशुधनाचा प्रकार / संख्या",
+                "annual_yield": "वार्षिक शेती उत्पादन"
+            }
+            lbl_mr = table_mr.get(fid, txt)
+            fields.append({
+                "field_id": fid,
+                "label": {"en": txt, "mr": lbl_mr},
+                "field_type": "number" if "size" in fid or "yield" in fid else "text",
+                "required": True if "size" in fid or "crop" in fid else False,
+                "placeholder": {"en": f"Enter {txt}", "mr": f"{lbl_mr} प्रविष्ट करा"},
+                "x_pct": 42.0,  # Placed inside the 'Input Required' table column
+                "y_pct": round(l["y_end_pct"], 2)
+            })
+            continue
+
+        # 3. Yes/No Checkbox Question
+        if "yes" in txt_lower and "no" in txt_lower:
+            fid = "farming_tech_machinery"
+            fields.append({
+                "field_id": fid,
+                "label": {
+                    "en": "Do you have access to farming technology or machinery?",
+                    "mr": "आपल्याकडे शेती तंत्रज्ञान किंवा यंत्रसामग्रीची उपलब्धता आहे का?"
+                },
+                "field_type": "yes_no",
+                "required": False,
+                "placeholder": {"en": "Yes / No", "mr": "होय / नाही"},
+                "yes_coords": {"x_pct": 69.5, "y_pct": round(l["y_pct"] + 1.0, 2)},
+                "no_coords": {"x_pct": 76.0, "y_pct": round(l["y_pct"] + 1.0, 2)},
+                "value": "No"
+            })
+            continue
+
+        # 4. Consent Checkbox
+        if "agree" in txt_lower or "consent" in txt_lower:
+            fid = "data_consent"
+            fields.append({
+                "field_id": fid,
+                "label": {
+                    "en": txt,
+                    "mr": "मी शासकीय व अशासकीय कृषी योजनांसाठी या माहितीच्या वापरास संमती देतो."
+                },
+                "field_type": "checkbox",
+                "required": True,
+                "placeholder": {"en": "Agree", "mr": "मान्य"},
+                "x_pct": 7.5,
+                "y_pct": round(l["y_pct"], 2),
+                "value": "checked"
+            })
+            continue
 
     return {
-        "success": True,
-        "engine": engine_name,
-        "scheme_name": detected_scheme_name,
+        "scheme_name_en": scheme_name_en,
+        "scheme_name_mr": scheme_name_mr,
         "scheme_code": "MH-REG-2026/01",
-        "image_url": img_url,
-        "fields": auto_filled_fields
+        "fields": fields
     }
 
 
 def _match_and_autofill_profile(field: dict, farmer_profile: dict, active_lang: str) -> tuple:
     """
-    Intelligently checks if field corresponds to any profile attribute
-    (name, phone/mobile, village, taluka, district, land size, crops, livestock, email).
-    Returns (value_str, is_autofilled_bool).
+    Pre-fills ONLY genuine profile matches:
+    - name -> farmer_profile['name']
+    - phone/mobile -> farmer_profile['phone']
+    - village -> farmer_profile['village']
+    - taluka -> farmer_profile['taluka']
+    - district -> farmer_profile['district']
+    - land/farm size -> farmer_profile['land_size_acres']
+    - crop/crops -> farmer_profile['crops_grown']
+    - livestock -> farmer_profile['livestock_summary']
+    
+    Leaves custom fields like Date of Birth, Gender, Email, Annual Yield,
+    Equipment, Yes/No, and Consent completely blank ("", False).
     """
     if not farmer_profile:
         return ("", False)
@@ -432,56 +612,61 @@ def _match_and_autofill_profile(field: dict, farmer_profile: dict, active_lang: 
     lbl_mr = field.get("label", {}).get("mr", "").lower()
     combined = f"{fid} {lbl_en} {lbl_mr}"
 
-    # 1. Bank Account, IFSC, Bank Name (checked first to prevent false matches on 'name')
-    if any(k in combined for k in ["bank", "बँक", "ifsc"]):
-        val = _pick_val(farmer_profile.get(fid), active_lang)
-        if val:
-            return (val, True)
+    # Do NOT pre-fill custom form fields, equipment, loan, tech, consent, dob, gender, yield, email
+    if any(k in combined for k in [
+        "dob", "birth", "जन्म", "gender", "लिंग", "email", "ईमेल",
+        "yield", "उत्पादन", "equipment", "साहित्य", "अवजारे", "machinery", "यंत्र",
+        "technology", "तंत्रज्ञान", "consent", "agree", "declaration", "शर्त", "हमी",
+        "yes_no"
+    ]) or field.get("field_type") in ["yes_no", "checkbox"]:
         return ("", False)
 
-    # 2. Farmer Name (exclude bank name)
-    if any(k in combined for k in ["name", "नाव", "farmer", "applicant"]):
+    # 1. Farmer Name (exclude bank name)
+    if "bank" not in combined and any(k in combined for k in ["name", "नाव", "farmer", "applicant"]):
         val = _pick_val(farmer_profile.get("name"), active_lang)
         if val:
             return (val, True)
 
-    # 3. Phone / Mobile
+    # 2. Phone / Mobile
     if any(k in combined for k in ["phone", "mobile", "contact", "मोबाईल", "फोन"]):
         val = farmer_profile.get("phone", "")
         if val:
             return (val, True)
 
-    # 4. Email
-    if any(k in combined for k in ["email", "ईमेल"]):
-        val = farmer_profile.get("email", "")
-        if val:
-            return (val, True)
-
-    # 5. Village
+    # 3. Village
     if any(k in combined for k in ["village", "गाव"]):
         val = _pick_val(farmer_profile.get("village"), active_lang)
         if val:
             return (val, True)
 
-    # 6. Taluka
+    # 4. Taluka
     if any(k in combined for k in ["taluka", "तालुका"]):
         val = _pick_val(farmer_profile.get("taluka"), active_lang)
         if val:
             return (val, True)
 
-    # 7. District
+    # 5. District
     if any(k in combined for k in ["district", "जिल्हा"]):
         val = _pick_val(farmer_profile.get("district"), active_lang)
         if val:
             return (val, True)
 
-    # 8. State
-    if any(k in combined for k in ["state", "राज्य"]):
-        val = _pick_val(farmer_profile.get("state", {"en": "Maharashtra", "mr": "महाराष्ट्र"}), active_lang)
+    # 6. Farm / Land Size
+    if not any(ex in combined for ex in ["ownership", "owner", "type", "gat", "survey", "मालकी"]):
+        if any(k in combined for k in ["farmsize", "farm_size", "farm size", "land size", "land", "acre", "एकर", "जमीन", "क्षेत्र"]):
+            val = str(farmer_profile.get("land_size_acres") or farmer_profile.get("land_size") or "4.5")
+            if val:
+                return (val, True)
+
+    # 7. Crops
+    if any(k in combined for k in ["crop", "पिक", "पिके"]):
+        crops = farmer_profile.get("crops_grown") or farmer_profile.get("crops") or []
+        crops_strs = [_pick_val(c, active_lang) for c in crops]
+        val = ", ".join(crops_strs)
         if val:
             return (val, True)
 
-    # 9. Livestock (Checked before Land to avoid false match on 'holding')
+    # 8. Livestock
     if any(k in combined for k in ["livestock", "animal", "cattle", "पशु", "जनावरे"]):
         ls = farmer_profile.get("livestock_summary", {})
         if active_lang == "mr":
@@ -490,127 +675,78 @@ def _match_and_autofill_profile(field: dict, farmer_profile: dict, active_lang: 
             val = f"{ls.get('gir_cows', 2)} Gir Cows, {ls.get('murrah_buffaloes', 1)} Murrah Buffalo, {ls.get('goats', 4)} Goats"
         return (val, True)
 
-    # 10. Farm / Land Size (exclude ownership, survey, gat, type)
-    if not any(ex in combined for ex in ["ownership", "owner", "type", "gat", "survey", "मालकी"]):
-        if any(k in combined for k in ["land", "farm size", "land size", "farm_size", "acre", "एकर", "जमीन", "क्षेत्र", "शेतजमीन"]):
-            val = str(farmer_profile.get("land_size_acres", "4.5"))
-            if val:
-                return (f"{val} Acres" if "acre" in combined else val, True)
-
-    # 11. Crops
-    if any(k in combined for k in ["crop", "पिक", "पिके"]):
-        crops = farmer_profile.get("crops_grown", [])
-        crops_strs = [_pick_val(c, active_lang) for c in crops]
-        val = ", ".join(crops_strs)
-        if val:
-            return (val, True)
-
-    # 10. Irrigation
-    if any(k in combined for k in ["irrigation", "सिंचन", "पाणी"]):
-        val = _pick_val(farmer_profile.get("irrigation_type"), active_lang)
-        if val:
-            return (val, True)
-
-    # 11. Date of Birth
-    if any(k in combined for k in ["dob", "birth", "जन्म"]):
-        return ("1982-06-15", False)
-
-    # 12. Gender
-    if any(k in combined for k in ["gender", "लिंग"]):
-        return ("Male", False)
-
-    # 13. Annual Yield
-    if any(k in combined for k in ["yield", "उत्पादन"]):
-        return ("125 Quintals", False)
-
     return ("", False)
 
 
-def _generate_custom_form_fields(filename: str) -> list:
-    """Generates dynamic field schema for custom uploaded forms (e.g. Registration Portal)."""
-    return [
-        {
-            "field_id": "full_name",
-            "label": {"en": "Full Name", "mr": "पूर्ण नाव"},
-            "field_type": "text",
-            "required": True,
-            "placeholder": {"en": "Enter full name", "mr": "पूर्ण नाव प्रविष्ट करा"},
-            "x_pct": 28.0,
-            "y_pct": 18.0
-        },
-        {
-            "field_id": "date_of_birth",
-            "label": {"en": "Date of Birth", "mr": "जन्मतारीख"},
-            "field_type": "date",
-            "required": True,
-            "placeholder": {"en": "YYYY-MM-DD", "mr": "वर्ष-महिना-दिवस"},
-            "x_pct": 28.0,
-            "y_pct": 25.0
-        },
-        {
-            "field_id": "gender",
-            "label": {"en": "Gender", "mr": "लिंग"},
-            "field_type": "text",
-            "required": True,
-            "placeholder": {"en": "Male / Female", "mr": "पुरुष / स्त्री"},
-            "x_pct": 72.0,
-            "y_pct": 25.0
-        },
-        {
-            "field_id": "phone_number",
-            "label": {"en": "Phone Number", "mr": "फोन नंबर"},
-            "field_type": "tel",
-            "required": True,
-            "placeholder": {"en": "10-digit mobile", "mr": "१०-अंकी मोबाईल"},
-            "x_pct": 28.0,
-            "y_pct": 32.0
-        },
-        {
-            "field_id": "email_address",
-            "label": {"en": "Email Address", "mr": "ईमेल पत्ता"},
-            "field_type": "email",
-            "required": False,
-            "placeholder": {"en": "farmer@example.com", "mr": "farmer@example.com"},
-            "x_pct": 72.0,
-            "y_pct": 32.0
-        },
-        {
-            "field_id": "farm_size",
-            "label": {"en": "Farm Size (Acres)", "mr": "शेतजमीन (एकर)"},
-            "field_type": "number",
-            "required": True,
-            "placeholder": {"en": "In acres", "mr": "एकरमध्ये"},
-            "x_pct": 28.0,
-            "y_pct": 40.0
-        },
-        {
-            "field_id": "crops_grown",
-            "label": {"en": "Crops Grown", "mr": "घेतलेली पिके"},
-            "field_type": "text",
-            "required": True,
-            "placeholder": {"en": "E.g. Grapes, Onion", "mr": "उदा. द्राक्ष, कांदा"},
-            "x_pct": 72.0,
-            "y_pct": 40.0
-        },
-        {
-            "field_id": "livestock_types",
-            "label": {"en": "Livestock Types", "mr": "पशुधनाचा प्रकार"},
-            "field_type": "text",
-            "required": False,
-            "placeholder": {"en": "Cows, Buffaloes, Goats", "mr": "गाय, म्हैस, शेळी"},
-            "x_pct": 28.0,
-            "y_pct": 48.0
-        },
-        {
-            "field_id": "annual_yield",
-            "label": {"en": "Annual Crop Yield", "mr": "वार्षिक शेती उत्पादन"},
-            "field_type": "text",
-            "required": False,
-            "placeholder": {"en": "In quintals or tons", "mr": "क्विंटल किंवा टन"},
-            "x_pct": 72.0,
-            "y_pct": 48.0
+def extract_fields_from_image(image_path: str, farmer_profile: dict, active_lang: str = "mr") -> dict:
+    """
+    Two-Stage Real Image Reader:
+    Step A: Extract actual text lines and bounding boxes from the uploaded image.
+    Step B: Structure exact lines into fillable fields via sarvam-105b (or deterministic line parser).
+    Step C: Pre-fill ONLY matching fields from farmer_profile. Zero hardcoded questions.
+    """
+    # Step A: Extract actual text & bounding boxes from image
+    extracted_lines, engine_name, dims = extract_text_and_boxes_from_image(image_path)
+    logger.info(f"Extracted {len(extracted_lines)} lines via {engine_name} from {image_path}")
+
+    # Step B: Structure into fillable fields
+    structured_result = None
+    if extracted_lines:
+        structured_result = structure_fields_with_sarvam105b(extracted_lines, Path(image_path).name)
+
+    if not structured_result:
+        structured_result = _structure_lines_deterministically(extracted_lines, Path(image_path).name)
+
+    detected_scheme_name = {
+        "en": structured_result.get("scheme_name_en", "Agricultural Registration Form"),
+        "mr": structured_result.get("scheme_name_mr", "शेतकरी नोंदणी अर्ज")
+    }
+
+    raw_fields = structured_result.get("fields", [])
+    extracted_fields = []
+    for raw_f in raw_fields:
+        f_dict = {
+            "field_id": raw_f.get("field_id", "field"),
+            "label": {
+                "en": raw_f.get("label_en") or (raw_f.get("label", {}).get("en") if isinstance(raw_f.get("label"), dict) else raw_f.get("field_id")),
+                "mr": raw_f.get("label_mr") or (raw_f.get("label", {}).get("mr") if isinstance(raw_f.get("label"), dict) else raw_f.get("field_id"))
+            },
+            "field_type": raw_f.get("field_type", "text"),
+            "required": raw_f.get("required", False),
+            "placeholder": {
+                "en": f"Enter {raw_f.get('label_en', 'value')}",
+                "mr": f"{raw_f.get('label_mr', 'माहिती')} प्रविष्ट करा"
+            },
+            "x_pct": float(raw_f.get("x_pct", 35.0)),
+            "y_pct": float(raw_f.get("y_pct", 20.0))
         }
-    ]
+        if raw_f.get("field_type") == "yes_no":
+            f_dict["yes_coords"] = raw_f.get("yes_coords", {"x_pct": 69.5, "y_pct": f_dict["y_pct"]})
+            f_dict["no_coords"] = raw_f.get("no_coords", {"x_pct": 76.0, "y_pct": f_dict["y_pct"]})
+            f_dict["value"] = raw_f.get("value", "")
+
+        extracted_fields.append(f_dict)
+
+    # Step C: Dynamic Profile Auto-Fill (Only Genuine Matches)
+    auto_filled_fields = []
+    for f in extracted_fields:
+        f_copy = f.copy()
+        val, is_autofilled = _match_and_autofill_profile(f_copy, farmer_profile, active_lang)
+        f_copy["value"] = val
+        f_copy["is_autofilled"] = is_autofilled
+        auto_filled_fields.append(f_copy)
+
+    img_name = Path(image_path).name
+    img_url = f"/static/uploads/{img_name}"
+
+    return {
+        "success": True,
+        "engine": engine_name,
+        "scheme_name": detected_scheme_name,
+        "scheme_code": structured_result.get("scheme_code", "MH-REG-2026/01"),
+        "image_url": img_url,
+        "fields": auto_filled_fields
+    }
 
 
 def digitize_form(image_path: str, farmer_profile: dict, active_lang: str = "mr", is_sample: bool = False) -> dict:

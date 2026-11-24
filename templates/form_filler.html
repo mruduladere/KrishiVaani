@@ -21,8 +21,8 @@
         </div>
     </div>
 
-    <!-- STEP 1: Upload & 1-Click Scan Card (shown when not viewing completed result) -->
-    {% if not form_data or not is_generated %}
+    <!-- STEP 1: Upload & 1-Click Scan Card (shown when no active form is loaded) -->
+    {% if not form_data %}
     <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 no-print">
         <div>
             <h2 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -112,10 +112,12 @@
                     {{ t('form_filler_editor_subtitle') }}
                 </p>
             </div>
-            <a href="/form-filler" class="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1">
-                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                <span>{{ t('btn_cancel') }}</span>
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="/form-filler/reset" class="px-3.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-xl text-xs font-bold border border-slate-300 transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('form_filler_btn_upload_new') }}</span>
+                </a>
+            </div>
         </div>
 
         <form action="/form-filler/generate" method="POST">
@@ -134,7 +136,7 @@
                         <img src="{{ form_data.image_url }}" alt="Form Scan" class="w-full h-auto block select-none">
                     </div>
                     <p class="text-[10px] text-slate-400 text-center">
-                        Fields detected with normalized coordinates (x_pct, y_pct) for precision print overlay.
+                        Precision blank slot detection (underlines, table cells, checkboxes).
                     </p>
                 </div>
 
@@ -142,7 +144,54 @@
                 <div class="lg:col-span-7 space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {% for field in form_data.fields %}
-                        <div class="{% if field.field_id in ['farmer_name', 'crops_cultivated', 'bank_account'] %}sm:col-span-2{% endif %}">
+                        
+                        {# Field Type: YES / NO Question with Radio Buttons #}
+                        {% if field.field_type == 'yes_no' %}
+                        <div class="sm:col-span-2 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-800">
+                                    {{ field.label | pick }} {% if field.required %}<span class="text-rose-500">*</span>{% endif %}
+                                </label>
+                                {% if field.is_autofilled %}
+                                <span class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                    <i data-lucide="check" class="w-2.5 h-2.5"></i>
+                                    <span>{{ t('form_filler_autofill_badge') }}</span>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-6 text-xs font-semibold text-slate-800 pt-1">
+                                <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 transition">
+                                    <input type="radio" name="field_{{ field.field_id }}" value="Yes" 
+                                           {% if field.value in ['Yes', 'yes', 'होय'] %}checked{% endif %}
+                                           class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                    <span>{% if session.get('lang') == 'mr' %}होय (Yes){% else %}Yes{% endif %}</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 transition">
+                                    <input type="radio" name="field_{{ field.field_id }}" value="No" 
+                                           {% if field.value in ['No', 'no', 'नाही'] or not field.value %}checked{% endif %}
+                                           class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                    <span>{% if session.get('lang') == 'mr' %}नाही (No){% else %}No{% endif %}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {# Field Type: Consent or Agreement Checkbox #}
+                        {% elif field.field_type == 'checkbox' %}
+                        <div class="sm:col-span-2 p-3.5 bg-emerald-50/50 rounded-2xl border border-emerald-200 shadow-sm">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" name="field_{{ field.field_id }}" value="checked" 
+                                       {% if field.value in ['checked', 'on', 'yes', 'true', 'True', '1'] %}checked{% endif %}
+                                       class="w-4 h-4 mt-0.5 text-emerald-600 rounded focus:ring-emerald-500 border-slate-300">
+                                <div class="text-xs font-bold text-slate-900 leading-snug">
+                                    {{ field.label | pick }}
+                                    {% if field.required %}<span class="text-rose-500">*</span>{% endif %}
+                                </div>
+                            </label>
+                        </div>
+
+                        {# Standard Inputs: Text, Number, Date, Tel, Email #}
+                        {% else %}
+                        <div class="{% if field.field_id in ['farmer_name', 'full_name', 'crops_cultivated', 'crops_grown', 'bank_account', 'bottom_signature', 'bottom_farmer_name'] %}sm:col-span-2{% endif %}">
                             <div class="flex items-center justify-between mb-1">
                                 <label class="block text-xs font-semibold text-slate-700">
                                     {{ field.label | pick }} {% if field.required %}<span class="text-rose-500">*</span>{% endif %}
@@ -162,13 +211,16 @@
                                 {% if field.required %}required{% endif %}
                                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
                         </div>
+                        {% endif %}
+
                         {% endfor %}
                     </div>
 
                     <!-- Generate Submit Button -->
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <a href="/form-filler" class="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition">
-                            {{ t('btn_cancel') }}
+                        <a href="/form-filler/reset" class="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>{{ t('form_filler_btn_upload_new') }}</span>
                         </a>
                         <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
                             <i data-lucide="check-circle" class="w-4 h-4"></i>
@@ -198,11 +250,15 @@
                 </button>
             </div>
 
-            <!-- Action Buttons: Print & Download -->
-            <div class="flex items-center gap-2.5">
-                <a href="/form-filler" class="px-3 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+            <!-- Action Buttons: Print, Download, Edit & Reset -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="/form-filler/edit" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                    <span>Edit Values</span>
+                    <span>{{ t('form_filler_btn_edit') }}</span>
+                </a>
+                <a href="/form-filler/reset" class="px-3 py-2 border border-slate-300 text-slate-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>{{ t('form_filler_btn_upload_new') }}</span>
                 </a>
                 <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i>
@@ -223,23 +279,51 @@
 
                 <!-- Typed Overlay Values Placed Exactly at Normalized Coordinates -->
                 {% for field in form_data.fields %}
-                <div 
-                    class="absolute text-[13px] font-bold text-slate-900 font-mono tracking-tight pointer-events-none"
-                    style="left: {{ field.x_pct }}%; top: {{ field.y_pct }}%; transform: translateY(-50%);">
-                    {{ field.value }}
-                </div>
+                    {# 1. YES / NO Question with Checkmark Over Selected Box #}
+                    {% if field.field_type == 'yes_no' %}
+                        {% if field.value in ['Yes', 'yes', 'होय'] and field.yes_coords %}
+                        <div class="absolute text-[15px] font-black text-slate-900 pointer-events-none select-none"
+                             style="left: {{ field.yes_coords.x_pct }}%; top: {{ field.yes_coords.y_pct }}%; transform: translate(-50%, -50%);">
+                            ✓
+                        </div>
+                        {% elif field.value in ['No', 'no', 'नाही'] and field.no_coords %}
+                        <div class="absolute text-[15px] font-black text-slate-900 pointer-events-none select-none"
+                             style="left: {{ field.no_coords.x_pct }}%; top: {{ field.no_coords.y_pct }}%; transform: translate(-50%, -50%);">
+                            ✓
+                        </div>
+                        {% endif %}
+
+                    {# 2. Consent Checkbox Checkmark #}
+                    {% elif field.field_type == 'checkbox' %}
+                        {% if field.value in ['checked', 'on', 'yes', 'true', 'True', '1'] %}
+                        <div class="absolute text-[15px] font-black text-slate-900 pointer-events-none select-none"
+                             style="left: {{ field.x_pct }}%; top: {{ field.y_pct }}%; transform: translate(-50%, -50%);">
+                            ✓
+                        </div>
+                        {% endif %}
+
+                    {# 3. Standard Text / Date / Number Underlines & Table Cells #}
+                    {% else %}
+                        {% if field.value %}
+                        <div 
+                            class="absolute text-[13px] font-bold text-slate-900 font-mono tracking-tight pointer-events-none select-none whitespace-nowrap"
+                            style="left: {{ field.x_pct }}%; top: {{ field.y_pct }}%; transform: translateY(-85%);">
+                            {{ field.value }}
+                        </div>
+                        {% endif %}
+                    {% endif %}
                 {% endfor %}
 
-                <!-- Date Stamp Overlay -->
+                <!-- Date Stamp Overlay (for PM-KISAN forms if not extracted) -->
+                {% if 'sample_pmkisan' in form_data.image_url %}
                 <div class="absolute text-[12px] font-bold text-slate-800 font-mono" style="right: 8%; top: 10.7%;">
                     {{ current_date }}
                 </div>
-
-                <!-- Digital Signature Overlay -->
                 <div class="absolute text-center" style="right: 12%; bottom: 15.5%;">
                     <span class="text-xs font-cursive font-bold text-indigo-900 italic block">{{ farmer.name | pick }}</span>
                     <span class="text-[9px] text-emerald-700 font-mono font-semibold block">[ Digitally Signed via KrishiVaani ]</span>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -263,6 +347,7 @@
 
             <!-- Form Details Table -->
             <div class="mt-6 border border-slate-900 divide-y divide-slate-900 text-xs text-slate-900">
+                {% if form_dict.get('farmer_name') %}
                 <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
                     1. Applicant Personal & Location Details
                 </div>
@@ -300,6 +385,66 @@
                 <div class="p-2.5">
                     <strong>Bank & Branch Name:</strong> {{ form_dict.get('bank_name', '') }}
                 </div>
+                {% else %}
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    Digitized Application Details / अर्जाचा तपशील
+                </div>
+                <div class="divide-y divide-slate-200">
+                    {% for field in form_data.fields %}
+                    <div class="grid grid-cols-12 p-2.5">
+                        <div class="col-span-5 font-semibold text-slate-800">
+                            {{ field.label | pick }}:
+                        </div>
+                        <div class="col-span-7 font-bold text-slate-900">
+                            {% if field.field_type == 'checkbox' %}
+                                {% if field.value in ['checked', 'on', 'yes', 'true', 'True', '1'] %}✓ Confirmed / मान्य{% else %}—{% endif %}
+                            {% elif field.field_type == 'yes_no' %}
+                                {{ field.value }}
+                            {% else %}
+                                {{ field.value if field.value else '—' }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
+                    Applicant Declaration & Verification
+                </div>
+                <div class="p-3 text-[11px] leading-relaxed text-slate-700 space-y-1">
+                    <p>I hereby certify that all information submitted above is true and verified. I consent to Aadhaar-based DBT direct benefit transfers and official verification.</p>
+                </div>
+            </div>
+
+            <!-- Signature & Stamp Block -->
+            <div class="mt-10 pt-6 border-t border-slate-300 flex items-end justify-between text-xs">
+                <div>
+                    <p><strong>Place:</strong> {{ form_dict.get('taluka') or farmer.taluka | pick }}, {{ form_dict.get('district') or farmer.district | pick }}</p>
+                    <p class="mt-1"><strong>Date:</strong> {{ current_date }}</p>
+                    <div class="mt-4 border border-dashed border-slate-400 p-3 rounded-lg w-44 text-center text-[10px] text-slate-500">
+                        Official Tahsil / Krishi Office Stamp
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div class="h-12 flex items-center justify-center">
+                        <span class="font-cursive text-sm text-slate-900 italic font-bold">
+                            {{ form_dict.get('farmer_name') or form_dict.get('full_name') or form_dict.get('bottom_farmer_name') or (farmer.name | pick) }}
+                        </span>
+                    </div>
+                    <div class="border-t border-slate-900 pt-1 w-52">
+                        <p class="font-bold text-slate-900">Applicant Farmer Signature</p>
+                        <p class="text-[10px] text-slate-500">(अर्जदार शेतकऱ्याची सही / अंगठा)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center text-[10px] text-slate-400 border-t border-slate-200 pt-3">
+                Printed via KrishiVaani Smart Form Digitizer • Strictly Pure Python • SIH 2026 Prototype
+            </div>
+        </div>
 
                 <div class="bg-slate-100 font-bold px-3 py-2 uppercase tracking-wide">
                     4. Applicant Declaration & Verification

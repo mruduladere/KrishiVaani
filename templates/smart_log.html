@@ -43,6 +43,21 @@
                 </div>
             </div>
 
+            <!-- Speech Review Banner (Displayed when speech is captured) -->
+            <div id="transcriptReviewCard" class="hidden p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-emerald-800 flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>{{ t('smart_log_transcript_review') }}</span>
+                    </span>
+                    <button type="button" onclick="clearInput()" class="text-slate-500 hover:text-slate-700 underline text-[11px]">
+                        {{ t('btn_cancel') }}
+                    </button>
+                </div>
+                <p id="transcriptPreviewText" class="text-slate-800 font-medium italic"></p>
+                <p class="text-[11px] text-emerald-700">{{ t('smart_log_transcript_clarity') }}</p>
+            </div>
+
             <!-- Large Textarea -->
             <div class="relative">
                 <textarea 
@@ -59,7 +74,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                 <div class="text-xs text-slate-500 flex items-center gap-1.5">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                    <span>Strict No Database • 100% In-Memory State • Offline Fallback Enabled</span>
+                    <span>Strict No Database • 100% In-Memory State • Multi-Intent Engine</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="clearInput()" class="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition">
@@ -86,54 +101,82 @@
                     <div class="flex items-center justify-between mb-1">
                         <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
                             <i data-lucide="layers" class="w-3 h-3"></i>
-                            <span>Livestock + Expense</span>
+                            <span>Cattle Purchase (₹25,000)</span>
                         </span>
                         <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition"></i>
                     </div>
                     <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
-                        "{{ t('smart_log_chip_1') }}"
+                        "I bought a cow named Gauri for ₹25,000."
                     </p>
                 </button>
 
-                <!-- Chip 2: Farm Expense -->
-                <button type="button" onclick="loadChip(2)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-amber-50 hover:border-amber-300 transition-all group">
+                <!-- Chip 2: Vaccination Complete -->
+                <button type="button" onclick="loadChip(2)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-emerald-50 hover:border-emerald-300 transition-all group">
                     <div class="flex items-center justify-between mb-1">
-                        <span class="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <i data-lucide="receipt" class="w-3 h-3"></i>
-                            <span>Farm Expense</span>
+                        <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="heart-pulse" class="w-3 h-3"></i>
+                            <span>Livestock Vaccination</span>
                         </span>
-                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-700 transition"></i>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition"></i>
                     </div>
                     <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
-                        "{{ t('smart_log_chip_2') }}"
+                        "I completed Gauri's vaccination today."
                     </p>
                 </button>
 
-                <!-- Chip 3: Marketplace Listing -->
+                <!-- Chip 3: Milk Yield -->
                 <button type="button" onclick="loadChip(3)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-blue-50 hover:border-blue-300 transition-all group">
                     <div class="flex items-center justify-between mb-1">
                         <span class="text-[11px] font-bold text-blue-800 bg-blue-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <i data-lucide="shopping-bag" class="w-3 h-3"></i>
-                            <span>Marketplace Listing</span>
+                            <i data-lucide="droplet" class="w-3 h-3"></i>
+                            <span>Milk Yield (65 Litres)</span>
                         </span>
                         <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700 transition"></i>
                     </div>
                     <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
-                        "{{ t('smart_log_chip_3') }}"
+                        "My ten cows produced 65 litres of milk today."
                     </p>
                 </button>
 
-                <!-- Chip 4: Crop Calendar Task -->
-                <button type="button" onclick="loadChip(4)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-purple-50 hover:border-purple-300 transition-all group">
+                <!-- Chip 4: Farm Expense -->
+                <button type="button" onclick="loadChip(4)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-amber-50 hover:border-amber-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="receipt" class="w-3 h-3"></i>
+                            <span>Input Purchase (₹1,200)</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "I purchased fertiliser for ₹1,200."
+                    </p>
+                </button>
+
+                <!-- Chip 5: Produce Sale -->
+                <button type="button" onclick="loadChip(5)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-emerald-50 hover:border-emerald-300 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+                            <span>Produce Sale / Income</span>
+                        </span>
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700 transition"></i>
+                    </div>
+                    <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
+                        "I sold onions for ₹8,000."
+                    </p>
+                </button>
+
+                <!-- Chip 6: Cattle Addition without Price -->
+                <button type="button" onclick="loadChip(6)" class="text-left p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 hover:bg-purple-50 hover:border-purple-300 transition-all group">
                     <div class="flex items-center justify-between mb-1">
                         <span class="text-[11px] font-bold text-purple-800 bg-purple-100/70 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <i data-lucide="calendar" class="w-3 h-3"></i>
-                            <span>Crop Task / Spray</span>
+                            <i data-lucide="tag" class="w-3 h-3"></i>
+                            <span>Cattle (Registration Pending)</span>
                         </span>
                         <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-700 transition"></i>
                     </div>
                     <p class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug line-clamp-2">
-                        "{{ t('smart_log_chip_4') }}"
+                        "I bought a cow named Gauri"
                     </p>
                 </button>
             </div>
@@ -162,6 +205,85 @@
                 <span>{{ t('smart_log_result_engine') }}: <strong>{{ result.engine }}</strong></span>
             </div>
         </div>
+
+        <!-- Notification Alerts -->
+        {% if result.notifications %}
+        <div class="space-y-2">
+            {% for note in result.notifications %}
+            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <span>{{ note | pick }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Dedicated Livestock Registration Completion Workflow Card -->
+        {% if result.has_pending_cattle and result.pending_cattle_info %}
+        <div class="p-5 sm:p-6 rounded-2xl border-2 border-amber-300 bg-amber-50/60 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-700"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-900">
+                            {{ t('complete_livestock_form_title') }} &bull; {{ result.pending_cattle_info.name }} ({{ result.pending_cattle_info.tag_id }})
+                        </h4>
+                        <p class="text-xs text-amber-800 leading-snug mt-0.5">
+                            {{ t('reg_pending_notice') }}
+                        </p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-200/90 text-amber-950 border border-amber-300">
+                    {{ t('status_reg_pending') }}
+                </span>
+            </div>
+
+            <form method="POST" action="/livestock/complete-pending" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                <input type="hidden" name="animal_id" value="{{ result.pending_cattle_info.tag_id }}">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">12-Digit INAPH Tag (शासकीय टॅग)</label>
+                    <input type="text" name="official_tag" placeholder="E.g. 100123456789" class="w-full text-xs rounded-xl border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Breed (जात)</label>
+                    <select name="breed" class="w-full text-xs rounded-xl border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                        <option value="Gir">Gir (गीर)</option>
+                        <option value="Murrah">Murrah (मुऱ्हा)</option>
+                        <option value="Dangi">Dangi (डांगी)</option>
+                        <option value="Khillar">Khillar (खिलार)</option>
+                        <option value="Deoni">Deoni (देवणी)</option>
+                        <option value="Crossbred">Crossbred / इतर</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Age in Years (वय)</label>
+                    <input type="number" step="0.5" name="age_years" placeholder="E.g. 3.0" class="w-full text-xs rounded-xl border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Daily Milk Yield (L/day)</label>
+                    <input type="number" step="0.5" name="daily_milk" placeholder="E.g. 11.0" class="w-full text-xs rounded-xl border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Initial Vaccine (लस)</label>
+                    <select name="vaccine_name" class="w-full text-xs rounded-xl border-slate-300 p-2.5 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                        <option value="">None / Pending</option>
+                        <option value="Foot & Mouth Disease (FMD)">Foot & Mouth Disease (FMD)</option>
+                        <option value="Hemorrhagic Septicemia (HS)">Hemorrhagic Septicemia (HS)</option>
+                        <option value="Black Quarter (BQ)">Black Quarter (BQ)</option>
+                        <option value="Brucellosis">Brucellosis</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2 md:col-span-1 flex items-end">
+                    <button type="submit" class="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-700/20 transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>{{ t('btn_update_livestock') }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
 
         <!-- Dispatched Action Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,10 +330,12 @@
 <script>
     // Demo chips mapping
     const DEMO_CHIPS = {
-        1: {{ t('smart_log_chip_1') | tojson }},
-        2: {{ t('smart_log_chip_2') | tojson }},
-        3: {{ t('smart_log_chip_3') | tojson }},
-        4: {{ t('smart_log_chip_4') | tojson }}
+        1: "I bought a cow named Gauri for ₹25,000.",
+        2: "I completed Gauri's vaccination today.",
+        3: "My ten cows produced 65 litres of milk today.",
+        4: "I purchased fertiliser for ₹1,200.",
+        5: "I sold onions for ₹8,000.",
+        6: "I bought a cow named Gauri"
     };
 
     function loadChip(id) {
@@ -220,39 +344,58 @@
             const input = document.getElementById("smartLogInput");
             input.value = text;
             input.focus();
+            document.getElementById("transcriptReviewCard").classList.add("hidden");
         }
     }
 
     function clearInput() {
         document.getElementById("smartLogInput").value = "";
+        document.getElementById("transcriptReviewCard").classList.add("hidden");
     }
 
-    // Voice Input: Browser SpeechRecognition with Sarvam STT Fallback
+    // Voice Input: Browser SpeechRecognition with De-duplication and Review
     let recognition = null;
     let isListening = false;
+    let sessionTranscript = "";
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRec();
         recognition.continuous = false;
         recognition.interimResults = false;
-        // Language matching active session
         recognition.lang = "{{ 'mr-IN' if lang == 'mr' else 'en-IN' }}";
 
         recognition.onstart = function() {
             isListening = true;
+            sessionTranscript = "";
             document.getElementById("speechStatus").classList.remove("hidden");
             document.getElementById("micIcon").classList.add("text-rose-600", "animate-pulse");
             document.getElementById("micBtn").classList.add("bg-rose-50", "border-rose-300", "text-rose-700");
         };
 
         recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            const input = document.getElementById("smartLogInput");
-            if (input.value.trim().length > 0) {
-                input.value += " " + transcript;
-            } else {
-                input.value = transcript;
+            let capturedText = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    capturedText += event.results[i][0].transcript;
+                }
+            }
+            if (!capturedText && event.results.length > 0) {
+                capturedText = event.results[0][0].transcript;
+            }
+
+            const cleanText = capturedText.trim();
+            if (cleanText) {
+                const input = document.getElementById("smartLogInput");
+                input.value = cleanText;
+
+                // Show clean transcript review card
+                const reviewCard = document.getElementById("transcriptReviewCard");
+                const previewText = document.getElementById("transcriptPreviewText");
+                if (reviewCard && previewText) {
+                    previewText.textContent = `"${cleanText}"`;
+                    reviewCard.classList.remove("hidden");
+                }
             }
         };
 

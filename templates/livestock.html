@@ -123,7 +123,7 @@
                     <div class="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold tracking-wider uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                                <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold tracking-wider uppercase {% if animal.is_pending or 'PENDING' in animal.tag_id %}bg-amber-100 text-amber-800 border-amber-300{% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %} border">
                                     {{ animal.tag_id }}
                                 </span>
                                 <h3 class="font-bold text-base text-slate-900 leading-snug">
@@ -134,6 +134,12 @@
                                 <i data-lucide="tag" class="w-3.5 h-3.5 text-slate-400"></i>
                                 <span>{{ animal.type }} &bull; <strong>{{ animal.breed }}</strong></span>
                             </p>
+                            {% if animal.is_pending or 'PENDING' in animal.tag_id %}
+                            <div class="mt-2 text-[11px] font-medium text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 flex items-center gap-1.5">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-600 flex-shrink-0"></i>
+                                <span>{{ t('reg_pending_notice') }}</span>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- Overall Animal Health Status -->

@@ -1194,7 +1194,12 @@ def livestock():
             v_copy["badge_icon"] = badge_icon
             processed_vaccines.append(v_copy)
             
-        if has_overdue:
+        if animal.get("registration_status") == "Registration pending":
+            animal_copy["overall_badge_class"] = "bg-amber-100 text-amber-800 border-amber-300"
+            animal_copy["overall_status_text"] = t("status_reg_pending")
+            animal_copy["overall_icon"] = "clock"
+            animal_copy["is_pending"] = True
+        elif has_overdue:
             animal_copy["overall_badge_class"] = "bg-red-50 text-red-700 border-red-200"
             animal_copy["overall_status_text"] = t("health_attention")
             animal_copy["overall_icon"] = "alert-triangle"
@@ -1303,6 +1308,57 @@ def add_animal():
     livestock_sum["daily_milk_litres"] = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
 
     flash(t("animal_added_success"), "success")
+    return redirect(url_for("livestock"))
+
+
+@app.route("/livestock/complete-pending", methods=["POST"])
+def complete_pending_livestock():
+    """Updates pending livestock record with official tag and agronomic details."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    animal_id = request.form.get("animal_id", "").strip()
+    official_tag = request.form.get("official_tag", "").strip()
+    breed = request.form.get("breed", "").strip()
+    age_str = request.form.get("age_years", "").strip()
+    milk_str = request.form.get("daily_milk", "").strip()
+    vax_name = request.form.get("vaccine_name", "").strip()
+    vax_date = request.form.get("vaccine_date", "").strip()
+
+    today = datetime.date.today()
+    updated = False
+    for animal in LIVESTOCK_DB:
+        if animal.get("tag_id") == animal_id:
+            if official_tag:
+                animal["tag_id"] = official_tag
+                animal["registration_status"] = "Registered"
+                animal["health_status"] = {"en": "Registered & Active", "mr": "नोंदणीकृत व सक्रिय"}
+            if breed:
+                animal["breed"] = {"en": breed, "mr": breed}
+            if age_str:
+                try:
+                    animal["age_years"] = float(age_str)
+                except ValueError:
+                    pass
+            if milk_str:
+                try:
+                    animal["daily_milk_yield_litres"] = float(milk_str)
+                except ValueError:
+                    pass
+            if vax_name:
+                animal["vaccination_history"] = [{
+                    "vaccine": {"en": vax_name, "mr": vax_name},
+                    "date_given": vax_date or today.strftime("%Y-%m-%d"),
+                    "due_date": (today + datetime.timedelta(days=180)).strftime("%Y-%m-%d"),
+                    "status": "Up-to-Date"
+                }]
+            updated = True
+            flash(t("animal_added_success"), "success")
+            break
+
+    if not updated:
+        flash("Could not find the animal record to update.", "error")
+
     return redirect(url_for("livestock"))
 
 
@@ -1593,8 +1649,10 @@ def smart_log_submit():
 
     if result.get("success"):
         flash(t("smart_log_result_success"), "success")
+        if result.get("has_pending_cattle"):
+            flash(t("smart_log_cattle_pending_alert"), "warning")
     else:
-        flash("Could not extract actions from statement. Please verify and try again.", "error")
+        flash(t("smart_log_empty_prompt"), "error")
 
     return redirect(url_for("smart_log"))
 
@@ -1875,8 +1933,8 @@ def api_speech_to_text():
 def api_text_to_speech():
     """Generates speech via Sarvam AI bulbul:v3 with fallback notification."""
     data = request.get_json(silent=True) or {}
-    text = data.get("text", "").strip()
-    language_code = data.get("language_code", "mr-IN")
+    text = (data.get("text") or "").strip()
+    language_code = (data.get("language_code") or "mr-IN").strip()
 
     if not text:
         return {"status": "error", "message": "Text is required", "fallback": True}, 400
@@ -1910,16 +1968,17 @@ def disease_scanner():
 def api_analyze_plant():
     """
     Analyzes leaf photo via Two-Stage Sarvam AI Vision + Maharashtra Agronomy Engine.
+    Handles missing, null, or whitespace optional fields consistently.
     """
     if not session.get("is_authenticated"):
         return {"success": False, "message": "Unauthorized"}, 401
 
     data = request.get_json(silent=True) or {}
-    image_base64 = data.get("image_base64", "").strip()
-    triage_crop = data.get("triage_crop", "").strip()
-    triage_leaf_age = data.get("triage_leaf_age", "").strip()
-    triage_pattern = data.get("triage_pattern", "").strip()
-    shc_note = data.get("shc_note", "").strip()
+    image_base64 = (data.get("image_base64") or "").strip()
+    triage_crop = (data.get("triage_crop") or "").strip()
+    triage_leaf_age = (data.get("triage_leaf_age") or "").strip()
+    triage_pattern = (data.get("triage_pattern") or "").strip()
+    shc_note = (data.get("shc_note") or "").strip()
     active_lang = session.get("lang", "mr")
 
     from plant_doctor import analyze_plant_leaf
@@ -1936,6 +1995,173 @@ def api_analyze_plant():
     )
 
     return result
+
+
+# ---------------------------------------------------------
+# MODULE 11: REAL-TIME WEATHER & AGRONOMIC ADVISORY
+# ---------------------------------------------------------
+@app.route("/weather-advisory", methods=["GET"])
+def weather_advisory_page():
+    """Renders the real-time location-specific weather & agronomic advisory page."""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("index"))
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+
+    # Import weather advisory engine
+    import weather_advisory
+
+    # Determine location: check URL params, then fallback to farmer profile
+    req_lat = request.args.get("lat")
+    req_lon = request.args.get("lon")
+    name_en = request.args.get("name_en")
+    name_mr = request.args.get("name_mr")
+    dist_param = request.args.get("district")
+    tal_param = request.args.get("taluka")
+
+    # If coordinates are provided in query
+    if req_lat and req_lon:
+        try:
+            lat = float(req_lat)
+            lon = float(req_lon)
+            disp_en = name_en or f"Location ({lat:.4f}, {lon:.4f})"
+            disp_mr = name_mr or f"स्थान ({lat:.4f}, {lon:.4f})"
+            selected_loc = {
+                "display_name": disp_mr if active_lang == "mr" else disp_en,
+                "display_name_en": disp_en,
+                "display_name_mr": disp_mr,
+                "district_en": dist_param or "Maharashtra",
+                "district_mr": dist_param or "महाराष्ट्र",
+                "taluka_en": tal_param or "",
+                "taluka_mr": tal_param or "",
+                "lat": round(lat, 4),
+                "lon": round(lon, 4)
+            }
+        except (ValueError, TypeError):
+            req_lat, req_lon = None, None
+
+    if not req_lat or not req_lon:
+        # Fallback to farmer's profile village/taluka/district
+        farmer_dist = pick(farmer.get("district", "Nashik"), lang="en")
+        farmer_tal = pick(farmer.get("taluka", "Niphad"), lang="en")
+        farmer_vil = pick(farmer.get("village", "Pimpalgaon Baswant"), lang="en")
+
+        # Lookup coordinates in location database
+        resolved_coords = None
+        dist_entry = weather_advisory.MAHARASHTRA_LOCATIONS.get(farmer_dist) or weather_advisory.MAHARASHTRA_LOCATIONS.get("Nashik")
+        if dist_entry:
+            tal_entry = dist_entry.get("talukas", {}).get(farmer_tal)
+            if tal_entry:
+                for vil in tal_entry.get("villages", []):
+                    if farmer_vil.lower() in vil.get("en", "").lower():
+                        resolved_coords = (vil["lat"], vil["lon"])
+                        break
+                if not resolved_coords:
+                    resolved_coords = (tal_entry["lat"], tal_entry["lon"])
+            if not resolved_coords:
+                resolved_coords = (dist_entry["lat"], dist_entry["lon"])
+
+        if not resolved_coords:
+            resolved_coords = (20.0764, 74.1086)  # Niphad, Nashik default
+
+        selected_loc = {
+            "display_name": f"{pick(farmer.get('village'), lang=active_lang)}, {pick(farmer.get('taluka'), lang=active_lang)}",
+            "display_name_en": f"{pick(farmer.get('village'), lang='en')}, {pick(farmer.get('taluka'), lang='en')}",
+            "display_name_mr": f"{pick(farmer.get('village'), lang='mr')}, {pick(farmer.get('taluka'), lang='mr')}",
+            "district_en": farmer_dist,
+            "district_mr": pick(farmer.get("district"), lang="mr"),
+            "taluka_en": farmer_tal,
+            "taluka_mr": pick(farmer.get("taluka"), lang="mr"),
+            "lat": resolved_coords[0],
+            "lon": resolved_coords[1]
+        }
+
+    # Fetch real-time weather from Open-Meteo
+    try:
+        raw_weather, fetched_at_str, _ = weather_advisory.fetch_open_meteo_raw(
+            selected_loc["lat"],
+            selected_loc["lon"]
+        )
+    except Exception as e:
+        flash(f"Open-Meteo Weather Service is momentarily slow or unreachable: {str(e)}", "warning")
+        raw_weather = {
+            "current": {"temperature_2m": 24.5, "relative_humidity_2m": 58, "precipitation": 0.0, "wind_speed_10m": 8.5, "wind_gusts_10m": 12.0, "weather_code": 1, "cloud_cover": 25},
+            "hourly": {"time": [], "temperature_2m": [], "precipitation": [], "wind_speed_10m": [], "relative_humidity_2m": [], "weather_code": []},
+            "daily": {"time": [], "temperature_2m_max": [], "temperature_2m_min": [], "precipitation_sum": [], "wind_speed_10m_max": [], "wind_gusts_10m_max": [], "weather_code": []}
+        }
+        fetched_at_str = "Recent Estimate"
+
+    # Generate full advisory & rule calculations
+    advisory = weather_advisory.generate_weather_analysis_and_advisories(
+        raw_weather,
+        farmer,
+        selected_loc
+    )
+
+    return render_template(
+        "weather_advisory.html",
+        farmer=farmer,
+        selected_location=selected_loc,
+        advisory=advisory,
+        fetched_at_str=fetched_at_str,
+        active_nav="weather_advisory"
+    )
+
+
+@app.route("/api/weather/locations", methods=["GET"])
+def api_weather_locations():
+    """Returns the full 36-district Maharashtra location hierarchy for cascading dropdowns."""
+    import weather_advisory
+    return weather_advisory.MAHARASHTRA_LOCATIONS
+
+
+@app.route("/api/weather/search-locations", methods=["GET"])
+def api_weather_search_locations():
+    """Searches Maharashtra locations by text query and returns matching lat/lon."""
+    query = request.args.get("q", "").strip()
+    import weather_advisory
+    results = weather_advisory.search_locations_in_db(query, max_results=8)
+    return {"results": results}
+
+
+@app.route("/api/weather/forecast", methods=["GET"])
+def api_weather_forecast():
+    """JSON API endpoint returning real-time Open-Meteo forecast and agronomic advisories."""
+    if not session.get("is_authenticated"):
+        return {"success": False, "message": "Unauthorized"}, 401
+
+    farmer = get_current_farmer()
+    active_lang = session.get("lang", "mr")
+    lat_str = request.args.get("lat")
+    lon_str = request.args.get("lon")
+
+    if not lat_str or not lon_str:
+        return {"success": False, "error": "lat and lon parameters are required"}, 400
+
+    try:
+        lat = float(lat_str)
+        lon = float(lon_str)
+    except ValueError:
+        return {"success": False, "error": "Invalid coordinates"}, 400
+
+    import weather_advisory
+    try:
+        raw_weather, fetched_at_str, is_fresh = weather_advisory.fetch_open_meteo_raw(lat, lon)
+        selected_loc = {
+            "lat": lat,
+            "lon": lon,
+            "display_name": f"{lat:.4f}, {lon:.4f}"
+        }
+        advisory = weather_advisory.generate_weather_analysis_and_advisories(raw_weather, farmer, selected_loc)
+        return {
+            "success": True,
+            "fetched_at": fetched_at_str,
+            "is_fresh": is_fresh,
+            "advisory": advisory
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
 
 
 if __name__ == "__main__":

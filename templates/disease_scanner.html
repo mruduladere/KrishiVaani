@@ -10,7 +10,7 @@
         <div class="relative z-10 max-w-3xl">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 mb-3 border border-emerald-600/60 backdrop-blur-sm">
                 <i data-lucide="scan-search" class="w-3.5 h-3.5"></i>
-                <span>Sarvam AI Multimodal Vision • CROPSAP &amp; MPKV Agronomy Rules</span>
+                <span>Maharashtra Agronomy Knowledge Base • MPKV &amp; HORTSAP &amp; CROPSAP Grounded</span>
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
                 {{ t('doc_title') }}
@@ -107,9 +107,19 @@
 
                 <!-- TAB 3: 1-Click Demo Samples (Immediate SIH Judge Test) -->
                 <div id="tabContentSamples" class="space-y-3 hidden">
-                    <p class="text-xs text-slate-500">Click any verified Maharashtra field case for instant 1-click evaluation:</p>
+                    <p class="text-xs text-slate-500">Click any verified Maharashtra field case for instant evaluation:</p>
                     <div class="grid grid-cols-1 gap-2.5">
-                        <!-- Sample 1: Vidarbha Cotton -->
+                        <!-- Sample 1: Nashik Tomato -->
+                        <button type="button" onclick="loadDemoSample('tomato_foliar_blight')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
+                            <img src="/static/uploads/tomato_foliar_blight.svg" alt="Tomato" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-800 block truncate">{{ t('doc_sample_5') }}</span>
+                                <span class="text-[11px] text-slate-500 block truncate">Nashik • Concentric target rings vs Bacterial Spot</span>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
+                        </button>
+
+                        <!-- Sample 2: Vidarbha Cotton -->
                         <button type="button" onclick="loadDemoSample('cotton_k_deficiency')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
                             <img src="/static/uploads/cotton_k_deficiency.svg" alt="Cotton" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
                             <div class="min-w-0 flex-1">
@@ -119,7 +129,7 @@
                             <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
                         </button>
 
-                        <!-- Sample 2: Grapes Downy Mildew -->
+                        <!-- Sample 3: Grapes Downy Mildew -->
                         <button type="button" onclick="loadDemoSample('grapes_downy_mildew')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
                             <img src="/static/uploads/grapes_downy_mildew.svg" alt="Grapes" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
                             <div class="min-w-0 flex-1">
@@ -129,7 +139,7 @@
                             <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
                         </button>
 
-                        <!-- Sample 3: Soybean Zinc Chlorosis -->
+                        <!-- Sample 4: Soybean Zinc Chlorosis -->
                         <button type="button" onclick="loadDemoSample('soybean_zn_chlorosis')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
                             <img src="/static/uploads/soybean_zn_chlorosis.svg" alt="Soybean" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
                             <div class="min-w-0 flex-1">
@@ -139,7 +149,7 @@
                             <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0"></i>
                         </button>
 
-                        <!-- Sample 4: Onion Purple Blotch -->
+                        <!-- Sample 5: Onion Purple Blotch -->
                         <button type="button" onclick="loadDemoSample('onion_purple_blotch')" class="w-full text-left p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 transition-all flex items-center gap-3 group">
                             <img src="/static/uploads/onion_purple_blotch.svg" alt="Onion" class="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-200 shadow-sm">
                             <div class="min-w-0 flex-1">
@@ -160,27 +170,27 @@
                     <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">{{ t('doc_triage_title') }}</h3>
                 </div>
 
-                <!-- Crop Selection -->
+                <!-- Crop Selection (Unselected / Auto-Detect by default) -->
                 <div class="space-y-1.5">
                     <label class="text-xs font-semibold text-slate-700">{{ t('doc_crop_select') }}</label>
                     <select id="triageCrop" class="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <option value="">Auto-Detect from Leaf</option>
-                        <option value="Cotton" selected>Cotton / कापूस (Vidarbha / Marathwada)</option>
+                        <option value="" selected>Auto-Detect / Select Crop</option>
+                        <option value="Tomato">Tomato / टोमॅटो (Nashik / Pune / Satara)</option>
+                        <option value="Cotton">Cotton / कापूस (Vidarbha / Marathwada)</option>
                         <option value="Grapes">Grapes / द्राक्ष (Nashik / Sangli)</option>
                         <option value="Soybean">Soybean / सोयाबीन (Marathwada)</option>
                         <option value="Onion">Onion / कांदा (Nashik / Pune)</option>
                         <option value="Sugarcane">Sugarcane / ऊस (Western Maharashtra)</option>
                         <option value="Pomegranate">Pomegranate / डाळिंब (Solapur / Nashik)</option>
                         <option value="Mango">Mango / आंबा (Konkan)</option>
-                        <option value="Tomato">Tomato / टोमॅटो</option>
                     </select>
                 </div>
 
-                <!-- Leaf Age / Position Triage Chips -->
+                <!-- Leaf Age / Position Triage Chips (Unselected by default) -->
                 <div class="space-y-1.5">
                     <label class="text-xs font-semibold text-slate-700">{{ t('doc_leaf_age') }}</label>
                     <div class="grid grid-cols-3 gap-1.5">
-                        <button type="button" onclick="setTriageLeafAge('older', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center">
+                        <button type="button" onclick="setTriageLeafAge('older', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
                             {{ t('doc_leaf_age_older') }}
                         </button>
                         <button type="button" onclick="setTriageLeafAge('younger', this)" class="triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
@@ -192,11 +202,11 @@
                     </div>
                 </div>
 
-                <!-- Symptom Pattern Triage Chips -->
+                <!-- Symptom Pattern Triage Chips (Unselected by default) -->
                 <div class="space-y-1.5">
                     <label class="text-xs font-semibold text-slate-700">{{ t('doc_pattern') }}</label>
                     <div class="grid grid-cols-2 gap-1.5">
-                        <button type="button" onclick="setTriagePattern('scorch', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center">
+                        <button type="button" onclick="setTriagePattern('scorch', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
                             {{ t('doc_pattern_scorch') }}
                         </button>
                         <button type="button" onclick="setTriagePattern('interveinal', this)" class="triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center">
@@ -237,7 +247,7 @@
                     <i data-lucide="loader-2" class="w-6 h-6"></i>
                 </div>
                 <h4 class="text-sm font-bold text-slate-900">{{ t('doc_analyzing') }}</h4>
-                <p class="text-xs text-slate-500">Checking symptom patterns against MPKV, Dr. PDKV &amp; CROPSAP guidelines...</p>
+                <p class="text-xs text-slate-500">Evaluating leaf symptoms against MPKV, Dr. PDKV &amp; HORTSAP guidelines...</p>
             </div>
 
             <!-- Empty State Card (shown when no report is generated) -->
@@ -256,7 +266,7 @@
             <!-- Populated Diagnostic Report Card (hidden until analysis succeeds) -->
             <div id="reportCard" class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden hidden space-y-6 p-6 sm:p-8">
                 
-                <!-- Report Header & Confidence -->
+                <!-- Report Header & Honest Diagnostic Assessment -->
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
@@ -272,12 +282,16 @@
                         </h2>
                     </div>
 
-                    <!-- Confidence Rating -->
+                    <!-- Honest Diagnostic Certainty Assessment (Replaces Uncalibrated Percentages) -->
                     <div class="text-left sm:text-right shrink-0 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-2xl">
                         <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">{{ t('doc_confidence') }}</span>
-                        <div class="flex items-baseline gap-1 mt-0.5">
-                            <span id="reportConfidence" class="text-2xl font-black text-emerald-700">94</span>
-                            <span class="text-sm font-bold text-slate-400">%</span>
+                        <div class="mt-1">
+                            <span id="reportConfidenceLevel" class="inline-block text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-xl">
+                                Assessment
+                            </span>
+                            <span id="reportConfidenceLabel" class="text-[10px] text-slate-400 block mt-1">
+                                Preliminary Visual Estimate
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -306,6 +320,37 @@
                     </div>
                     <p id="reportDifferential" class="text-xs text-amber-900/90 leading-relaxed">
                         Rule out instructions...
+                    </p>
+                </div>
+
+                <!-- Plausible Alternatives List Card -->
+                <div id="reportAlternativesCard" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-800">
+                        <i data-lucide="help-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                        <span>{{ t('doc_plausible_alternatives') }}</span>
+                    </div>
+                    <ul id="reportAlternativesList" class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                    </ul>
+                </div>
+
+                <!-- Field Confirmatory Observations Needed Card -->
+                <div id="reportObservationsCard" class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 space-y-2">
+                    <div class="flex items-center gap-2 text-xs font-bold text-blue-900">
+                        <i data-lucide="search" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                        <span>{{ t('doc_confirmatory_observations') }}</span>
+                    </div>
+                    <ul id="reportObservationsList" class="text-xs text-blue-950 space-y-1.5 list-disc list-inside">
+                    </ul>
+                </div>
+
+                <!-- Chemical Safety Warning Card (Preserves Safety Against Blind Spraying) -->
+                <div id="reportChemWarningCard" class="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 space-y-1.5">
+                    <div class="flex items-center gap-2 text-xs font-bold text-amber-900">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                        <span>{{ t('doc_chemical_warning') }}</span>
+                    </div>
+                    <p id="reportChemicalWarning" class="text-xs text-amber-950 leading-relaxed font-medium">
+                        Chemical warning...
                     </p>
                 </div>
 
@@ -400,12 +445,12 @@
 <audio id="ttsAudioPlayer" class="hidden"></audio>
 
 <script>
-    // Runtime State
+    // Runtime State - Starts with NULL triage values (prevents false presumption)
     let cameraStream = null;
     let selectedImageBase64 = null;
     let currentTriage = {
-        leafAge: 'older',
-        pattern: 'scorch'
+        leafAge: null,
+        pattern: null
     };
     let currentReport = null;
 
@@ -508,21 +553,33 @@
         sendAnalysisRequest(selectedImageBase64);
     }
 
-    // Triage Chips Setters
+    // Triage Chips Setters (Clean Toggle: clicking same chip deselects it)
     function setTriageLeafAge(age, btn) {
-        currentTriage.leafAge = age;
+        const isAlreadySelected = currentTriage.leafAge === age;
         document.querySelectorAll('.triage-age-btn').forEach(b => {
             b.className = 'triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center';
         });
-        btn.className = 'triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+
+        if (isAlreadySelected) {
+            currentTriage.leafAge = null;
+        } else {
+            currentTriage.leafAge = age;
+            btn.className = 'triage-age-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+        }
     }
 
     function setTriagePattern(pat, btn) {
-        currentTriage.pattern = pat;
+        const isAlreadySelected = currentTriage.pattern === pat;
         document.querySelectorAll('.triage-pat-btn').forEach(b => {
             b.className = 'triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all text-center';
         });
-        btn.className = 'triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+
+        if (isAlreadySelected) {
+            currentTriage.pattern = null;
+        } else {
+            currentTriage.pattern = pat;
+            btn.className = 'triage-pat-btn py-1.5 px-2 text-[11px] font-semibold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 transition-all text-center';
+        }
     }
 
     // 1-Click Demo Sample Trigger
@@ -559,13 +616,14 @@
             if (data && data.success) {
                 renderReport(data, imageOrSampleId);
             } else {
-                alert("Analysis could not be completed. Please try another image or pick a demo sample.");
+                const errMsg = (data && data.message) ? data.message : "Analysis could not be completed. Please try another image or pick a demo sample.";
+                alert(errMsg);
                 document.getElementById('emptyReportCard').classList.remove('hidden');
             }
         } catch (err) {
             console.error("Analysis network error:", err);
             document.getElementById('loadingCard').classList.add('hidden');
-            alert("Network error contacting analysis engine. Falling back to offline diagnosis.");
+            alert("Network error contacting analysis engine. Please try again.");
             document.getElementById('emptyReportCard').classList.remove('hidden');
         }
     }
@@ -576,9 +634,51 @@
         document.getElementById('reportCropBadge').innerText = report.crop || 'Crop';
         document.getElementById('reportSeverityBadge').innerText = report.severity || 'Moderate';
         document.getElementById('reportPrimaryDiagnosis').innerText = report.primary_diagnosis || 'Plant Health Issue';
-        document.getElementById('reportConfidence').innerText = report.confidence_pct || '92';
+        
+        // Honest Uncertainty Indicators (Replaced fake percentage)
+        document.getElementById('reportConfidenceLevel').innerText = report.confidence_level || 'Preliminary Estimate';
+        document.getElementById('reportConfidenceLabel').innerText = report.confidence_label || 'Field Confirmation Required';
+
         document.getElementById('reportVisualObservation').innerText = report.visual_observation || '';
         document.getElementById('reportDifferential').innerText = report.secondary_differential || '';
+        
+        // Plausible Alternatives List
+        const altsList = document.getElementById('reportAlternativesList');
+        altsList.innerHTML = '';
+        if (report.plausible_alternatives && report.plausible_alternatives.length > 0) {
+            report.plausible_alternatives.forEach(alt => {
+                const li = document.createElement('li');
+                li.innerText = alt;
+                altsList.appendChild(li);
+            });
+            document.getElementById('reportAlternativesCard').classList.remove('hidden');
+        } else {
+            document.getElementById('reportAlternativesCard').classList.add('hidden');
+        }
+
+        // Confirmatory Observations List
+        const obsList = document.getElementById('reportObservationsList');
+        obsList.innerHTML = '';
+        if (report.confirmatory_observations && report.confirmatory_observations.length > 0) {
+            report.confirmatory_observations.forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = item;
+                obsList.appendChild(li);
+            });
+            document.getElementById('reportObservationsCard').classList.remove('hidden');
+        } else {
+            document.getElementById('reportObservationsCard').classList.add('hidden');
+        }
+
+        // Chemical Safety Warning
+        const chemWarnEl = document.getElementById('reportChemicalWarning');
+        if (report.chemical_safety_warning) {
+            chemWarnEl.innerText = report.chemical_safety_warning;
+            document.getElementById('reportChemWarningCard').classList.remove('hidden');
+        } else {
+            document.getElementById('reportChemWarningCard').classList.add('hidden');
+        }
+
         document.getElementById('reportCauses').innerText = report.causes || '';
         document.getElementById('reportOrganicRemedy').innerText = report.organic_remedy || '';
         document.getElementById('reportVerifiedDosage').innerText = report.verified_dosage || '';

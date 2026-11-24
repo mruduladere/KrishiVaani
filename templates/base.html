@@ -77,6 +77,13 @@
                     <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md {% if active_nav == 'disease_scanner' %}bg-emerald-200/80 text-emerald-900{% else %}bg-emerald-100/60 text-emerald-800{% endif %}">AI</span>
                 </a>
 
+                <!-- Flagship Weather & Agronomic Advisory -->
+                <a href="/weather-advisory" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'weather_advisory' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <i data-lucide="cloud-sun" class="w-4 h-4 {% if active_nav == 'weather_advisory' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>
+                    <span>{{ t('nav_weather_advisory') }}</span>
+                    <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md {% if active_nav == 'weather_advisory' %}bg-sky-200/80 text-sky-900{% else %}bg-sky-100/70 text-sky-800{% endif %}">LIVE</span>
+                </a>
+
                 <!-- 3. Multilingual AI Assistant -->
                 <a href="/ai-assistant" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {% if active_nav == 'ai_assistant' %}bg-emerald-50 text-emerald-800 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
                     <i data-lucide="bot" class="w-4 h-4 {% if active_nav == 'ai_assistant' %}text-emerald-700{% else %}text-slate-400{% endif %}"></i>

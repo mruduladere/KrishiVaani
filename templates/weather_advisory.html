@@ -1,0 +1,867 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ t('weather_page_title') }} | {{ t('app_title') }}
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto pb-16">
+
+    <!-- Hero / Header Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-900 via-sky-800 to-emerald-900 text-white p-7 sm:p-9 shadow-xl border border-sky-700/40">
+        <div class="absolute -right-12 -bottom-16 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
+        <div class="absolute right-12 top-6 opacity-15 hidden md:block pointer-events-none">
+            <i data-lucide="cloud-sun-rain" class="w-44 h-44 text-white"></i>
+        </div>
+
+        <div class="relative z-10 space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white backdrop-blur border border-white/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {{ t('sih_badge') }} • Open-Meteo
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-400/20 text-sky-200 border border-sky-400/30">
+                    Asia/Kolkata
+                </span>
+            </div>
+
+            <div class="max-w-3xl">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                    {{ t('weather_page_title') }}
+                </h1>
+                <p class="text-sm sm:text-base text-sky-100/90 font-normal leading-relaxed mt-1">
+                    {{ t('weather_page_sub') }}
+                </p>
+            </div>
+
+            <!-- Auto-read Farmer Profile Pills -->
+            <div class="pt-2 border-t border-white/10 flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur border border-white/15">
+                    <i data-lucide="sprout" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    <span class="text-sky-200">{{ t('weather_profile_crop_badge') }}:</span>
+                    <strong class="text-white">{{ advisory.farmer_crop_info.crop_display | pick }} ({{ advisory.farmer_crop_info.variety | pick }})</strong>
+                </div>
+
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur border border-white/15">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-300"></i>
+                    <span class="text-sky-200">{{ t('weather_profile_stage_badge') }}:</span>
+                    <strong class="text-white">{{ advisory.farmer_crop_info.growth_stage | pick }}</strong>
+                </div>
+
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur border border-white/15">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-200"></i>
+                    <span class="text-sky-200">{{ t('weather_profile_soil_badge') }}:</span>
+                    <strong class="text-white">{{ advisory.farmer_crop_info.soil_type | pick }}</strong>
+                </div>
+
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur border border-white/15">
+                    <i data-lucide="droplet" class="w-3.5 h-3.5 text-sky-300"></i>
+                    <span class="text-sky-200">{{ t('weather_profile_irr_badge') }}:</span>
+                    <strong class="text-white">{{ advisory.farmer_crop_info.irrigation_type | pick }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Selector Card -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                    <span>{{ t('weather_location_selector_title') }}</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    {{ t('weather_active_loc_badge') }}: <strong class="text-emerald-700 font-semibold" id="activeLocationDisplay">{{ selected_location.display_name }}</strong>
+                    <span class="text-slate-400 ml-1.5 font-mono text-[11px]">(Lat: <span id="activeLatDisplay">{{ selected_location.lat }}</span>, Lon: <span id="activeLonDisplay">{{ selected_location.lon }}</span>)</span>
+                </p>
+            </div>
+
+            <!-- GPS and Quick Buttons -->
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" id="btnUseGps" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200 transition">
+                    <i data-lucide="crosshair" class="w-4 h-4 text-sky-600"></i>
+                    <span>{{ t('weather_use_gps') }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar with Live Suggestions -->
+        <div class="relative">
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="locationSearchInput" placeholder="{{ t('weather_search_placeholder') }}" 
+                    class="w-full pl-10 pr-24 py-2.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition">
+                <button type="button" id="btnSearchTrigger" class="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition">
+                    Search
+                </button>
+            </div>
+            <!-- Autocomplete Suggestion Dropdown -->
+            <div id="searchSuggestionsList" class="hidden absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl border border-slate-200 shadow-xl z-30 max-h-60 overflow-y-auto divide-y divide-slate-100"></div>
+        </div>
+
+        <!-- 3-Tier Cascading Selector: District -> Taluka -> Village -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            <!-- District -->
+            <div class="space-y-1.5">
+                <label for="selectDistrict" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {{ t('weather_district_label') }} (36)
+                </label>
+                <select id="selectDistrict" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition">
+                    <option value="">-- Choose District --</option>
+                </select>
+            </div>
+
+            <!-- Taluka -->
+            <div class="space-y-1.5">
+                <label for="selectTaluka" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {{ t('weather_taluka_label') }}
+                </label>
+                <select id="selectTaluka" disabled class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed">
+                    <option value="">-- Choose Taluka --</option>
+                </select>
+            </div>
+
+            <!-- Village / Representative Market -->
+            <div class="space-y-1.5">
+                <label for="selectVillage" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {{ t('weather_village_label') }}
+                </label>
+                <select id="selectVillage" disabled class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed">
+                    <option value="">-- Choose Village / Center --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Manual Lat/Lon Toggle -->
+        <div class="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-100 text-slate-500">
+            <details class="cursor-pointer">
+                <summary class="font-medium hover:text-slate-800 transition select-none flex items-center gap-1.5">
+                    <i data-lucide="compass" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>{{ t('weather_custom_coords') }}</span>
+                </summary>
+                <div class="flex items-center gap-2 mt-2 pt-2">
+                    <input type="number" step="0.0001" id="manualLatInput" placeholder="Latitude (e.g. 19.9975)" value="{{ selected_location.lat }}" class="w-40 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white">
+                    <input type="number" step="0.0001" id="manualLonInput" placeholder="Longitude (e.g. 73.7898)" value="{{ selected_location.lon }}" class="w-40 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white">
+                    <button type="button" id="btnApplyManualCoords" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-medium hover:bg-slate-900 transition">
+                        Apply
+                    </button>
+                </div>
+            </details>
+
+            <div class="text-[11px] text-slate-400 flex items-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                <span>{{ t('weather_fetch_time_label') }}: <strong class="text-slate-600">{{ fetched_at_str }}</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Observed Weather Grid -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="thermometer-sun" class="w-5 h-5 text-amber-500"></i>
+                    <span>{{ t('weather_current_heading') }}</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    {{ selected_location.display_name }} • {{ advisory.current_weather.condition_en if lang == 'en' else advisory.current_weather.condition_mr }}
+                </p>
+            </div>
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200/60">
+                <i data-lucide="{{ advisory.current_weather.condition_icon }}" class="w-4 h-4 text-emerald-600"></i>
+                <span>{{ advisory.current_weather.condition_en if lang == 'en' else advisory.current_weather.condition_mr }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- 1. Temp -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_temp_label') }}</span>
+                    <i data-lucide="thermometer" class="w-4 h-4 text-amber-500"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.temperature }}°C</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Max: {{ advisory.current_weather.temp_max_today }}° | Min: {{ advisory.current_weather.temp_min_today }}°</span>
+                </div>
+            </div>
+
+            <!-- 2. Humidity -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_humidity_label') }}</span>
+                    <i data-lucide="droplets" class="w-4 h-4 text-sky-500"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.humidity }}%</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Foliar risk: {{ "High" if advisory.current_weather.humidity >= 80 else "Normal" }}</span>
+                </div>
+            </div>
+
+            <!-- 3. Rain -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_precip_label') }}</span>
+                    <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-500"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.precipitation }} mm</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Today total: {{ advisory.current_weather.rain_sum_today }} mm</span>
+                </div>
+            </div>
+
+            <!-- 4. Wind -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_wind_label') }}</span>
+                    <i data-lucide="wind" class="w-4 h-4 text-teal-500"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.wind_speed }} km/h</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Gusts: {{ advisory.current_weather.wind_gusts }} km/h</span>
+                </div>
+            </div>
+
+            <!-- 5. Soil Moisture -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_soil_moisture_label') }}</span>
+                    <i data-lucide="waves" class="w-4 h-4 text-emerald-600"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.soil_moisture }}%</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Root layer (3-9cm)</span>
+                </div>
+            </div>
+
+            <!-- 6. ET0 Evapotranspiration -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-slate-500 text-xs">
+                    <span>{{ t('weather_et0_label') }}</span>
+                    <i data-lucide="sun-medium" class="w-4 h-4 text-amber-600"></i>
+                </div>
+                <div class="mt-2">
+                    <span class="text-2xl font-black text-slate-900">{{ advisory.current_weather.et0 }} mm</span>
+                    <span class="block text-[11px] text-slate-500 mt-0.5">Atmospheric demand</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colour-Coded Farmer Warning Engine -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-rose-600"></i>
+                    <span>{{ t('weather_alerts_heading') }}</span>
+                </h2>
+                <p class="text-xs text-slate-500">{{ t('weather_caution_uncertainty') }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for alert in advisory.alerts %}
+            <div class="p-5 rounded-3xl border shadow-sm flex flex-col justify-between transition-all duration-150
+                {% if alert.level == 'red' %}
+                    bg-rose-50/70 border-rose-200 text-rose-950
+                {% elif alert.level == 'orange' %}
+                    bg-amber-50/70 border-amber-200 text-amber-950
+                {% elif alert.level == 'yellow' %}
+                    bg-yellow-50/70 border-yellow-200 text-yellow-950
+                {% else %}
+                    bg-emerald-50/70 border-emerald-200 text-emerald-950
+                {% endif %}">
+                
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full shrink-0
+                                {% if alert.level == 'red' %}bg-rose-500 animate-ping
+                                {% elif alert.level == 'orange' %}bg-amber-500
+                                {% elif alert.level == 'yellow' %}bg-yellow-500
+                                {% else %}bg-emerald-500{% endif %}"></span>
+                            <h3 class="font-bold text-base leading-snug">
+                                {{ alert.title | pick }}
+                            </h3>
+                        </div>
+                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shrink-0
+                            {% if alert.level == 'red' %}bg-rose-200/80 text-rose-900
+                            {% elif alert.level == 'orange' %}bg-amber-200/80 text-amber-900
+                            {% elif alert.level == 'yellow' %}bg-yellow-200/80 text-yellow-900
+                            {% else %}bg-emerald-200/80 text-emerald-900{% endif %}">
+                            {{ alert.action_tag | pick }}
+                        </span>
+                    </div>
+
+                    <p class="text-xs leading-relaxed opacity-90">
+                        {{ alert.what | pick }}
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                        <div class="p-2.5 rounded-xl bg-white/70 border border-slate-200/60">
+                            <strong class="block text-[11px] uppercase tracking-wider text-emerald-800 font-bold mb-0.5">
+                                {% if lang == 'mr' %}आत्ता काय करावे:{% else %}What to do now:{% endif %}
+                            </strong>
+                            <span class="text-slate-700 leading-normal">{{ alert.do_now | pick }}</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white/70 border border-slate-200/60">
+                            <strong class="block text-[11px] uppercase tracking-wider text-rose-800 font-bold mb-0.5">
+                                {% if lang == 'mr' %}काय टाळावे:{% else %}What to avoid:{% endif %}
+                            </strong>
+                            <span class="text-slate-700 leading-normal">{{ alert.avoid | pick }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-2.5 border-t border-black/5 flex items-center justify-between text-[11px] opacity-75">
+                    <span>Timing: <strong>{{ alert.when | pick }}</strong></span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Core Trio: Irrigation Advisor, Spraying Advisor, Sowing Advisor -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 1. Irrigation Advisor -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 flex flex-col justify-between space-y-4 hover:border-sky-300 transition">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                            <i data-lucide="droplet" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-900">{{ t('weather_irrigation_advisor_heading') }}</h3>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase
+                        {% if advisory.irrigation_advisor.badge == 'rose' %}bg-rose-100 text-rose-800
+                        {% elif advisory.irrigation_advisor.badge == 'amber' %}bg-amber-100 text-amber-800
+                        {% elif advisory.irrigation_advisor.badge == 'sky' %}bg-sky-100 text-sky-800
+                        {% elif advisory.irrigation_advisor.badge == 'emerald' %}bg-emerald-100 text-emerald-800
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {{ advisory.irrigation_advisor.decision }}
+                    </span>
+                </div>
+
+                <div class="mt-4 space-y-2.5">
+                    <h4 class="font-extrabold text-sm text-slate-900">
+                        {{ advisory.irrigation_advisor.status | pick }}
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        {{ advisory.irrigation_advisor.reason | pick }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-3 bg-sky-50/70 rounded-2xl border border-sky-200/60 text-xs text-sky-950 mt-2">
+                <strong class="block text-[11px] font-bold uppercase tracking-wider text-sky-800 mb-0.5">
+                    {% if lang == 'mr' %}सिंचन कृती सल्ला:{% else %}Irrigation Action:{% endif %}
+                </strong>
+                <span>{{ advisory.irrigation_advisor.guidance | pick }}</span>
+            </div>
+        </div>
+
+        <!-- 2. Spraying Safety Advisor -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 flex flex-col justify-between space-y-4 hover:border-emerald-300 transition">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                            <i data-lucide="spray-can" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-900">{{ t('weather_spraying_advisor_heading') }}</h3>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase
+                        {% if advisory.spraying_advisor.badge == 'emerald' %}bg-emerald-100 text-emerald-800
+                        {% else %}bg-rose-100 text-rose-800{% endif %}">
+                        {{ advisory.spraying_advisor.decision }}
+                    </span>
+                </div>
+
+                <div class="mt-4 space-y-2.5">
+                    <h4 class="font-extrabold text-sm text-slate-900">
+                        {{ advisory.spraying_advisor.status | pick }}
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        {{ advisory.spraying_advisor.reason | pick }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 text-xs text-emerald-950 mt-2">
+                <strong class="block text-[11px] font-bold uppercase tracking-wider text-emerald-800 mb-0.5">
+                    {% if lang == 'mr' %}फवारणी योग्य वेळ विंडो:{% else %}Spraying Window:{% endif %}
+                </strong>
+                <span>{{ advisory.spraying_advisor.window | pick }}</span>
+                <span class="block text-[10px] text-slate-500 mt-1">※ नेहमी कृषी विद्यापीठ शिफारशीत कीटकनाशक लेबल वाचावे.</span>
+            </div>
+        </div>
+
+        <!-- 3. Sowing & Transplanting Advisor -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 flex flex-col justify-between space-y-4 hover:border-amber-300 transition">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                            <i data-lucide="flower" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-900">{{ t('weather_sowing_advisor_heading') }}</h3>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase
+                        {% if advisory.sowing_advisor.badge == 'emerald' %}bg-emerald-100 text-emerald-800
+                        {% elif advisory.sowing_advisor.badge == 'amber' %}bg-amber-100 text-amber-800
+                        {% else %}bg-rose-100 text-rose-800{% endif %}">
+                        {{ advisory.sowing_advisor.badge }}
+                    </span>
+                </div>
+
+                <div class="mt-4 space-y-2.5">
+                    <h4 class="font-extrabold text-sm text-slate-900">
+                        {{ advisory.sowing_advisor.status | pick }}
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        {{ advisory.sowing_advisor.reason | pick }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 text-xs text-amber-950 mt-2">
+                <strong class="block text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-0.5">
+                    {% if lang == 'mr' %}लागवड मार्गदर्शन:{% else %}Field Advice:{% endif %}
+                </strong>
+                <span>{{ advisory.sowing_advisor.guidance | pick }}</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Farmer Profile Specific Crop Advisory + "आज काय करावे?" Checklist -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Crop-Specific Advisory based on Logged-in Profile Crop -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i data-lucide="leaf" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900">{{ t('weather_crop_advisory_heading') }}</h3>
+                        <p class="text-xs text-slate-500">{{ advisory.farmer_crop_info.crop_display | pick }} • {{ advisory.farmer_crop_info.growth_stage | pick }}</p>
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    {{ advisory.crop_advisory.priority | pick }}
+                </span>
+            </div>
+
+            <div class="space-y-3 pt-1">
+                <h4 class="text-base font-bold text-emerald-900 leading-snug">
+                    {{ advisory.crop_advisory.title | pick }}
+                </h4>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    {{ advisory.crop_advisory.advice | pick }}
+                </p>
+
+                <!-- Profile SHC & Application Context -->
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-600 space-y-1 mt-3">
+                    <div>
+                        <strong class="text-slate-800 font-semibold">{% if lang == 'mr' %}मृदा आरोग्य नोंद (SHC):{% else %}Soil Health Card Note:{% endif %}</strong>
+                        <span>{{ advisory.farmer_crop_info.soil_health_note | pick }}</span>
+                    </div>
+                    <div>
+                        <strong class="text-slate-800 font-semibold">{% if lang == 'mr' %}मागील फवारणी इतिहास:{% else %}Prior Application History:{% endif %}</strong>
+                        <span>{{ advisory.farmer_crop_info.recent_applications | pick }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- "आज काय करावे?" Today's Action Checklist -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-sky-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i data-lucide="check-square" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900">{{ t('weather_checklist_heading') }}</h3>
+                        <p class="text-xs text-slate-500">{{ selected_location.display_name }} • {{ fetched_at_str }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2.5 pt-1">
+                {% for item in advisory.action_checklist %}
+                <div class="p-3.5 rounded-2xl border flex items-start gap-3 transition-colors
+                    {% if item.status == 'warning' %}bg-rose-50/60 border-rose-200/70 text-rose-950
+                    {% elif item.status == 'urgent' %}bg-amber-50/60 border-amber-200/70 text-amber-950
+                    {% elif item.status == 'info' %}bg-sky-50/60 border-sky-200/70 text-sky-950
+                    {% else %}bg-emerald-50/60 border-emerald-200/70 text-emerald-950{% endif %}">
+                    
+                    <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5
+                        {% if item.status == 'warning' %}bg-rose-200/80 text-rose-800
+                        {% elif item.status == 'urgent' %}bg-amber-200/80 text-amber-800
+                        {% elif item.status == 'info' %}bg-sky-200/80 text-sky-800
+                        {% else %}bg-emerald-200/80 text-emerald-800{% endif %}">
+                        <i data-lucide="{{ item.icon }}" class="w-3.5 h-3.5"></i>
+                    </div>
+
+                    <p class="text-xs sm:text-sm font-medium leading-relaxed flex-1">
+                        {{ item.task | pick }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Next 48-Hour Hourly Forecast (Horizontal Carousel) -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="clock" class="w-5 h-5 text-sky-600"></i>
+                    <span>{{ t('weather_hourly_heading') }}</span>
+                </h2>
+                <p class="text-xs text-slate-500">Scroll horizontally to view temperature, rain chance, and wind for every hour</p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto pb-3 pt-1 -mx-2 px-2 scrollbar-thin">
+            <div class="flex items-stretch gap-3 min-w-max">
+                {% for hour in advisory.hourly_forecast %}
+                <div class="w-28 p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-between text-center hover:bg-emerald-50/40 hover:border-emerald-200 transition">
+                    <span class="text-[11px] font-semibold text-slate-500">{{ hour.time_str_en if lang == 'en' else hour.time_str_mr }}</span>
+                    
+                    <div class="my-2 flex flex-col items-center">
+                        <i data-lucide="{{ hour.icon }}" class="w-6 h-6 text-slate-700"></i>
+                        <span class="text-sm font-bold text-slate-900 mt-1">{{ hour.temp }}°</span>
+                    </div>
+
+                    <div class="space-y-0.5 text-[10px] text-slate-500 w-full pt-1 border-t border-slate-200/50">
+                        <div class="flex items-center justify-between text-blue-600">
+                            <span>Rain:</span>
+                            <strong>{{ hour.precipitation }}mm</strong>
+                        </div>
+                        <div class="flex items-center justify-between text-teal-600">
+                            <span>Wind:</span>
+                            <strong>{{ hour.wind_speed }}k</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Next 7-Day Forecast Grid -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
+                    <span>{{ t('weather_daily_heading') }}</span>
+                </h2>
+                <p class="text-xs text-slate-500">7-Day Agro-Meteorological Trends for {{ selected_location.display_name }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 pt-1">
+            {% for day in advisory.daily_forecast %}
+            <div class="p-4 rounded-2xl border flex flex-col items-center justify-between text-center
+                {% if loop.first %}bg-emerald-50/60 border-emerald-200 shadow-sm{% else %}bg-slate-50 border-slate-100{% endif %}">
+                
+                <div>
+                    <span class="block text-xs font-bold text-slate-900">{{ day.day_en if lang == 'en' else day.day_mr }}</span>
+                    <span class="text-[11px] text-slate-400">{{ day.date }}</span>
+                </div>
+
+                <div class="my-3 flex flex-col items-center">
+                    <i data-lucide="{{ day.icon }}" class="w-8 h-8 text-slate-700"></i>
+                    <span class="text-xs text-slate-600 font-medium mt-1 line-clamp-1">
+                        {{ day.weather_text_en if lang == 'en' else day.weather_text_mr }}
+                    </span>
+                </div>
+
+                <div class="w-full space-y-1 text-xs">
+                    <div class="flex items-center justify-between font-bold">
+                        <span class="text-slate-900">{{ day.temp_max }}°</span>
+                        <span class="text-slate-400 font-normal">{{ day.temp_min }}°</span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-blue-600 pt-1 border-t border-slate-200/60">
+                        <span>Precip:</span>
+                        <strong>{{ day.precipitation_sum }} mm</strong>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-teal-600">
+                        <span>Wind:</span>
+                        <strong>{{ day.wind_max }} km/h</strong>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Footer Attribution & Disclaimer -->
+    <div class="p-4 rounded-2xl bg-slate-100/70 border border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div>
+            <span>{{ t('weather_data_source_note') }}</span>
+        </div>
+        <div>
+            <span>{{ t('sih_badge') }} • Voice of Agriculture</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Interactive Client-side Script for Cascading Dropdowns, Search, and GPS -->
+<script>
+(function() {
+    let locationsData = null;
+    const currentLang = "{{ lang }}";
+
+    const selectDistrict = document.getElementById("selectDistrict");
+    const selectTaluka = document.getElementById("selectTaluka");
+    const selectVillage = document.getElementById("selectVillage");
+
+    const searchInput = document.getElementById("locationSearchInput");
+    const searchBtn = document.getElementById("btnSearchTrigger");
+    const suggestionsList = document.getElementById("searchSuggestionsList");
+    const btnUseGps = document.getElementById("btnUseGps");
+
+    const manualLatInput = document.getElementById("manualLatInput");
+    const manualLonInput = document.getElementById("manualLonInput");
+    const btnApplyManualCoords = document.getElementById("btnApplyManualCoords");
+
+    // Fetch Maharashtra locations database once on load
+    fetch("/api/weather/locations")
+        .then(res => res.json())
+        .then(data => {
+            locationsData = data;
+            populateDistricts();
+        })
+        .catch(err => {
+            console.error("Failed to load locations catalog:", err);
+        });
+
+    function populateDistricts() {
+        if (!locationsData) return;
+        selectDistrict.innerHTML = '<option value="">-- Choose District --</option>';
+
+        const sortedDistricts = Object.keys(locationsData).sort();
+        sortedDistricts.forEach(distKey => {
+            const distObj = locationsData[distKey];
+            const name = (currentLang === 'mr' && distObj.mr) ? distObj.mr : (distObj.en || distKey);
+            const opt = document.createElement("option");
+            opt.value = distKey;
+            opt.textContent = name;
+            // Pre-select if matches current district
+            if (distKey.toLowerCase() === "{{ selected_location.district_en | lower }}") {
+                opt.selected = true;
+            }
+            selectDistrict.appendChild(opt);
+        });
+
+        if (selectDistrict.value) {
+            populateTalukas(selectDistrict.value);
+        }
+    }
+
+    function populateTalukas(distKey) {
+        selectTaluka.innerHTML = '<option value="">-- Choose Taluka --</option>';
+        selectTaluka.disabled = true;
+        selectVillage.innerHTML = '<option value="">-- Choose Village / Center --</option>';
+        selectVillage.disabled = true;
+
+        if (!locationsData || !locationsData[distKey]) return;
+        const talukas = locationsData[distKey].talukas || {};
+        const sortedTalukas = Object.keys(talukas).sort();
+
+        sortedTalukas.forEach(talKey => {
+            const talObj = talukas[talKey];
+            const name = (currentLang === 'mr' && talObj.mr) ? talObj.mr : (talObj.en || talKey);
+            const opt = document.createElement("option");
+            opt.value = talKey;
+            opt.textContent = name;
+            if (talKey.toLowerCase() === "{{ selected_location.taluka_en | lower }}") {
+                opt.selected = true;
+            }
+            selectTaluka.appendChild(opt);
+        });
+
+        selectTaluka.disabled = false;
+        if (selectTaluka.value) {
+            populateVillages(distKey, selectTaluka.value);
+        }
+    }
+
+    function populateVillages(distKey, talKey) {
+        selectVillage.innerHTML = '<option value="">-- Choose Village / Center --</option>';
+        selectVillage.disabled = true;
+
+        if (!locationsData || !locationsData[distKey] || !locationsData[distKey].talukas[talKey]) return;
+        const villages = locationsData[distKey].talukas[talKey].villages || [];
+
+        villages.forEach((vilObj, idx) => {
+            const name = (currentLang === 'mr' && vilObj.mr) ? vilObj.mr : (vilObj.en || "Village " + idx);
+            const opt = document.createElement("option");
+            opt.value = idx;
+            opt.textContent = name;
+            opt.dataset.lat = vilObj.lat;
+            opt.dataset.lon = vilObj.lon;
+            opt.dataset.nameEn = vilObj.en;
+            opt.dataset.nameMr = vilObj.mr;
+            selectVillage.appendChild(opt);
+        });
+
+        selectVillage.disabled = false;
+    }
+
+    // Event Handlers for Cascading dropdowns
+    selectDistrict.addEventListener("change", function() {
+        if (this.value) {
+            populateTalukas(this.value);
+            // Auto navigate to district coordinates if chosen directly
+            const distObj = locationsData[this.value];
+            if (distObj) {
+                navigateToCoords(distObj.lat, distObj.lon, distObj.en, distObj.mr, this.value, this.value);
+            }
+        } else {
+            selectTaluka.innerHTML = '<option value="">-- Choose Taluka --</option>';
+            selectTaluka.disabled = true;
+            selectVillage.innerHTML = '<option value="">-- Choose Village / Center --</option>';
+            selectVillage.disabled = true;
+        }
+    });
+
+    selectTaluka.addEventListener("change", function() {
+        const distKey = selectDistrict.value;
+        if (distKey && this.value) {
+            populateVillages(distKey, this.value);
+            const talObj = locationsData[distKey].talukas[this.value];
+            if (talObj) {
+                navigateToCoords(talObj.lat, talObj.lon, talObj.en, talObj.mr, distKey, this.value);
+            }
+        }
+    });
+
+    selectVillage.addEventListener("change", function() {
+        const opt = this.options[this.selectedIndex];
+        if (opt && opt.dataset.lat) {
+            navigateToCoords(opt.dataset.lat, opt.dataset.lon, opt.dataset.nameEn, opt.dataset.nameMr, selectDistrict.value, selectTaluka.value);
+        }
+    });
+
+    function navigateToCoords(lat, lon, nameEn, nameMr, district, taluka) {
+        const params = new URLSearchParams();
+        params.set("lat", lat);
+        params.set("lon", lon);
+        if (nameEn) params.set("name_en", nameEn);
+        if (nameMr) params.set("name_mr", nameMr);
+        if (district) params.set("district", district);
+        if (taluka) params.set("taluka", taluka);
+
+        window.location.href = "/weather-advisory?" + params.toString();
+    }
+
+    // Free text live search with debounce
+    let searchTimeout = null;
+    searchInput.addEventListener("input", function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            suggestionsList.classList.add("hidden");
+            suggestionsList.innerHTML = "";
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/weather/search-locations?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const results = data.results || [];
+                    if (results.length === 0) {
+                        suggestionsList.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">No locations matched</div>';
+                        suggestionsList.classList.remove("hidden");
+                        return;
+                    }
+
+                    suggestionsList.innerHTML = "";
+                    results.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "px-4 py-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between text-xs transition";
+                        const dispName = (currentLang === 'mr' && item.display_name_mr) ? item.display_name_mr : item.display_name_en;
+                        div.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                <span class="font-medium text-slate-800">${dispName}</span>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">${item.type}</span>
+                        `;
+                        div.addEventListener("click", () => {
+                            suggestionsList.classList.add("hidden");
+                            navigateToCoords(item.lat, item.lon, item.display_name_en, item.display_name_mr, item.district_en, item.taluka_en);
+                        });
+                        suggestionsList.appendChild(div);
+                    });
+                    suggestionsList.classList.remove("hidden");
+                    if (window.lucide) lucide.createIcons();
+                });
+        }, 250);
+    });
+
+    // Close suggestions dropdown when clicking outside
+    document.addEventListener("click", function(e) {
+        if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+            suggestionsList.classList.add("hidden");
+        }
+    });
+
+    // GPS Geolocation Handler
+    btnUseGps.addEventListener("click", function() {
+        if (!navigator.geolocation) {
+            alert(currentLang === 'mr' ? 'आपल्या ब्राउझरमध्ये GPS सुविधा उपलब्ध नाही.' : 'Geolocation is not supported by your browser.');
+            return;
+        }
+
+        btnUseGps.disabled = true;
+        btnUseGps.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Locating...</span>';
+        if (window.lucide) lucide.createIcons();
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                navigateToCoords(lat, lon, "My GPS Farm Location", "माझे GPS शेत स्थान", "", "");
+            },
+            (err) => {
+                btnUseGps.disabled = false;
+                btnUseGps.innerHTML = '<i data-lucide="crosshair" class="w-4 h-4 text-sky-600"></i><span>{{ t("weather_use_gps") }}</span>';
+                if (window.lucide) lucide.createIcons();
+                alert(currentLang === 'mr' ? 'GPS परवानगी नाकारली किंवा त्रुटी आली. कृपया स्थान हाताने निवडा.' : 'Unable to retrieve GPS coordinates. Please select location manually.');
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    });
+
+    // Manual Lat/Lon handler
+    btnApplyManualCoords.addEventListener("click", function() {
+        const lat = parseFloat(manualLatInput.value);
+        const lon = parseFloat(manualLonInput.value);
+        if (isNaN(lat) || isNaN(lon) || lat < 14 || lat > 23 || lon < 72 || lon > 81) {
+            alert(currentLang === 'mr' ? 'कृपया महाराष्ट्रातील वैध अक्षांश (14-23) व रेखांश (72-81) प्रविष्ट करा.' : 'Please enter valid coordinates within Maharashtra (Lat: 14-23, Lon: 72-81).');
+            return;
+        }
+        navigateToCoords(lat, lon, `Custom Coords (${lat.toFixed(4)}, ${lon.toFixed(4)})`, `थेट स्थान (${lat.toFixed(4)}, ${lon.toFixed(4)})`, "", "");
+    });
+
+})();
+</script>
+{% endblock %}

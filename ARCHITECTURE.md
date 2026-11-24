@@ -260,9 +260,13 @@ The **AI Crop & Nutrient Doctor** provides instant, vision-guided disease and nu
    - **1-Click Demo Evaluation Samples:** Pre-loaded with 4 verified Maharashtra field cases (*Vidarbha Bt Cotton Potassium Scorch, Western Maharashtra Grapes Downy Mildew, Marathwada Soybean Zinc Chlorosis, Nashik Onion Purple Blotch*) with embedded SVG vector leaf illustrations.
    - **Field Context & Triage Chips:** Accepts Crop selection, Affected Leaf Position (*Older/Lower* vs. *Younger/Top* vs. *Whole Canopy*), Symptom Pattern (*Burnt Margins*, *Interveinal Chlorosis*, *Spots/Powder*, *Curling*), and optional Soil Health Card / pH notes.
 2. **Two-Stage Sarvam AI Vision & Agronomy Pipeline (`plant_doctor.py`):**
-   - **Stage A (Vision Model Analysis):** Submits the base64 leaf image to Sarvam AI's multimodal vision API (`model="gemma4"` or chat completion via `sarvam-105b`) guided by the system prompt loaded with `maharashtra_agronomy_kb.md`.
+   - **Stage A (Vision Model Analysis & Validation):** Validates uploaded base64 image data using Pillow (verifying format, dimensions >= 20px, and image integrity). Submits the image to Sarvam AI or chat completion via `sarvam-105b` guided by the system prompt loaded with `maharashtra_agronomy_kb.md`.
    - **Stage B (Grounded Maharashtra Agronomy Synthesis):** Synthesizes visual observations against state research authority rules:
-     - **Strict Differential Diagnostics:** Dynamically contrasts the primary condition against the #2 lookalike (*e.g., Potassium Deficiency vs. Jassid Hopper Burn; Zinc Chlorosis vs. Iron Chlorosis; Sucking Pests vs. Viral Leaf Curl; Downy Mildew vs. Powdery Mildew*).
+     - **Strict Crop Isolation (Zero Cross-Crop Leakage):** Enforces strict crop boundaries so that Tomato leaves never receive Cotton advice (or vice-versa). Unspecified crops trigger a clear prompt to specify the crop before chemical advice is provided.
+     - **Accurate Disease & Pathogen Taxonomy:** Prevents erroneous conflation of distinct diseases. Correctly distinguishes Bacterial Spot (*Xanthomonas vesicatoria / X. perforans* - foliar/fruit surface spot) from Bacterial Canker (*Clavibacter michiganensis* - systemic vascular wilt with bird's-eye fruit spots) and Early Blight (*Alternaria solani* - concentric target rings).
+     - **Honest Diagnostic Certainty (Anti-Fabrication):** Eliminates uncalibrated, fabricated percentage scores (e.g. fake 85% or 94%). Uses honest qualitative certainty tiers (Low, Moderate, High) explicitly labeled as *"Preliminary Visual Estimate (Field Confirmation Required)"*.
+     - **Plausible Alternatives & Field Confirmatory Checklist:** When photographic evidence is non-definitive, lists 2-3 plausible alternative conditions and actionable field checks (e.g., inspecting spot undersides for water-soaking, slicing stems for vascular discoloration, inspecting fruit).
+     - **Safe Chemical Prescription Guardrail:** Refuses to recommend synthetic chemical pesticides from an unconfirmed photograph alone. Mandates physical field inspection and local Taluka Krishi Adhikari / KVK consultation before purchasing chemicals.
      - **Verified State Dosages:** Integrates verified packages of practices from MPKV Rahuri, Dr. PDKV Akola, VNMKV Parbhani, Dr. BSKKV Dapoli, and ICAR-NRCG Pune.
      - **ETL & Predator Safety:** Checks Economic Threshold Levels and warns against spraying when beneficial insects (ladybird beetles, chrysoperla) are present.
      - **Soil Health Card Priority:** Overrides generic baseline fertilizer charts whenever the farmer supplies specific soil test parameters (pH, available N/P/K, Zinc, Organic Carbon).
@@ -274,7 +278,37 @@ The **AI Crop & Nutrient Doctor** provides instant, vision-guided disease and nu
 
 ---
 
-## 11. How to Run KrishiVaani
+## 11. Module 11: Real-Time Weather & Agronomic Advisory (`/weather-advisory`)
+
+### Architectural Purpose
+Provides a real-time, location-specific agro-meteorological advisory engine powered by the official Open-Meteo Weather API (`https://api.open-meteo.com/v1/forecast`, `Asia/Kolkata` timezone). Seamlessly translates live atmospheric observations into actionable farming advisories based on the logged-in farmer's existing profile without prompting for re-entry.
+
+### Key Capabilities & Engineering Standards:
+1. **Zero-Database Location Engine & 36-District Database (`build_locations.py` / `static/maharashtra_locations.json`):**
+   - Comprehensive coverage of all 36 Maharashtra districts, major agricultural talukas, and prominent farming villages/APMCs (including Pimpalgaon Baswant, Lasalgaon, Baramati KVK, Rahuri MPKV, Narayangaon, etc.).
+   - Provides 3 location selection pathways:
+     - Cascading 3-tier dropdown: State → District → Taluka → Village.
+     - Live debounced autocomplete search across all locations.
+     - Browser GPS Geolocation (`navigator.geolocation`) with one-click permission.
+   - Instantly recalculates latitude and longitude, updates Open-Meteo coordinates, and reruns the advisory engine without refreshing unrelated state.
+2. **Automated Farmer Profile Integration:**
+   - Automatically reads crop (`crops_grown`), variety, current growth stage, soil type, irrigation method, and Soil Health Card notes directly from `flask.session['farmer_profile']`.
+   - Never prompts the farmer to re-select crop or growth stage.
+3. **Open-Meteo Weather Pipeline & 15-Minute In-Memory Cache:**
+   - Queries live Open-Meteo endpoints for temperature, relative humidity, precipitation, wind speed & gusts, cloud cover, soil moisture (3–9 cm depth), and FAO ET0 evapotranspiration.
+   - Features in-memory caching (`WEATHER_CACHE`, TTL = 15 minutes) to minimize external network requests and prevent rate-limiting.
+4. **Colour-Coded Warning & Advisory Engines (`weather_advisory.py`):**
+   - **Warning Alerts (Green/Yellow/Orange/Red):** Real-time hazard triggers for rain within 6 hours, heavy rain within 24 hours, thunderstorm/lightning risks, squall winds, heat stress, frost, and high-humidity foliar disease danger.
+   - **Irrigation Advisor:** Compares forecasted rainfall, current soil moisture, and evapotranspiration against crop growth stage to advise whether to irrigate, hold, or open drainage trenches.
+   - **Spraying Safety Advisor:** Evaluates rain probability within 6 hours, wind speeds (>16 km/h), temperatures (>36°C), and thunderstorms to identify safe spraying windows or mandate postponement.
+   - **Sowing & Transplanting Outlook:** Assesses soil temperature and moisture conditions for germination and seedling safety.
+   - **Profile Crop Advisory & Action Checklist:** Tailors advice directly to the active crop (e.g. Grapes downy mildew / berry splitting in wet conditions, Soybean pod filling in dry conditions) accompanied by a 4-point "आज काय करावे?" checklist.
+5. **Bilingual Presentation (100% Pure Marathi & Pure English):**
+   - Fully symmetric translations in `translations.py` ensuring zero language mixing or awkward bracket formatting.
+
+---
+
+## 12. How to Run KrishiVaani
 
 ```bash
 # 1. Install Flask and requirements

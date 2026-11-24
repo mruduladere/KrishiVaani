@@ -98,6 +98,22 @@ To avoid catastrophic misidentification between nutritional deficiencies, abioti
   - Spray wettable sulfur 80% WP @ 2.0 g / L water at bud emergence stage.
   - Boron application: Solubor @ 1 g / L during marble-sized fruit stage to control black tip and spongy tissue.
 
+### I. Tomato (*टोमॅटो*) — Nashik, Pune, Ahmednagar, Satara (MPKV Rahuri & HORTSAP)
+- **Strict Differentiation of Tomato Foliar Spot & Blight Complex:**
+  - **Bacterial Spot (*जिवाणूजन्य ठिपके - Xanthomonas vesicatoria / X. perforans*):** Small (2–3 mm), dark brown-to-black angular spots that appear water-soaked/greasy on the underside, often with a faint chlorotic halo. Fruit shows small, raised dark scabby blisters. **Foliar/fruit surface pathogen.**
+  - **Bacterial Canker (*बॅक्टेरियल कॅन्कर - Clavibacter michiganensis subsp. michiganensis*):** **Systemic vascular bacterial disease (distinct from Xanthomonas spot).** Lower leaflets curl upward, wilt unilaterally; leaf margins dry up and brown ("marginal firing"); stems exhibit internal vascular browning, pith decay, and open longitudinal cankers; fruit develops small white haloed spots with dark raised centers ("bird's-eye spots" / *पक्ष्यांच्या डोळ्यांसारखे डाग*).
+  - **Early Blight (*लवकर येणारा करपा - Alternaria solani*):** Dark brown to black circular or oval spots characterized by distinct concentric rings (**"target-board" / "bull's-eye" pattern**), starting on older lower foliage, surrounded by a prominent yellow chlorotic halo.
+  - **Late Blight (*उशिरा येणारा करपा - Phytophthora infestans*):** Large, irregular water-soaked greasy grayish-green lesions rapidly turning dark brown/black under cool, humid weather (>85% RH, 15–22°C), with delicate white fungal down visible on the underside during moist mornings.
+  - **Potassium Deficiency in Tomato:** Chlorosis and necrosis strictly along leaf margins of older leaves; no concentric rings, no water-soaking, no fruit blisters.
+- **Diagnostic Safeguard from Single Photographs:**
+  - A photograph of tomato foliar spots is **presumptive, never definitive**. Do NOT assert a single pathogen without field verification of:
+    1. Concentric rings (Early Blight).
+    2. Water-soaked greasy underside (Bacterial Spot).
+    3. Stem vascular discoloration, cankers, or bird's-eye fruit spots (Bacterial Canker).
+- **Treatment Protocols & Safe Agronomy Rules:**
+  - **Cultural & Preventive First:** Remove and burn infected lower leaves; avoid overhead sprinkler irrigation to minimize leaf wetness; sanitize pruning shears; practice crop rotation with non-solanaceous crops for 2–3 seasons.
+  - **Chemical Safety Rule:** Never recommend synthetic fungicides or bactericides solely from an unconfirmed photograph. If bacterial or fungal blight is suspected, mandate: *"Inspect field symptoms for concentric rings or water-soaking, and verify exact registered molecules and dosage locally with Taluka Krishi Adhikari / Krishi Vigyan Kendra (KVK)."*
+
 ---
 
 ## 4. Universal Anti-Hallucination Guardrails & Local Consultation Mandates
