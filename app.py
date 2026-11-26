@@ -5,7 +5,9 @@ Strictly NO external database (uses Python in-memory state + flask.session).
 Bilingual English & Marathi support via translations.py.
 """
 
+import os
 import re
+import uuid
 import copy
 import datetime
 import urllib.parse
@@ -26,9 +28,10 @@ from translations import t, pick, TRANSLATIONS
 from ai_router import route_farmer_query
 from smart_dispatcher import extract_and_dispatch
 from form_digitizer import digitize_form
+import db_service
 
 app = Flask(__name__)
-app.secret_key = "krishivaani-secret-key-sih2026-pure-python"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "krishivaani-secret-key-sih2026-pure-python"
 
 # ---------------------------------------------------------
 # IN-MEMORY RUNTIME DATA STORE (STRICTLY NO DATABASE)
@@ -75,16 +78,43 @@ def pick_filter(val):
 
 
 def get_current_farmer():
-    """Retrieves active farmer profile from session or in-memory database."""
+    """Retrieves active farmer profile from session, Supabase, or in-memory database."""
     if session.get("farmer_profile"):
         return session["farmer_profile"]
     phone = session.get("phone")
-    if phone and phone in FARMERS_DB:
-        session["farmer_profile"] = copy.deepcopy(FARMERS_DB[phone])
-        return session["farmer_profile"]
+    if phone:
+        loaded = db_service.get_farmer_by_phone(phone, FARMERS_DB)
+        if loaded:
+            session["farmer_profile"] = db_service._strip_secret_fields(loaded)
+            return session["farmer_profile"]
     sample = copy.deepcopy(FARMERS_DB.get("9822012345", SAMPLE_FARMER))
-    session["farmer_profile"] = sample
-    return sample
+    session["farmer_profile"] = db_service._strip_secret_fields(sample)
+    return session["farmer_profile"]
+
+
+def _active_phone():
+    """Returns normalized phone of current logged-in farmer."""
+    return normalize_phone(session.get("phone", "9822012345")) or "9822012345"
+
+
+def _load_expenses():
+    return db_service.list_expenses(_active_phone(), EXPENSES_DB)
+
+
+def _load_livestock():
+    return db_service.list_livestock(_active_phone(), LIVESTOCK_DB)
+
+
+def _load_tasks():
+    return db_service.list_crop_tasks(_active_phone(), TASKS_DB)
+
+
+def _load_marketplace():
+    return db_service.list_marketplace(MARKETPLACE_DB)
+
+
+def _load_services():
+    return db_service.list_nearby_services(SERVICES_DB)
 
 
 def normalize_phone(phone_str):
@@ -367,26 +397,23 @@ def index():
 
 @app.route("/login", methods=["POST"])
 def login():
-    """Validates mobile number and 4-digit PIN against in-memory registered accounts."""
+    """Validates mobile number and 4-digit PIN against Supabase or in-memory registered accounts."""
     phone_input = request.form.get("phone", "").strip()
     pin_input = request.form.get("pin", "").strip()
 
     cleaned_phone = normalize_phone(phone_input)
-
-    # Search in registered farmers in-memory dictionary
-    matched_farmer = None
-    for reg_phone, profile in FARMERS_DB.items():
-        if normalize_phone(reg_phone) == cleaned_phone:
-            if profile.get("pin") == pin_input:
-                matched_farmer = profile
-                break
+    matched_farmer, db_err = db_service.authenticate_farmer(cleaned_phone, pin_input, FARMERS_DB)
+    if db_err:
+        flash(f"Database connection error: {db_err}", "error")
+        return redirect(url_for("index"))
 
     if matched_farmer:
         session["is_authenticated"] = True
         session["phone"] = cleaned_phone
         session["farmer_name"] = matched_farmer.get("name", "Farmer")
-        session["farmer_profile"] = copy.deepcopy(matched_farmer)
-        session["crop_tasks"] = generate_starter_tasks_for_crops(matched_farmer.get("crops_grown", []))
+        session["farmer_profile"] = db_service._strip_secret_fields(matched_farmer)
+        db_tasks = db_service.list_crop_tasks(cleaned_phone, [])
+        session["crop_tasks"] = db_tasks if db_tasks else generate_starter_tasks_for_crops(matched_farmer.get("crops_grown", []))
         flash(t("login_success"), "success")
         return redirect(url_for("dashboard"))
 
@@ -397,18 +424,21 @@ def login():
 @app.route("/demo-login")
 def demo_login():
     """1-Click Demo Login bypass for Smart India Hackathon evaluators."""
+    db_service.ensure_demo_seeded()
+    demo_farmer = db_service.get_farmer_by_phone("9822012345", FARMERS_DB) or copy.deepcopy(SAMPLE_FARMER)
     session["is_authenticated"] = True
     session["phone"] = "9822012345"
-    session["farmer_name"] = SAMPLE_FARMER["name"]
-    session["farmer_profile"] = copy.deepcopy(SAMPLE_FARMER)
-    session["crop_tasks"] = generate_starter_tasks_for_crops(SAMPLE_FARMER.get("crops_grown", []))
+    session["farmer_name"] = demo_farmer.get("name", SAMPLE_FARMER["name"])
+    session["farmer_profile"] = db_service._strip_secret_fields(demo_farmer)
+    db_tasks = db_service.list_crop_tasks("9822012345", [])
+    session["crop_tasks"] = db_tasks if db_tasks else generate_starter_tasks_for_crops(demo_farmer.get("crops_grown", []))
     flash("Welcome to KrishiVaani Demo Account (Ramesh Patil)", "success")
     return redirect(url_for("dashboard"))
 
 
 @app.route("/register", methods=["POST"])
 def register():
-    """Registers a new farmer account in-memory and signs them in immediately."""
+    """Registers a new farmer account in Supabase (or in-memory fallback) and signs them in immediately."""
     name = request.form.get("name", "").strip()
     phone = request.form.get("phone", "").strip()
     pin = request.form.get("pin", "").strip()
@@ -427,7 +457,7 @@ def register():
 
     new_farmer = {
         "name": name,
-        "phone": phone,
+        "phone": cleaned_phone,
         "pin": pin,
         "email": f"{cleaned_phone}@krishivaani.in",
         "village": village,
@@ -449,15 +479,21 @@ def register():
         }
     }
 
-    # Save to in-memory store
-    FARMERS_DB[cleaned_phone] = new_farmer
+    ok, err = db_service.register_farmer(new_farmer, pin, FARMERS_DB)
+    if not ok:
+        flash(f"Registration failed: {err}", "error")
+        return redirect(url_for("index"))
+
+    starter_tasks = generate_starter_tasks_for_crops(new_farmer["crops_grown"])
+    for tsk in starter_tasks:
+        db_service.add_crop_task(cleaned_phone, tsk, TASKS_DB)
 
     # Set session
     session["is_authenticated"] = True
     session["phone"] = cleaned_phone
     session["farmer_name"] = name
-    session["farmer_profile"] = copy.deepcopy(new_farmer)
-    session["crop_tasks"] = generate_starter_tasks_for_crops(new_farmer["crops_grown"])
+    session["farmer_profile"] = db_service._strip_secret_fields(new_farmer)
+    session["crop_tasks"] = starter_tasks
     flash(t("reg_success"), "success")
     return redirect(url_for("dashboard"))
 
@@ -494,10 +530,11 @@ def dashboard():
     active_lang = session.get("lang", "mr")
 
     # Dynamic calculation of stats
+    expenses_list = _load_expenses()
     nov_expenses = sum(
-        item.get("amount", 0)
-        for item in EXPENSES_DB
-        if "Nov" in item.get("month", "") or "11" in item.get("date", "")
+        float(item.get("amount", 0))
+        for item in expenses_list
+        if "Nov" in str(item.get("month", "")) or "11" in str(item.get("date", ""))
     )
 
     livestock = farmer.get("livestock_summary", {})
@@ -507,10 +544,10 @@ def dashboard():
         + livestock.get("goats", 0)
     )
 
-    # Use session['crop_tasks'] if present, else fallback
-    current_tasks = session.get("crop_tasks")
-    if current_tasks is None:
-        current_tasks = generate_starter_tasks_for_crops(farmer.get("crops_grown", []))
+    # Use Supabase / session['crop_tasks'] if present, else fallback
+    current_tasks = _load_tasks() if db_service.is_supabase_configured() else session.get("crop_tasks")
+    if not current_tasks:
+        current_tasks = session.get("crop_tasks") or generate_starter_tasks_for_crops(farmer.get("crops_grown", []))
         session["crop_tasks"] = current_tasks
 
     stats = {
@@ -599,10 +636,21 @@ def update_profile():
     else:
         session["farmer_profile"] = farmer
 
-    # Also sync back into FARMERS_DB if phone is registered
-    phone = session.get("phone")
-    if phone:
-        FARMERS_DB[phone] = copy.deepcopy(farmer)
+    # Also sync back into Supabase / FARMERS_DB if phone is registered
+    phone = _active_phone()
+    ok, err = db_service.update_farmer_profile(phone, {
+        "name": farmer["name"],
+        "land_size_acres": farmer["land_size_acres"],
+        "soil_type": farmer["soil_type"],
+        "village": farmer["village"],
+        "taluka": farmer["taluka"],
+        "district": farmer["district"],
+        "irrigation_type": farmer["irrigation_type"],
+        "crops_grown": farmer["crops_grown"],
+    }, FARMERS_DB)
+    if not ok:
+        flash(f"Could not save profile to database: {err}", "error")
+        return redirect(url_for("dashboard"))
 
     flash(t("profile_updated_success"), "success")
     return redirect(url_for("dashboard"))
@@ -738,20 +786,19 @@ def crop_helper():
 
 @app.route("/toggle-task/<task_id>", methods=["POST"])
 def toggle_task(task_id):
-    """Toggles task completed status in session['crop_tasks'] and TASKS_DB."""
-    # 1. Update in session['crop_tasks']
-    tasks_list = session.get("crop_tasks", [])
+    """Toggles task completed status in Supabase, session['crop_tasks'], and TASKS_DB."""
+    new_status = False
+    tasks_list = _load_tasks() if db_service.is_supabase_configured() else session.get("crop_tasks", [])
     for task in tasks_list:
         if task.get("id") == task_id:
-            task["status"] = not task.get("status", False)
+            new_status = not task.get("status", False)
+            task["status"] = new_status
             break
     session["crop_tasks"] = tasks_list
 
-    # 2. Also update global TASKS_DB if present
-    for task in TASKS_DB:
-        if task.get("id") == task_id:
-            task["status"] = not task.get("status", False)
-            break
+    ok, err = db_service.toggle_crop_task(_active_phone(), task_id, new_status, TASKS_DB)
+    if not ok:
+        flash(f"Could not update task in database: {err}", "error")
 
     redirect_to = request.form.get("redirect") or request.referrer or url_for("dashboard")
     return redirect(redirect_to)
@@ -759,7 +806,7 @@ def toggle_task(task_id):
 
 @app.route("/add-task", methods=["POST"])
 def add_task():
-    """Appends a new farming reminder task to session['crop_tasks'] and TASKS_DB."""
+    """Appends a new farming reminder task to Supabase, session['crop_tasks'], and TASKS_DB."""
     title = request.form.get("title", "").strip()
     crop = request.form.get("crop", "Grapes").strip()
     due_date = request.form.get("due_date", "Pending").strip()
@@ -772,7 +819,7 @@ def add_task():
             farmer = get_current_farmer()
             tasks_list = generate_starter_tasks_for_crops(farmer.get("crops_grown", []))
 
-        new_id = f"TSK-{len(tasks_list) + 1:02d}"
+        new_id = f"TSK-{uuid.uuid4().hex[:6].upper()}"
         new_task = {
             "id": new_id,
             "crop": crop,
@@ -782,9 +829,12 @@ def add_task():
             "priority": priority,
             "status": False
         }
+        ok, err = db_service.add_crop_task(_active_phone(), new_task, TASKS_DB)
+        if not ok:
+            flash(f"Could not save task to database: {err}", "error")
+            return redirect(url_for("crop_helper", crop=current_crop))
         tasks_list.insert(0, new_task)
         session["crop_tasks"] = tasks_list
-        TASKS_DB.insert(0, new_task)
         flash(t("task_saved_success"), "success")
 
     return redirect(url_for("crop_helper", crop=current_crop))
@@ -808,8 +858,9 @@ def nearby_services():
     active_lang = session.get("lang", "mr")
 
     # Build resolved (string) versions for filtering and display
+    services_list = _load_services()
     resolved_services = []
-    for srv in SERVICES_DB:
+    for srv in services_list:
         resolved = copy.deepcopy(srv)
         resolved["name"] = pick(srv.get("name", ""), lang=active_lang)
         resolved["category"] = pick(srv.get("category", ""), lang=active_lang)
@@ -852,7 +903,7 @@ def nearby_services():
 
 @app.route("/add-service", methods=["POST"])
 def add_service():
-    """Registers a new service provider directly into in-memory SERVICES_DB."""
+    """Registers a new service provider into Supabase or in-memory SERVICES_DB."""
     name = request.form.get("name", "").strip()
     category = request.form.get("category", "").strip()
     taluka = request.form.get("taluka", "Niphad").strip()
@@ -862,8 +913,8 @@ def add_service():
     speciality = request.form.get("speciality", "").strip()
 
     if name and phone:
-        new_id = f"SRV-{len(SERVICES_DB) + 1:02d}"
-        SERVICES_DB.append({
+        new_id = f"SRV-{uuid.uuid4().hex[:6].upper()}"
+        new_service = {
             "id": new_id,
             "name": name,
             "category": category,
@@ -875,7 +926,11 @@ def add_service():
             "speciality": speciality,
             "rating": 5.0,
             "verified": True
-        })
+        }
+        ok, err = db_service.add_nearby_service_record(_active_phone(), new_service, SERVICES_DB)
+        if not ok:
+            flash(f"Could not save service to database: {err}", "error")
+            return redirect(url_for("nearby_services"))
         flash(t("service_saved_success"), "success")
 
     return redirect(url_for("nearby_services"))
@@ -913,17 +968,23 @@ def ai_assistant_ask():
     farmer = get_current_farmer()
     active_lang = session.get("lang", "mr")
 
-    # Compute live farm context figures
+    # Compute live farm context figures from Supabase / fallback store
+    expenses_list = _load_expenses()
+    livestock_list = _load_livestock()
+    tasks_list = _load_tasks()
+    services_list = _load_services()
+    marketplace_list = _load_marketplace()
+
     current_month_spend = sum(
         float(e.get("amount", 0))
-        for e in EXPENSES_DB
+        for e in expenses_list
         if "11" in str(e.get("date", ""))[:7]
     )
-    total_spend = sum(float(e.get("amount", 0)) for e in EXPENSES_DB)
+    total_spend = sum(float(e.get("amount", 0)) for e in expenses_list)
 
     # Compute top category
     cat_counts = {}
-    for e in EXPENSES_DB:
+    for e in expenses_list:
         c_en = pick(e.get("category", ""), lang="en")
         c_mr = pick(e.get("category", ""), lang="mr")
         amt = float(e.get("amount", 0))
@@ -934,7 +995,7 @@ def ai_assistant_ask():
     today = datetime.date.today()
     overdue_count = 0
     overdue_names = []
-    for a in LIVESTOCK_DB:
+    for a in livestock_list:
         for v in a.get("vaccination_history", []):
             try:
                 due = datetime.datetime.strptime(v.get("due_date", ""), "%Y-%m-%d").date()
@@ -949,7 +1010,7 @@ def ai_assistant_ask():
     farmer_crops = farmer.get("crops_grown", [])
     crops_en = ", ".join(pick(c, lang="en") for c in farmer_crops)
     crops_mr = ", ".join(pick(c, lang="mr") for c in farmer_crops)
-    pending_tasks = len([t for t in TASKS_DB if not t.get("status", False)])
+    pending_tasks = len([t for t in tasks_list if not t.get("status", False)])
 
     live_context = {
         "expenses": {
@@ -959,8 +1020,8 @@ def ai_assistant_ask():
             "top_category_mr": top_cat[1]
         },
         "livestock": {
-            "total_animals": len(LIVESTOCK_DB),
-            "daily_milk": round(sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB), 1),
+            "total_animals": len(livestock_list),
+            "daily_milk": round(sum(float(a.get("daily_milk_yield_litres", 0)) for a in livestock_list), 1),
             "overdue_count": overdue_count,
             "overdue_details": ", ".join(overdue_names) if overdue_names else "None"
         },
@@ -970,12 +1031,12 @@ def ai_assistant_ask():
             "pending_tasks": pending_tasks
         },
         "services": {
-            "total_services": len(SERVICES_DB),
+            "total_services": len(services_list),
             "sample_en": "Dr. Deshmukh Vet Clinic & Kisan Krishi Seva Kendra",
             "sample_mr": "डॉ. देशमुख पशुवैद्यक क्लिनिक व किसान कृषी सेवा केंद्र"
         },
         "marketplace": {
-            "total_listings": len(MARKETPLACE_DB)
+            "total_listings": len(marketplace_list)
         }
     }
 
@@ -1020,8 +1081,9 @@ def marketplace():
     search_query = request.args.get("q", "").strip().lower()
 
     # Resolve all listings to active language
+    marketplace_list = _load_marketplace()
     resolved_listings = []
-    for item in MARKETPLACE_DB:
+    for item in marketplace_list:
         ri = copy.deepcopy(item)
         ri["crop_name"] = pick(item.get("crop_name", ""), lang=active_lang)
         ri["category"] = pick(item.get("category", ""), lang=active_lang)
@@ -1049,8 +1111,8 @@ def marketplace():
         resolved_listings.append(ri)
 
     # Compute overall statistics
-    total_volume = sum(int(i.get("quantity_quintals", 0)) for i in MARKETPLACE_DB)
-    avg_price = int(sum(float(i.get("expected_price_per_quintal", 0)) for i in MARKETPLACE_DB) / len(MARKETPLACE_DB)) if MARKETPLACE_DB else 0
+    total_volume = sum(int(i.get("quantity_quintals", 0)) for i in marketplace_list)
+    avg_price = int(sum(float(i.get("expected_price_per_quintal", 0)) for i in marketplace_list) / len(marketplace_list)) if marketplace_list else 0
 
     return render_template(
         "marketplace.html",
@@ -1091,7 +1153,7 @@ def add_marketplace_listing():
         price = 2000.0
 
     today = datetime.date.today().strftime("%Y-%m-%d")
-    new_id = f"MKT-{len(MARKETPLACE_DB) + 101}"
+    new_id = f"MKT-{uuid.uuid4().hex[:6].upper()}"
 
     new_listing = {
         "id": new_id,
@@ -1112,7 +1174,11 @@ def add_marketplace_listing():
         "notes": {"en": notes, "mr": notes}
     }
 
-    MARKETPLACE_DB.insert(0, new_listing)
+    ok, err = db_service.add_marketplace_record(_active_phone(), new_listing, MARKETPLACE_DB)
+    if not ok:
+        flash(f"Could not save marketplace listing to database: {err}", "error")
+        return redirect(url_for("marketplace"))
+
     flash(t("mkt_added_success"), "success")
     return redirect(url_for("marketplace"))
 
@@ -1130,14 +1196,15 @@ def livestock():
     today = datetime.date.today()
     active_lang = session.get("lang", "mr")
 
-    total_animals = len(LIVESTOCK_DB)
-    total_milk = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
+    livestock_list = _load_livestock()
+    total_animals = len(livestock_list)
+    total_milk = sum(float(a.get("daily_milk_yield_litres", 0)) for a in livestock_list)
     
     overdue_count = 0
     upcoming_count = 0
     
     processed_animals = []
-    for animal in LIVESTOCK_DB:
+    for animal in livestock_list:
         animal_copy = copy.deepcopy(animal)
         # Resolve bilingual string fields
         animal_copy["name"] = pick(animal.get("name", ""), lang=active_lang)
@@ -1235,7 +1302,9 @@ def vaccinate_animal():
     vaccine_name = request.form.get("vaccine_name", "").strip()  # always en key
     today = datetime.date.today()
 
-    for animal in LIVESTOCK_DB:
+    livestock_list = _load_livestock()
+    updated_history = None
+    for animal in livestock_list:
         if animal.get("tag_id") == animal_id:
             for v in animal.get("vaccination_history", []):
                 # vaccine field may be a dict or a plain string — resolve to en for comparison
@@ -1250,8 +1319,15 @@ def vaccinate_animal():
                         next_due = today + datetime.timedelta(days=365)
                     v["due_date"] = next_due.strftime("%Y-%m-%d")
                     v["status"] = "Up-to-Date"
+                    updated_history = animal.get("vaccination_history", [])
                     break
             break
+
+    if updated_history is not None:
+        ok, err = db_service.update_livestock(_active_phone(), animal_id, {"vaccination_history": updated_history}, LIVESTOCK_DB)
+        if not ok:
+            flash(f"Could not update vaccination in database: {err}", "error")
+            return redirect(url_for("livestock"))
 
     flash(t("vaccine_updated_success"), "success")
     return redirect(url_for("livestock"))
@@ -1259,7 +1335,7 @@ def vaccinate_animal():
 
 @app.route("/livestock/add", methods=["POST"])
 def add_animal():
-    """Adds a new animal to the in-memory livestock registry."""
+    """Adds a new animal to Supabase or the in-memory livestock registry."""
     tag_id = request.form.get("tag_id", "").strip()
     name = request.form.get("name", "").strip()
     animal_type = request.form.get("type", "Cow").strip()
@@ -1270,7 +1346,7 @@ def add_animal():
     
     today = datetime.date.today()
     if not tag_id:
-        tag_id = f"MH-NSK-0{len(LIVESTOCK_DB) + 1:02d}"
+        tag_id = f"MH-NSK-{uuid.uuid4().hex[:4].upper()}"
 
     vaccine_labels = {
         "FMD": "Foot & Mouth Disease (FMD)",
@@ -1299,13 +1375,18 @@ def add_animal():
         ]
     }
     
-    LIVESTOCK_DB.append(new_animal)
+    ok, err = db_service.add_livestock(_active_phone(), new_animal, LIVESTOCK_DB)
+    if not ok:
+        flash(f"Could not save animal to database: {err}", "error")
+        return redirect(url_for("livestock"))
 
     # Sync with farmer profile livestock summary
+    livestock_list = _load_livestock()
     farmer = get_current_farmer()
     livestock_sum = farmer.setdefault("livestock_summary", {})
-    livestock_sum["total_animals"] = len(LIVESTOCK_DB)
-    livestock_sum["daily_milk_litres"] = sum(float(a.get("daily_milk_yield_litres", 0)) for a in LIVESTOCK_DB)
+    livestock_sum["total_animals"] = len(livestock_list)
+    livestock_sum["daily_milk_litres"] = sum(float(a.get("daily_milk_yield_litres", 0)) for a in livestock_list)
+    db_service.update_farmer_profile(_active_phone(), {"livestock_summary": livestock_sum}, FARMERS_DB)
 
     flash(t("animal_added_success"), "success")
     return redirect(url_for("livestock"))
@@ -1327,31 +1408,36 @@ def complete_pending_livestock():
 
     today = datetime.date.today()
     updated = False
-    for animal in LIVESTOCK_DB:
+    livestock_list = _load_livestock()
+    for animal in livestock_list:
         if animal.get("tag_id") == animal_id:
+            updates = {"pending_completion": False}
             if official_tag:
-                animal["tag_id"] = official_tag
-                animal["registration_status"] = "Registered"
-                animal["health_status"] = {"en": "Registered & Active", "mr": "नोंदणीकृत व सक्रिय"}
+                updates["tag_id"] = official_tag
+                updates["health_status"] = {"en": "Registered & Active", "mr": "नोंदणीकृत व सक्रिय"}
             if breed:
-                animal["breed"] = {"en": breed, "mr": breed}
+                updates["breed"] = {"en": breed, "mr": breed}
             if age_str:
                 try:
-                    animal["age_years"] = float(age_str)
+                    updates["age_years"] = float(age_str)
                 except ValueError:
                     pass
             if milk_str:
                 try:
-                    animal["daily_milk_yield_litres"] = float(milk_str)
+                    updates["daily_milk_yield_litres"] = float(milk_str)
                 except ValueError:
                     pass
             if vax_name:
-                animal["vaccination_history"] = [{
+                updates["vaccination_history"] = [{
                     "vaccine": {"en": vax_name, "mr": vax_name},
                     "date_given": vax_date or today.strftime("%Y-%m-%d"),
                     "due_date": (today + datetime.timedelta(days=180)).strftime("%Y-%m-%d"),
                     "status": "Up-to-Date"
                 }]
+            ok, err = db_service.update_livestock(_active_phone(), animal_id, updates, LIVESTOCK_DB)
+            if not ok:
+                flash(f"Could not update animal record in database: {err}", "error")
+                return redirect(url_for("livestock"))
             updated = True
             flash(t("animal_added_success"), "success")
             break
@@ -1376,8 +1462,9 @@ def expenses():
     active_lang = session.get("lang", "mr")
 
     # Resolve all bilingual fields in expenses to pure active-language strings
+    expenses_list = _load_expenses()
     resolved_expenses = []
-    for e in EXPENSES_DB:
+    for e in expenses_list:
         re = copy.deepcopy(e)
         re["category"] = pick(e.get("category", ""), lang=active_lang)
         re["crop"] = pick(e.get("crop", ""), lang=active_lang)
@@ -1387,19 +1474,19 @@ def expenses():
         re["payment_mode"] = pick(e.get("payment_mode", ""), lang=active_lang)
         resolved_expenses.append(re)
 
-    total_spend = sum(float(e.get("amount", 0)) for e in EXPENSES_DB)
-    total_entries = len(EXPENSES_DB)
+    total_spend = sum(float(e.get("amount", 0)) for e in expenses_list)
+    total_entries = len(expenses_list)
 
     # Current month detection (November = month 11)
     current_month_spend = sum(
         float(e.get("amount", 0))
-        for e in EXPENSES_DB
+        for e in expenses_list
         if "11" in str(e.get("date", ""))[:7]
     )
 
     # 1. Category aggregation (use resolved strings as keys)
     cat_map = {}
-    for idx, e in enumerate(EXPENSES_DB):
+    for idx, e in enumerate(expenses_list):
         cat = resolved_expenses[idx]["category"]
         amt = float(e.get("amount", 0))
         if cat not in cat_map:
@@ -1421,7 +1508,7 @@ def expenses():
 
     # 2. Crop aggregation (use resolved strings)
     crop_map = {}
-    for idx, e in enumerate(EXPENSES_DB):
+    for idx, e in enumerate(expenses_list):
         c = resolved_expenses[idx]["crop"]
         amt = float(e.get("amount", 0))
         if c not in crop_map:
@@ -1447,7 +1534,7 @@ def expenses():
     month_order_mr = ["सप्टेंबर २०२६", "ऑक्टोबर २०२६", "नोव्हेंबर २०२६"]
     month_order = month_order_mr if active_lang == "mr" else month_order_en
 
-    for idx, e in enumerate(EXPENSES_DB):
+    for idx, e in enumerate(expenses_list):
         m = resolved_expenses[idx]["month"]
         amt = float(e.get("amount", 0))
         month_map[m] = month_map.get(m, 0) + amt
@@ -1456,7 +1543,7 @@ def expenses():
 
     # 4. Seasonal aggregation (resolved season labels)
     season_map = {}
-    for idx, e in enumerate(EXPENSES_DB):
+    for idx, e in enumerate(expenses_list):
         s = resolved_expenses[idx]["season"]
         amt = float(e.get("amount", 0))
         if s not in season_map:
@@ -1539,7 +1626,7 @@ def add_expense():
     except Exception:
         month_str = today.strftime("%B %Y")
 
-    new_id = f"EXP-{len(EXPENSES_DB) + 1:03d}"
+    new_id = f"EXP-{uuid.uuid4().hex[:6].upper()}"
     new_expense = {
         "id": new_id,
         "date": date_str,
@@ -1552,16 +1639,21 @@ def add_expense():
         "payment_mode": payment_mode
     }
     
-    EXPENSES_DB.insert(0, new_expense)
+    ok, err = db_service.add_expense_record(_active_phone(), new_expense, EXPENSES_DB)
+    if not ok:
+        flash(f"Could not save expense to database: {err}", "error")
+        return redirect(url_for("expenses"))
     flash(t("expense_added_success"), "success")
     return redirect(url_for("expenses"))
 
 
 @app.route("/expenses/delete/<expense_id>", methods=["POST"])
 def delete_expense(expense_id):
-    """Removes an expense record from in-memory EXPENSES_DB."""
-    global EXPENSES_DB
-    EXPENSES_DB = [e for e in EXPENSES_DB if e.get("id") != expense_id]
+    """Removes an expense record from Supabase or in-memory EXPENSES_DB."""
+    ok, err = db_service.delete_expense_record(_active_phone(), expense_id, EXPENSES_DB)
+    if not ok:
+        flash(f"Could not delete expense from database: {err}", "error")
+        return redirect(url_for("expenses"))
     flash(t("expense_deleted_success"), "success")
     return redirect(url_for("expenses"))
 
@@ -1571,7 +1663,7 @@ def delete_expense(expense_id):
 # ---------------------------------------------------------
 @app.route("/expenses/smart-add", methods=["POST"])
 def smart_add_expense():
-    """Parses 1-line natural language text via Sarvam AI and logs to EXPENSES_DB."""
+    """Parses 1-line natural language text via Sarvam AI and logs to Supabase / EXPENSES_DB."""
     if not session.get("is_authenticated"):
         return redirect(url_for("index"))
 
@@ -1586,7 +1678,7 @@ def smart_add_expense():
     if parsed and parsed.get("amount", 0) > 0:
         today = datetime.date.today()
         month_str = today.strftime("%B %Y")
-        new_id = f"EXP-{len(EXPENSES_DB) + 1:03d}"
+        new_id = f"EXP-{uuid.uuid4().hex[:6].upper()}"
         new_expense = {
             "id": new_id,
             "date": today.strftime("%Y-%m-%d"),
@@ -1598,7 +1690,10 @@ def smart_add_expense():
             "amount": float(parsed.get("amount", 0)),
             "payment_mode": parsed.get("payment_mode", "Cash")
         }
-        EXPENSES_DB.insert(0, new_expense)
+        ok, err = db_service.add_expense_record(_active_phone(), new_expense, EXPENSES_DB)
+        if not ok:
+            flash(f"Could not save smart expense to database: {err}", "error")
+            return redirect(url_for("expenses"))
         flash(t("expense_added_success"), "success")
     else:
         flash("Could not parse expense text. Please try again or use standard form.", "error")
@@ -1636,15 +1731,63 @@ def smart_log_submit():
 
     farmer = get_current_farmer()
     active_lang = session.get("lang", "mr")
+    phone = _active_phone()
+
+    if db_service.is_supabase_configured():
+        livestock_list = _load_livestock()
+        expenses_list = _load_expenses()
+        marketplace_list = _load_marketplace()
+        tasks_list = _load_tasks()
+    else:
+        livestock_list = LIVESTOCK_DB
+        expenses_list = EXPENSES_DB
+        marketplace_list = MARKETPLACE_DB
+        tasks_list = TASKS_DB
+
+    before_ls = {a.get("tag_id"): copy.deepcopy(a) for a in livestock_list}
+    before_exp_ids = {e.get("id") for e in expenses_list}
+    before_mkt_ids = {m.get("id") for m in marketplace_list}
+    before_tsk_ids = {tsk.get("id") for tsk in tasks_list}
 
     in_memory_dbs = {
-        "livestock": LIVESTOCK_DB,
-        "expenses": EXPENSES_DB,
-        "marketplace": MARKETPLACE_DB,
-        "tasks": TASKS_DB
+        "livestock": livestock_list,
+        "expenses": expenses_list,
+        "marketplace": marketplace_list,
+        "tasks": tasks_list
     }
 
     result = extract_and_dispatch(raw_text, farmer, in_memory_dbs, active_lang=active_lang)
+
+    if db_service.is_supabase_configured() and result.get("success"):
+        db_errors = []
+        for a in livestock_list:
+            tid = a.get("tag_id")
+            if tid not in before_ls:
+                ok, err = db_service.add_livestock(phone, a, LIVESTOCK_DB)
+                if not ok:
+                    db_errors.append(err)
+            elif a != before_ls[tid]:
+                ok, err = db_service.update_livestock(phone, tid, a, LIVESTOCK_DB)
+                if not ok:
+                    db_errors.append(err)
+        for e in expenses_list:
+            if e.get("id") not in before_exp_ids:
+                ok, err = db_service.add_expense_record(phone, e, EXPENSES_DB)
+                if not ok:
+                    db_errors.append(err)
+        for m in marketplace_list:
+            if m.get("id") not in before_mkt_ids:
+                ok, err = db_service.add_marketplace_record(phone, m, MARKETPLACE_DB)
+                if not ok:
+                    db_errors.append(err)
+        for tsk in tasks_list:
+            if tsk.get("id") not in before_tsk_ids:
+                ok, err = db_service.add_crop_task(phone, tsk, TASKS_DB)
+                if not ok:
+                    db_errors.append(err)
+        if db_errors:
+            flash(f"Database sync warning: {db_errors[0]}", "error")
+
     session["smart_log_result"] = result
 
     if result.get("success"):

@@ -6,3 +6,4 @@ Pillow==12.2.0
 python-dotenv==1.2.4
 certifi>=2024.2.2
 sarvamai==0.1.46
+supabase==2.34.1
