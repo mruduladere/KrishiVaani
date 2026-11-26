@@ -25,7 +25,7 @@ TRANSLATIONS = {
         # App Branding & Meta
         "app_title": "KrishiVaani",
         "app_subtitle": "Voice of Agriculture",
-        "sih_badge": "Smart India Hackathon Prototype",
+        "sih_badge": "IEEE Ideathon — Top 5 Teams, Round 1 Qualifiers",
         "footer_text": "🌱 KrishiVaani • Pure Python • Powered by Supabase • Designed for Maharashtra Farmers",
         "lang_name_mr": "Marathi",
         "lang_name_en": "English",
@@ -591,7 +591,7 @@ TRANSLATIONS = {
         # App Branding & Meta
         "app_title": "कृषीवाणी",
         "app_subtitle": "शेतकऱ्यांचा डिजिटल आवाज",
-        "sih_badge": "स्मार्ट इंडिया हॅकाथॉन प्रोटोटाईप",
+        "sih_badge": "IEEE आयडियाथॉन — टॉप ५ संघ, फेरी १ पात्र",
         "footer_text": "🌱 कृषीवाणी • प्युअर पायथन • सुपाबेस समर्थित • महाराष्ट्रातील बळीराजासाठी",
         "lang_name_mr": "मराठी",
         "lang_name_en": "इंग्रजी",
