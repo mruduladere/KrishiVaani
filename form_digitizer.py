@@ -92,7 +92,7 @@ def get_sample_form_svg():
         
         <line x1="25" y1="1040" x2="775" y2="1040" stroke="#059669" stroke-width="2"/>
         <text x="400" y="1060" font-size="11" font-weight="bold" fill="#065F46" text-anchor="middle">KRISHIVAANI SMART FORM DIGITIZER • MAHARASHTRA AGRI 2026</text>
-        <text x="400" y="1076" font-size="10" fill="#047857" text-anchor="middle">No Database • In-Memory Reactive Pipeline</text>
+        <text x="400" y="1076" font-size="10" fill="#047857" text-anchor="middle">Powered by Supabase • Smart Document Pipeline</text>
     </svg>'''
     import urllib.parse
     return f"data:image/svg+xml;utf8,{urllib.parse.quote(svg)}"
