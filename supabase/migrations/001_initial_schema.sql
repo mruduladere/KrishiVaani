@@ -144,3 +144,23 @@ CREATE POLICY "Public can view marketplace listings"
 
 -- Private farmer tables (farmers, crop_tasks, livestock, expenses) have NO public/anon policies,
 -- ensuring zero exposure via anon key.
+
+-- ============================================================================
+-- TABLE-LEVEL PRIVILEGES (REQUIRED FOR POSTGREST / SUPABASE ROLES)
+-- ============================================================================
+GRANT USAGE ON SCHEMA public TO service_role, anon, authenticated;
+
+GRANT ALL ON TABLE
+    public.farmers,
+    public.crop_tasks,
+    public.livestock,
+    public.expenses,
+    public.marketplace_listings,
+    public.nearby_services
+TO service_role;
+
+GRANT SELECT ON TABLE
+    public.marketplace_listings,
+    public.nearby_services
+TO anon, authenticated;
+
